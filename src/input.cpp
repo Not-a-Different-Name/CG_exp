@@ -205,10 +205,10 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
 
     // 机器人：姿势切换与走路循环（数字键已被视图/投影占满，用字母）
     case 'n':
-        if (robotAlive()) robotNextPose();
+        if (robotAlive()) { robotNextPose(); glutPostRedisplay(); }
         return;
     case 'b':
-        if (robotAlive()) robotToggleWalk();
+        if (robotAlive()) { robotToggleWalk(); glutPostRedisplay(); }
         return;
 
     // 森林分形参数：f 循环迭代深度 (0 → +1 → -1 → 0)，u/j 调分支角（调整即重建）

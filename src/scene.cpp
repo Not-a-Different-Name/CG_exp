@@ -13,14 +13,27 @@ constexpr int      kForestTrees  = 150;
 constexpr float    kForestClear  = 7.0f;
 constexpr unsigned kForestSeed   = 20260924u;
 
-// 采样兔子的漫游路线（种树避让 + 重建时保持一致）
+// 采样兔子的漫游路线（种树避让 + 重建时保持一致）。
+// 小动物的绕圈路线同样纳入避让，否则树会长在动物散步的路径上、挡住视线。
 void buildForestPath(std::vector<Vec3>& path)
 {
     path.clear();
-    path.reserve(722);
+    path.reserve(722 + 64);
     for (int i = 0; i <= 720; ++i)
         path.push_back(roamPath(0.02f * (float)i));       // 覆盖 0 ~ 14.4 秒
     path.push_back(v3(0.0f, 0.0f, 0.0f));                 // 林间空地（机器人+默认机位）
+
+    // 鹿与狐狸的绕圈路线（圆心/半径与 animals.cpp 的 kDefs 一致）
+    const float circles[][3] = {
+        { -3.5f,  0.5f, 1.8f },     // Deer
+        { -5.5f, -3.0f, 1.5f },     // Fox
+    };
+    for (const auto& c : circles)
+        for (int i = 0; i < 32; ++i)
+        {
+            const float a = 2.0f * 3.14159265f * (float)i / 32.0f;
+            path.push_back(v3(c[0] + c[2] * std::cos(a), 0.0f, c[1] + c[2] * std::sin(a)));
+        }
 }
 
 // ---------------------------------------------------------------------------

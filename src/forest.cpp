@@ -213,17 +213,24 @@ struct LTreeRule
     float       leafCol[3];
 };
 
-// 三套物种预设：迭代代数在 3 上下，展开后每棵树约 40~70 段枝
+// 三套物种预设。
+// 注意符号顺序必须是「先翻滚 / 、后俯仰 &」：翻滚改变的是俯仰所绕的轴，
+// 先转轴再低头，同一层的分支才会朝不同方位展开（轮生）；写反了所有枝条
+// 会伸向同一方向，整棵树退化成一把梳子（2026-11-14 实测教训）。
+// / 确定性 ±120° 不加抖动：连续多个 / 需要精确累计 360° 才能均分方位，
+// 抖动只放在 +-&^ 的角度幅值上。
 const LTreeRule kConifer = {
-    "F", "F[&F][&/F]F", 3, 30.0f, 0.86f, 0.66f, 0.085f, true,
+    // 每层：主干续一段 + 三枝轮生（方位角 0°/120°/240°）再低头
+    "F", "F[/&F][//&F][///&F]F", 3, 32.0f, 0.86f, 0.70f, 0.075f, true,
     { 0.21f, 0.14f, 0.07f }, { 0.10f, 0.26f, 0.10f }
 };
 const LTreeRule kBroadleaf = {
-    "F", "F[+&F][-&F]F", 3, 40.0f, 0.84f, 0.62f, 0.16f, false,
+    // 两枝分叉（方位差 120°）+ 主干续段，下一代继承已转的坐标系 → 冠幅自然错开
+    "F", "F[/+&F][//-&F]F", 3, 38.0f, 0.84f, 0.62f, 0.17f, false,
     { 0.26f, 0.18f, 0.10f }, { 0.15f, 0.35f, 0.12f }
 };
 const LTreeRule kBush = {
-    "[F][+F][-F]", "F[+F][-F]F", 2, 44.0f, 0.80f, 0.70f, 0.13f, false,
+    "[F][+F][-F]", "F[/+&F][//-&F]F", 2, 44.0f, 0.80f, 0.72f, 0.14f, false,
     { 0.24f, 0.17f, 0.09f }, { 0.18f, 0.33f, 0.10f }
 };
 
@@ -323,7 +330,7 @@ void buildFractalTree(MeshData& out, Rng& rng, const LTreeRule& rule, int depth)
             const float jit = 1.0f + rng.range(-0.12f, 0.12f);
             const Vec3 p1 = t.pos + t.heading * (t.len * jitterL);
 
-            const float leafy = (t.depth >= leafDepth - 1) ? 0.45f : 1.0f;   // 末梢细一些
+            const float leafy = (t.depth >= leafDepth - 1) ? 0.6f : 1.0f;   // 末梢略细
             addSegment(out, t.pos, p1, t.radius * leafy, t.radius * leafy * 0.7f,
                        rule.trunkCol, sides);
 
@@ -363,8 +370,8 @@ void buildFractalTree(MeshData& out, Rng& rng, const LTreeRule& rule, int depth)
         case '-': yaw( -angle * rng.range(0.85f, 1.15f)); break;
         case '&': pitch( angle * rng.range(0.85f, 1.15f)); break;
         case '^': pitch(-angle * rng.range(0.85f, 1.15f)); break;
-        case '/': roll( 120.0f * rng.range(0.6f, 1.4f));  break;   // 三分支错开约 120°
-        case '\\': roll(-120.0f * rng.range(0.6f, 1.4f)); break;
+        case '/': roll( 120.0f); break;      // 确定性：多符号累计需精确均分方位
+        case '\\': roll(-120.0f); break;
         case '[':
             stack.push_back(t);
             t.len    *= rule.lenShrink;

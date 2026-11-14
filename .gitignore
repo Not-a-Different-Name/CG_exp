@@ -1,9 +1,15 @@
 # 构建产物
-build/          # CMake 构建目录（x64）
-build32/        # CMake 构建目录（Win32）
-bin/            # VS 工程 viewer.sln 的输出（bin/<平台>/<配置>/）
-obj/            # VS 工程的中间文件
-x64/            # 旧版 VS 默认输出，保留忽略以防手滑
+# 注意：.gitignore 不支持行尾注释（注释必须单独占一行），
+# 否则整串（含空格和 #）会被当成匹配模式，等于没写。
+# CMake 构建目录（x64 / Win32）
+build/
+build32/
+# VS 工程 viewer.sln 的输出（bin/<平台>/<配置>/）
+bin/
+# VS 工程的中间文件
+obj/
+# 旧版 VS 默认输出，保留忽略以防手滑
+x64/
 Release/
 Debug/
 out/

@@ -314,8 +314,8 @@ int runSelfTest()
         bool ok = animalPartPosition(s, "Deer", p);
         check(ok && std::fabs(p[1]) < 0.1f, "deer stays on the ground (|y| < 0.1)");
         const float deerX0 = p[0], deerZ0 = p[2];
-        check(std::fabs(deerX0 - (-6.0f)) <= 3.2f + 0.01f &&
-              std::fabs(deerZ0 - 4.5f)  <= 3.2f + 0.01f,
+        check(std::fabs(deerX0 - (-3.5f)) <= 1.8f + 0.01f &&
+              std::fabs(deerZ0 - 0.5f)    <= 1.8f + 0.01f,
               "deer stays inside its walking circle");
 
         animalsUpdate(s, 40.0f);

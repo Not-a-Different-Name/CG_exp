@@ -56,7 +56,11 @@ struct PreviewState
 };
 PreviewState g_preview;
 
-void previewTick(int) { glutPostRedisplay(); }
+// 定时器链里「已有一帧在排队」的标志。输入事件也会 glutPostRedisplay，
+// 如果每次 display 都无条件再挂一个定时器，按一次键就会多出一条并行的重绘链，
+// 连按几次后帧率成倍上涨（每个 display 又挂一个新定时器，链数只增不减）。
+bool g_tickScheduled = false;
+void previewTick(int) { g_tickScheduled = false; glutPostRedisplay(); }
 
 void finishRecording()
 {
@@ -625,7 +629,14 @@ void appDisplay()
     {
         // 预览走 60fps 定时器。不能像录制那样无条件 postRedisplay ——
         // 那会变成忙等，把 CPU 吃满。
-        glutTimerFunc(16, previewTick, 0);
+        if (!g_tickScheduled) { g_tickScheduled = true; glutTimerFunc(16, previewTick, 0); }
+    }
+    else if (g_app.sceneKind == SceneKind::Forest && (robotAlive() || animalsAlive()))
+    {
+        // 森林里有常驻动画源（机器人姿势渐变/行走、动物漫步吃草），
+        // GLUT 默认只在输入事件后重绘 —— 不持续请求帧的话，按 n/b 只能看到
+        // 渐变的第一格（看起来像"没反应"）。30Hz 足够顺滑，也不吃满 CPU。
+        if (!g_tickScheduled) { g_tickScheduled = true; glutTimerFunc(33, previewTick, 0); }
     }
 }
 
