@@ -35,7 +35,12 @@ enum MenuId
 
     // 机器人（2026 实验主角）
     M_ROBOT_STAND = 700, M_ROBOT_WAVE, M_ROBOT_TPOSE, M_ROBOT_WALKFREEZE,
-    M_ROBOT_TOGGLE_WALK
+    M_ROBOT_TOGGLE_WALK,
+
+    // 森林分形参数（2026 加分项：分形算法）
+    M_FOREST_DETAIL_UP = 720, M_FOREST_DETAIL_DOWN,
+    M_FOREST_ANGLE_DOWN, M_FOREST_ANGLE_UP,
+    M_FOREST_REBUILD
 };
 
 void inputKeyboard(unsigned char key, int x, int y);

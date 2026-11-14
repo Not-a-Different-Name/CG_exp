@@ -7,6 +7,22 @@
 
 namespace {
 
+// 森林生成参数（初次建场景与运行期重建共用，保证两次生成完全一致）
+constexpr float    kForestHalf   = 34.0f;
+constexpr int      kForestTrees  = 150;
+constexpr float    kForestClear  = 7.0f;
+constexpr unsigned kForestSeed   = 20260924u;
+
+// 采样兔子的漫游路线（种树避让 + 重建时保持一致）
+void buildForestPath(std::vector<Vec3>& path)
+{
+    path.clear();
+    path.reserve(722);
+    for (int i = 0; i <= 720; ++i)
+        path.push_back(roamPath(0.02f * (float)i));       // 覆盖 0 ~ 14.4 秒
+    path.push_back(v3(0.0f, 0.0f, 0.0f));                 // 林间空地（机器人+默认机位）
+}
+
 // ---------------------------------------------------------------------------
 // 实验四的立方体：8 个顶点 + 8 个顶点颜色 + 6 个面。
 // 顶点色配合默认的 GL_SMOOTH 会在表面上做双线性插值，得到「五彩斑斓的立方体」。
@@ -188,25 +204,11 @@ bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::
     // ---- 森林场景 ----
     if (kind == SceneKind::Forest)
     {
-        // 采样兔子的漫游路线，种树时避开 —— 否则兔子会直接从树干里穿过去。
-        // 路径函数与漫游动画共用同一个 roamPath，两边永远一致。
         std::vector<Vec3> path;
-        path.reserve(722);
-        for (int i = 0; i <= 720; ++i)
-            path.push_back(roamPath(0.02f * (float)i));       // 覆盖 0 ~ 14.4 秒
+        buildForestPath(path);
 
-        // 兔子默认站在原点，但漫游曲线 t=0 的位置离原点还有 5 个单位（约 (4.8, -2.5)），
-        // 所以原点根本不在避让范围内 —— 实测会有一棵树正好杵在兔子和默认相机之间，
-        // 把兔子挡掉一大半。把原点也加进避让点，等于给兔子留一小片林间空地：
-        // 近景干净，树落在中景，正好是最舒服的构图。
-        path.push_back(v3(0.0f, 0.0f, 0.0f));
-
-        // clearance 必须大于追尾相机的跟随距离（anim.cpp 里 kCamDist = 4.6）：
-        // 相机吊在兔子后面 4.6 单位，如果树只让开 3.6，相机会一头扎进树干里，
-        // 因为背面剔除会直接看穿那棵树，树就"闪没"了。
         MeshData forestData;
-        buildForest(forestData, /*halfSize=*/34.0f, /*treeCount=*/150,
-                    path, /*clearance=*/7.0f, /*seed=*/20260924u);
+        buildForest(forestData, kForestHalf, kForestTrees, path, kForestClear, kForestSeed);
 
         auto forestMesh = std::make_shared<Mesh>();
         forestMesh->adopt(std::move(forestData));
@@ -358,6 +360,27 @@ void Scene::resetTransforms()
 {
     for (Object& o : objects)
         if (o.selectable) mat4Identity(o.xform);
+}
+
+bool Scene::rebuildForest()
+{
+    // 找到森林物体（build 时整片森林烘焙成一个 Mesh）
+    std::shared_ptr<Mesh> forestMesh;
+    for (Object& o : objects)
+        if (o.name == "Forest" && o.mesh) { forestMesh = o.mesh; break; }
+    if (!forestMesh) return false;
+
+    std::vector<Vec3> path;
+    buildForestPath(path);
+
+    MeshData data;
+    buildForest(data, kForestHalf, kForestTrees, path, kForestClear, kForestSeed);
+    forestMesh->adopt(std::move(data));      // adopt 会释放旧 GL 缓冲，下帧自动重传
+
+    std::printf("[scene] forest rebuilt: %d vertices, %d triangles (%s)\n",
+                (int)(forestMesh->data().positions.size() / 3),
+                forestMesh->data().triangleCount, forestParamsText());
+    return true;
 }
 
 int Scene::nextSelectable(int idx) const

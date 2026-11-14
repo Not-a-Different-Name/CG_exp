@@ -1,14 +1,14 @@
 #include "forest.h"
 
 #include <cmath>
+#include <cstring>
 
 namespace {
 
 constexpr float kPi = 3.14159265358979323846f;
 
 // ---------------------------------------------------------------------------
-// 确定性伪随机：xorshift32。固定种子保证每次运行生成完全一样的森林，录像才可复现。
-// （不能用 rand()：各 C 运行库的实现不同，换个编译器森林就变了。）
+// 确定性伪随机：xorshift32。固定种子保证每次运行生成完全一样的森林。
 // ---------------------------------------------------------------------------
 struct Rng
 {
@@ -26,12 +26,12 @@ struct Rng
     float range(float a, float b) { return a + (b - a) * unit(); }
 };
 
+} // namespace
+
 // ---------------------------------------------------------------------------
-// 往 MeshData 里塞一个三角形（平面法线）。绕序必须 CCW，否则会被背面剔除。
+// 基本形状（在 forest.h 里声明，供动物等其它程序化网格复用）
 // ---------------------------------------------------------------------------
-void pushTri(MeshData& m,
-             const Vec3& a, const Vec3& b, const Vec3& c,
-             const float col[3])
+void pushTri(MeshData& m, const Vec3& a, const Vec3& b, const Vec3& c, const float col[3])
 {
     const Vec3 n = v3norm(v3cross(b - a, c - a));
     const GLuint base = (GLuint)(m.positions.size() / 3);
@@ -57,9 +57,6 @@ void pushTri(MeshData& m,
     m.hasColors  = true;
 }
 
-// 竖直圆柱侧面（可锥形：r0 在 y0，r1 在 y1）。
-// 绕序：在 θ=0 处取 p0=(r,y0,0)，p1≈(r,y0,r·dθ)，q0=(r,y1,0)，q1≈(r,y1,r·dθ)，
-// 算 (p0,q0,q1) 的叉积得 +X，正是该处的外法线方向。
 void addCylinderSide(MeshData& m, float y0, float y1, float r0, float r1,
                      const float col[3], int sides)
 {
@@ -78,7 +75,6 @@ void addCylinderSide(MeshData& m, float y0, float y1, float r0, float r1,
     }
 }
 
-// 圆锥：底面圆 (y0, r) 收到顶点 (y1)。
 void addCone(MeshData& m, float y0, float y1, float r, const float col[3], int sides)
 {
     const Vec3 apex(0.0f, y1, 0.0f);
@@ -89,14 +85,11 @@ void addCone(MeshData& m, float y0, float y1, float r, const float col[3], int s
         const Vec3 p0(r * std::cos(t0), y0, r * std::sin(t0));
         const Vec3 p1(r * std::cos(t1), y0, r * std::sin(t1));
 
-        // 侧面：(p0, apex, p1) 叉积得 (h·rdθ, r²dθ, 0)，朝外且略微朝上 —— 正确。
-        // 反过来写成 (p0, p1, apex) 会变成朝内，整个锥体被剔除。
         pushTri(m, p0, apex, p1, col);
         pushTri(m, v3(0.0f, y0, 0.0f), p0, p1, col);      // 底盖朝下
     }
 }
 
-// 椭球（树叶团）。用解析法线做平滑着色，比平面法线更像一团叶子。
 void addEllipsoid(MeshData& m, const Vec3& c, float rx, float ry, float rz,
                   const float col[3], int slices, int stacks)
 {
@@ -116,7 +109,6 @@ void addEllipsoid(MeshData& m, const Vec3& c, float rx, float ry, float rz,
             m.positions.push_back(c.y + ry * sy);
             m.positions.push_back(c.z + rz * sz);
 
-            // 椭球在 (rx·sx, ry·sy, rz·sz) 处的法线正比于 (sx/rx, sy/ry, sz/rz)
             const Vec3 n = v3norm(v3(sx / rx, sy / ry, sz / rz));
             m.normals.push_back(n.x);
             m.normals.push_back(n.y);
@@ -129,7 +121,6 @@ void addEllipsoid(MeshData& m, const Vec3& c, float rx, float ry, float rz,
     }
 
     for (int i = 0; i < stacks; ++i)
-    {
         for (int j = 0; j < slices; ++j)
         {
             const GLuint a = base + (GLuint)(i * (slices + 1) + j);
@@ -137,19 +128,45 @@ void addEllipsoid(MeshData& m, const Vec3& c, float rx, float ry, float rz,
             m.indices.push_back(a);     m.indices.push_back(a + 1); m.indices.push_back(b);
             m.indices.push_back(a + 1); m.indices.push_back(b + 1); m.indices.push_back(b);
         }
-    }
     m.hasNormals = true;
     m.hasColors  = true;
 }
 
+void appendTransformed(MeshData& out, const MeshData& part, const float m[16])
+{
+    const GLuint base = (GLuint)(out.positions.size() / 3);
+    const size_t nv = part.positions.size() / 3;
+    for (size_t i = 0; i < nv; ++i)
+    {
+        const Vec3 p = mat4MulPoint(m, v3(part.positions[i * 3], part.positions[i * 3 + 1],
+                                          part.positions[i * 3 + 2]));
+        out.positions.push_back(p.x);
+        out.positions.push_back(p.y);
+        out.positions.push_back(p.z);
+
+        const Vec3 d = mat4MulDir(m, v3(part.normals[i * 3], part.normals[i * 3 + 1],
+                                        part.normals[i * 3 + 2]));
+        const Vec3 n = v3norm(d);
+        out.normals.push_back(n.x);
+        out.normals.push_back(n.y);
+        out.normals.push_back(n.z);
+
+        out.colors.push_back(part.colors[i * 3]);
+        out.colors.push_back(part.colors[i * 3 + 1]);
+        out.colors.push_back(part.colors[i * 3 + 2]);
+    }
+    for (GLuint idx : part.indices) out.indices.push_back(base + idx);
+    out.hasNormals = true;
+    out.hasColors  = true;
+}
+
+namespace {
+
 // ---------------------------------------------------------------------------
-// 地面：细分网格 + 平滑的草色变化。
-// 必须细分：固定管线的雾是**逐顶点**算的，一整块大平面只有四个角有雾值，
-// 远处会突变成一条硬边。
+// 地面：细分网格 + 平滑的草色变化（细分是为了逐顶点雾不出硬边）
 // ---------------------------------------------------------------------------
 void addGround(MeshData& m, float halfSize, int div)
 {
-    // Shared vertices give adjacent cells identical colours, avoiding visible tile seams.
     const GLuint base = static_cast<GLuint>(m.positions.size()/3);
     const float step=2.0f*halfSize/div;
     for(int i=0;i<=div;++i) for(int j=0;j<=div;++j) {
@@ -168,53 +185,216 @@ void addGround(MeshData& m, float halfSize, int div)
 }
 
 // ---------------------------------------------------------------------------
-// 三种树型。都按「高度 1、底面在 y = 0、中心在原点」生成，
-// 摆放时用 appendScaled 统一缩放平移。
+// L-system 分形树
+//
+// 文法（只重写 F，其它符号原样保留）：
+//   F   沿当前方向长一段枝（锥台），末端小枝挂叶
+//   + - 绕「上」参考轴左/右偏航
+//   & ^ 绕「左」参考轴俯/仰
+//   / \ 绕前进方向翻滚（让分支在三维里错开，不共面）
+//   [ ] 海龟状态入栈 / 出栈（分支）
 // ---------------------------------------------------------------------------
-void buildConifer(MeshData& t, Rng& rng)
+
+// 运行期参数：迭代深度增减与分支角缩放（菜单/按键调整，重建森林生效）
+int   g_detailBump  = 0;
+float g_angleScale  = 1.0f;
+
+struct LTreeRule
 {
-    const float trunk[3] = { 0.20f, 0.13f, 0.07f };
-    addCylinderSide(t, 0.0f, 0.30f, 0.030f, 0.020f, trunk, 6);
+    const char* axiom;
+    const char* expansion;      // F 的重写结果
+    int         iterations;     // 基准迭代代数
+    float       angleDeg;       // 分支角
+    float       lenShrink;      // 每级分支长度衰减
+    float       radShrink;      // 每级分支半径衰减
+    float       leafSize;       // 末端叶团尺寸（相对单位树高）
+    bool        leafIsCone;     // 针叶用小锥，阔叶用椭球团
+    float       trunkCol[3];
+    float       leafCol[3];
+};
 
-    const float b = rng.range(0.0f, 0.08f);
-    const float g1[3] = { 0.10f + b, 0.24f + b, 0.09f + b * 0.5f };
-    const float g2[3] = { 0.08f + b, 0.21f + b, 0.08f + b * 0.5f };
+// 三套物种预设：迭代代数在 3 上下，展开后每棵树约 40~70 段枝
+const LTreeRule kConifer = {
+    "F", "F[&F][&/F]F", 3, 30.0f, 0.86f, 0.66f, 0.085f, true,
+    { 0.21f, 0.14f, 0.07f }, { 0.10f, 0.26f, 0.10f }
+};
+const LTreeRule kBroadleaf = {
+    "F", "F[+&F][-&F]F", 3, 40.0f, 0.84f, 0.62f, 0.16f, false,
+    { 0.26f, 0.18f, 0.10f }, { 0.15f, 0.35f, 0.12f }
+};
+const LTreeRule kBush = {
+    "[F][+F][-F]", "F[+F][-F]F", 2, 44.0f, 0.80f, 0.70f, 0.13f, false,
+    { 0.24f, 0.17f, 0.09f }, { 0.18f, 0.33f, 0.10f }
+};
 
-    addCone(t, 0.22f, 0.62f, 0.190f, g1, 8);
-    addCone(t, 0.48f, 0.84f, 0.140f, g1, 8);
-    addCone(t, 0.71f, 1.00f, 0.088f, g2, 8);
+// 字符串重写：迭代 depth 代
+std::string lExpand(const LTreeRule& rule, int depth)
+{
+    std::string s = rule.axiom;
+    for (int it = 0; it < depth; ++it)
+    {
+        std::string next;
+        next.reserve(s.size() * 8);
+        for (char c : s)
+        {
+            if (c == 'F') next += rule.expansion;
+            else          next += c;
+        }
+        s.swap(next);
+    }
+    return s;
 }
 
-void buildRoundTree(MeshData& t, Rng& rng)
+// 海龟状态：位置 + 正交坐标系（heading 前进方向 / up 俯仰参考 / left 翻滚参考）
+struct Turtle
 {
-    const float trunk[3] = { 0.24f, 0.16f, 0.09f };
-    addCylinderSide(t, 0.0f, 0.46f, 0.034f, 0.026f, trunk, 6);
+    Vec3  pos, heading, up, left;
+    float len;          // 当前段长
+    float radius;       // 当前段半径
+    int   depth;        // 分支层级（决定叶团与尺寸衰减）
+};
 
-    const float v = rng.range(0.0f, 0.45f);
-    const float g1[3] = { 0.13f + v, 0.29f + v, 0.10f + v * 0.4f };
-    const float g2[3] = { 0.10f + v, 0.25f + v, 0.08f + v * 0.4f };
+// 任意朝向的锥台枝干。绕序与 addCylinderSide 同构（外法线，CCW）。
+void addSegment(MeshData& m, const Vec3& p0, const Vec3& p1,
+                float r0, float r1, const float col[3], int sides)
+{
+    const Vec3 axis = p1 - p0;
+    const float h = v3len(axis);
+    if (h < 1e-6f) return;
+    const Vec3 d = axis * (1.0f / h);
 
-    addEllipsoid(t, v3(rng.range(-0.02f, 0.02f), 0.62f, rng.range(-0.02f, 0.02f)),
-                 0.24f, 0.21f, 0.24f, g1, 8, 5);
-    addEllipsoid(t, v3(rng.range(-0.05f, 0.05f), 0.79f, rng.range(-0.05f, 0.05f)),
-                 0.17f, 0.15f, 0.17f, g2, 8, 4);
-    addEllipsoid(t, v3(rng.range(-0.05f, 0.05f), 0.53f, rng.range(-0.05f, 0.05f)),
-                 0.16f, 0.14f, 0.16f, g2, 8, 4);
+    Vec3 u = v3cross(d, v3(0.0f, 1.0f, 0.0f));       // 与竖直不共线时的横向基
+    if (v3len(u) < 1e-5f) u = v3(1.0f, 0.0f, 0.0f);
+    u = v3norm(u);
+    const Vec3 v = v3cross(d, u);
+
+    for (int i = 0; i < sides; ++i)
+    {
+        const float t0 = 2.0f * kPi * (float)i / (float)sides;
+        const float t1 = 2.0f * kPi * (float)(i + 1) / (float)sides;
+
+        const Vec3 r0u = u * (r0 * std::cos(t0)) + v * (r0 * std::sin(t0));
+        const Vec3 r0w = u * (r0 * std::cos(t1)) + v * (r0 * std::sin(t1));
+        const Vec3 r1u = u * (r1 * std::cos(t0)) + v * (r1 * std::sin(t0));
+        const Vec3 r1w = u * (r1 * std::cos(t1)) + v * (r1 * std::sin(t1));
+
+        pushTri(m, p0 + r0u, p1 + r1u, p1 + r1w, col);
+        pushTri(m, p0 + r0u, p1 + r1w, p0 + r0w, col);
+    }
 }
 
-void buildBush(MeshData& t, Rng& rng)
+// 解释字符串生成一棵「单位高度」的树（底面 y=0，最高点 y=1）
+void buildFractalTree(MeshData& out, Rng& rng, const LTreeRule& rule, int depth)
 {
-    const float v = rng.range(0.0f, 0.5f);
-    const float g1[3] = { 0.12f + v, 0.28f + v, 0.09f + v * 0.4f };
-    const float g2[3] = { 0.09f + v, 0.24f + v, 0.07f + v * 0.4f };
+    const std::string s = lExpand(rule, depth);
+    const float angle = rule.angleDeg * g_angleScale;
 
-    addEllipsoid(t, v3(0.0f, 0.45f, 0.0f), 0.42f, 0.45f, 0.42f, g1, 8, 5);
-    addEllipsoid(t, v3(rng.range(-0.10f, 0.10f), 0.62f, rng.range(-0.10f, 0.10f)),
-                 0.30f, 0.30f, 0.30f, g2, 8, 4);
+    std::vector<Turtle> stack;
+    Turtle t;
+    t.pos     = v3(0.0f, 0.0f, 0.0f);
+    t.heading = v3(0.0f, 1.0f, 0.0f);
+    t.up      = v3(0.0f, 0.0f, 1.0f);
+    t.left    = v3(1.0f, 0.0f, 0.0f);
+    t.len     = 0.34f;                       // 首段后由 bbox 归一化，绝对值不敏感
+    t.radius  = 0.05f;
+    t.depth   = 0;
+
+    const int   leafDepth = depth;           // 最外层分支挂叶
+    const int   sides     = 5;
+
+    auto yaw   = [&](float deg) { const float r = deg * kPi / 180.0f;
+                                  quatRotate(r, t.up.x, t.up.y, t.up.z, t.heading.x, t.heading.y, t.heading.z);
+                                  quatRotate(r, t.up.x, t.up.y, t.up.z, t.left.x,   t.left.y,   t.left.z); };
+    auto pitch = [&](float deg) { const float r = deg * kPi / 180.0f;
+                                  quatRotate(r, t.left.x, t.left.y, t.left.z, t.heading.x, t.heading.y, t.heading.z);
+                                  quatRotate(r, t.left.x, t.left.y, t.left.z, t.up.x,      t.up.y,      t.up.z); };
+    auto roll  = [&](float deg) { const float r = deg * kPi / 180.0f;
+                                  quatRotate(r, t.heading.x, t.heading.y, t.heading.z, t.up.x,   t.up.y,   t.up.z);
+                                  quatRotate(r, t.heading.x, t.heading.y, t.heading.z, t.left.x, t.left.y, t.left.z); };
+
+    for (char c : s)
+    {
+        switch (c)
+        {
+        case 'F':
+        {
+            // 每棵树在固定规则上叠加少量确定性抖动，同种树不重样
+            const float jitterL = 1.0f + rng.range(-0.10f, 0.10f);
+            const float jit = 1.0f + rng.range(-0.12f, 0.12f);
+            const Vec3 p1 = t.pos + t.heading * (t.len * jitterL);
+
+            const float leafy = (t.depth >= leafDepth - 1) ? 0.45f : 1.0f;   // 末梢细一些
+            addSegment(out, t.pos, p1, t.radius * leafy, t.radius * leafy * 0.7f,
+                       rule.trunkCol, sides);
+
+            if (t.depth >= leafDepth - 1)
+            {
+                // 末端叶团：针叶用小锥（贴枝），阔叶用椭球团（裹枝头）
+                const float lv = rng.range(0.0f, 0.12f);
+                const float lc[3] = { rule.leafCol[0] + lv * 0.5f,
+                                      rule.leafCol[1] + lv,
+                                      rule.leafCol[2] + lv * 0.3f };
+                const Vec3 lcPos = p1 + t.heading * (t.len * 0.4f);
+                if (rule.leafIsCone)
+                {
+                    MeshData blob;
+                    const float s = rule.leafSize * 3.2f * jit;
+                    addCone(blob, 0.0f, s, s * 0.42f, lc, 4);
+                    float m[16];
+                    // 小锥沿枝方向立起来：构造 heading 为主轴的旋转
+                    const Vec3 h = t.heading;
+                    const float a = std::acos(h.y) * 180.0f / kPi;       // 与 +Y 的夹角
+                    const Vec3 ax = v3norm(v3cross(v3(0, 1, 0), h));
+                    if (v3len(ax) > 1e-5f) mat4FromAxisAngle(m, a, ax.x, ax.y, ax.z);
+                    else                  mat4Identity(m);
+                    m[12] = lcPos.x; m[13] = lcPos.y; m[14] = lcPos.z;
+                    appendTransformed(out, blob, m);
+                }
+                else
+                {
+                    const float r0 = rule.leafSize * jit;
+                    addEllipsoid(out, lcPos, r0, r0 * 0.85f, r0, lc, 6, 4);
+                }
+            }
+            t.pos = p1;
+            break;
+        }
+        case '+': yaw(  angle * rng.range(0.85f, 1.15f)); break;
+        case '-': yaw( -angle * rng.range(0.85f, 1.15f)); break;
+        case '&': pitch( angle * rng.range(0.85f, 1.15f)); break;
+        case '^': pitch(-angle * rng.range(0.85f, 1.15f)); break;
+        case '/': roll( 120.0f * rng.range(0.6f, 1.4f));  break;   // 三分支错开约 120°
+        case '\\': roll(-120.0f * rng.range(0.6f, 1.4f)); break;
+        case '[':
+            stack.push_back(t);
+            t.len    *= rule.lenShrink;
+            t.radius *= rule.radShrink;
+            t.depth  += 1;
+            break;
+        case ']':
+            if (!stack.empty()) { t = stack.back(); stack.pop_back(); }
+            break;
+        default: break;
+        }
+    }
 }
 
-// 把一棵「单位高度」的树缩放 height 倍后平移到 (x, z)，索引偏移后追加进 out。
-// 均匀缩放不改变法线方向，所以法线可以直接照搬。
+// 归一化到「高度 1、底面 y=0」，摆树时统一缩放
+void normalizeTree(MeshData& tree)
+{
+    float minY = 1e30f, maxY = -1e30f;
+    for (size_t i = 0; i < tree.positions.size(); i += 3)
+    {
+        minY = std::min(minY, tree.positions[i + 1]);
+        maxY = std::max(maxY, tree.positions[i + 1]);
+    }
+    const float h = maxY - minY;
+    if (h < 1e-6f) return;
+    for (size_t i = 0; i < tree.positions.size(); i += 3)
+        tree.positions[i + 1] = (tree.positions[i + 1] - minY) / h;
+}
+
+// 把一棵「单位高度」的树缩放 height 倍后平移到 (x, z)，随机偏航后追加进 out。
 void appendScaled(MeshData& out, const MeshData& tree,
                   float x, float z, float height, float yawRad)
 {
@@ -228,7 +408,6 @@ void appendScaled(MeshData& out, const MeshData& tree,
         const float py = tree.positions[i * 3 + 1] * height;
         const float pz = tree.positions[i * 3 + 2] * height;
 
-        // 绕 Y 转一圈，让同一种树看起来不重样
         out.positions.push_back(px * cs + pz * sn + x);
         out.positions.push_back(py);
         out.positions.push_back(-px * sn + pz * cs + z);
@@ -263,8 +442,30 @@ float distSqToPath(const std::vector<Vec3>& path, float x, float z)
     return best;
 }
 
+bool spotBlocked(const std::vector<Vec3>& path, float clearSq, float x, float z)
+{
+    return distSqToPath(path, x, z) < clearSq;
+}
+
 } // namespace
 
+// ---------------------------------------------------------------------------
+// 运行期分形参数
+// ---------------------------------------------------------------------------
+void forestSetDetail(int bump)  { g_detailBump = bump; }
+int  forestDetail()             { return g_detailBump; }
+void forestAdjustAngle(float scale) { g_angleScale = std::max(0.5f, std::min(g_angleScale * scale, 1.8f)); }
+const char* forestParamsText()
+{
+    static char buf[64];
+    std::snprintf(buf, sizeof(buf), "depth%s, angle x%.2f",
+                  g_detailBump == 0 ? "3" : (g_detailBump > 0 ? "3+1" : "3-1"),
+                  g_angleScale);
+    return buf;
+}
+
+// ---------------------------------------------------------------------------
+// 整片森林：地面 + 分形树 + 花草
 // ---------------------------------------------------------------------------
 void buildForest(MeshData& out,
                  float halfSize,
@@ -278,8 +479,7 @@ void buildForest(MeshData& out,
 
     addGround(out, halfSize, 48);
 
-    // 拒绝采样：随机撒点，太靠近兔子路线的丢掉，否则兔子会从树干里穿过去。
-    // 用尝试次数上限而不是 while(true)，参数不合理时也不会死循环。
+    // 拒绝采样：太靠近漫步路线的点丢弃
     const float clearSq = clearance * clearance;
     const float margin  = 2.5f;
     const int   maxTries = treeCount * 30;
@@ -291,31 +491,75 @@ void buildForest(MeshData& out,
     {
         const float x = rng.range(-halfSize + margin, halfSize - margin);
         const float z = rng.range(-halfSize + margin, halfSize - margin);
-        if (distSqToPath(path, x, z) < clearSq) continue;
+        if (spotBlocked(path, clearSq, x, z)) continue;
 
-        tree = MeshData{};                       // 复用同一个临时缓冲
+        tree = MeshData{};
 
         const float pick = rng.unit();
+        const LTreeRule* rule;
         float height;
-        if (pick < 0.42f)
-        {
-            buildConifer(tree, rng);
-            height = rng.range(11.0f, 22.0f);
-        }
-        else if (pick < 0.75f)
-        {
-            buildRoundTree(tree, rng);
-            height = rng.range(8.0f, 16.0f);
-        }
-        else
-        {
-            buildBush(tree, rng);
-            height = rng.range(1.8f, 3.6f);      // 灌木本来就矮
-        }
+        int depth;
+        if (pick < 0.42f)      { rule = &kConifer;   height = rng.range(11.0f, 22.0f); }
+        else if (pick < 0.75f) { rule = &kBroadleaf; height = rng.range(8.0f, 16.0f);  }
+        else                   { rule = &kBush;      height = rng.range(1.8f, 3.6f);   }
+        depth = std::max(1, rule->iterations + g_detailBump);
 
-        // 针叶树保持竖直；阔叶树稍微倾斜一点更自然
-        // （倾斜要绕水平轴，这里简单起见只做随机偏航 + 轻微高度差异）
+        buildFractalTree(tree, rng, *rule, depth);
+        normalizeTree(tree);
         appendScaled(out, tree, x, z, height, rng.range(0.0f, 2.0f * kPi));
         ++placed;
+    }
+
+    // ---- 花草（同样避开路线；草簇 + 花 = 茎 + 花头）----
+    static const float kFlowerCols[][3] = {
+        { 0.95f, 0.62f, 0.72f },   // 粉
+        { 0.95f, 0.93f, 0.82f },   // 白
+        { 0.96f, 0.84f, 0.30f },   // 黄
+    };
+
+    const int grassCount = 220;
+    for (int i = 0; i < grassCount; ++i)
+    {
+        const float x = rng.range(-halfSize + 1.0f, halfSize - 1.0f);
+        const float z = rng.range(-halfSize + 1.0f, halfSize - 1.0f);
+        if (spotBlocked(path, 2.2f * 2.2f, x, z)) continue;
+
+        const int blades = 3 + (int)rng.unit() * 3;         // 3~5 根一簇
+        for (int b = 0; b < blades; ++b)
+        {
+            const float h = rng.range(0.10f, 0.30f);
+            const float g = rng.range(0.0f, 0.10f);
+            const float col[3] = { 0.14f + g * 0.5f, 0.30f + g, 0.10f + g * 0.4f };
+
+            MeshData blade;
+            addCone(blade, 0.0f, h, rng.range(0.012f, 0.022f), col, 3);
+            float m[16];
+            mat4Identity(m);
+            m[12] = x + rng.range(-0.12f, 0.12f);
+            m[13] = 0.0f;
+            m[14] = z + rng.range(-0.12f, 0.12f);
+            appendTransformed(out, blade, m);
+        }
+    }
+
+    const int flowerCount = 70;
+    for (int i = 0; i < flowerCount; ++i)
+    {
+        const float x = rng.range(-halfSize + 1.0f, halfSize - 1.0f);
+        const float z = rng.range(-halfSize + 1.0f, halfSize - 1.0f);
+        if (spotBlocked(path, 2.2f * 2.2f, x, z)) continue;
+
+        const float stemH = rng.range(0.22f, 0.34f);
+        const float stem[3] = { 0.20f, 0.38f, 0.14f };
+
+        MeshData flower;
+        addCylinderSide(flower, 0.0f, stemH, 0.010f, 0.006f, stem, 3);
+        addEllipsoid(flower, v3(0.0f, stemH + 0.03f, 0.0f), 0.035f, 0.026f, 0.035f,
+                     kFlowerCols[i % 3], 6, 4);
+
+        float m[16];
+        mat4Identity(m);
+        m[12] = x; m[13] = 0.0f; m[14] = z;
+        appendTransformed(out, flower, m);
     }
 }

@@ -1,5 +1,6 @@
 #include "input.h"
 #include "app.h"
+#include "forest.h"
 #include "math3d.h"
 #include "robot.h"
 
@@ -139,6 +140,17 @@ void inputAction(int action)
     case M_ROBOT_WALKFREEZE: robotSetPose(RobotPose::WalkFreeze); break;
     case M_ROBOT_TOGGLE_WALK: robotToggleWalk();                  break;
 
+    // ---- 森林分形参数（L-system 迭代深度 / 分支角，调整后即时重建）----
+    case M_FOREST_DETAIL_UP:   forestSetDetail(std::min(1, forestDetail() + 1));
+                               g_app.scene.rebuildForest(); break;
+    case M_FOREST_DETAIL_DOWN: forestSetDetail(std::max(-1, forestDetail() - 1));
+                               g_app.scene.rebuildForest(); break;
+    case M_FOREST_ANGLE_UP:    forestAdjustAngle(1.12f);
+                               g_app.scene.rebuildForest(); break;
+    case M_FOREST_ANGLE_DOWN:  forestAdjustAngle(1.0f / 1.12f);
+                               g_app.scene.rebuildForest(); break;
+    case M_FOREST_REBUILD:     g_app.scene.rebuildForest(); break;
+
     default: break;
     }
 
@@ -197,6 +209,26 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
         return;
     case 'b':
         if (robotAlive()) robotToggleWalk();
+        return;
+
+    // 森林分形参数：f 循环迭代深度 (0 → +1 → -1 → 0)，u/j 调分支角（调整即重建）
+    case 'f':
+        if (g_app.sceneKind == SceneKind::Forest)
+        {
+            if (forestDetail() == 0) inputAction(M_FOREST_DETAIL_UP);
+            else
+            {
+                forestSetDetail(forestDetail() > 0 ? -1 : 0);
+                g_app.scene.rebuildForest();
+                glutPostRedisplay();
+            }
+        }
+        return;
+    case 'u':
+        if (g_app.sceneKind == SceneKind::Forest) inputAction(M_FOREST_ANGLE_DOWN);
+        return;
+    case 'j':
+        if (g_app.sceneKind == SceneKind::Forest) inputAction(M_FOREST_ANGLE_UP);
         return;
 
     // 空格：播放 / 暂停动画预览。森林场景里默认就是兔子漫步。
@@ -390,6 +422,13 @@ void inputBuildMenu()
     glutAddMenuEntry("Pose: walk freeze ",  M_ROBOT_WALKFREEZE);
     glutAddMenuEntry("Walk animation (b)",  M_ROBOT_TOGGLE_WALK);
 
+    const int mForest = glutCreateMenu(inputMenu);
+    glutAddMenuEntry("L-system depth +   (f)", M_FOREST_DETAIL_UP);
+    glutAddMenuEntry("L-system depth -   (f)", M_FOREST_DETAIL_DOWN);
+    glutAddMenuEntry("Branch angle -     (u)", M_FOREST_ANGLE_DOWN);
+    glutAddMenuEntry("Branch angle +     (j)", M_FOREST_ANGLE_UP);
+    glutAddMenuEntry("Rebuild forest         ", M_FOREST_REBUILD);
+
     glutCreateMenu(inputMenu);
     glutAddSubMenu("Transform",   mTrans);
     glutAddSubMenu("Projection",  mProj);
@@ -397,6 +436,7 @@ void inputBuildMenu()
     glutAddSubMenu("Render",      mRender);
     glutAddSubMenu("Show",        mShow);
     glutAddSubMenu("Robot",       mRobot);
+    glutAddSubMenu("Forest (fractal)", mForest);
     glutAddMenuEntry("Save screenshot (F12)", M_SCREENSHOT);
     glutAddMenuEntry("Toggle help (h)",       M_HELP);
     glutAddMenuEntry("Quit (ESC)",            M_QUIT);

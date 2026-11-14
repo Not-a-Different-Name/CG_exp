@@ -46,6 +46,10 @@ public:
 
     void  resetTransforms();                       // 所有物体变换复位为单位阵
 
+    // 森林场景运行期重建（分形参数调整后调用）：复用 "Forest" 物体已持有的 Mesh，
+    // 只重新生成几何数据。返回是否成功。
+    bool  rebuildForest();
+
     float radius() const { return radius_; }       // 场景半径，用于自适应取景
     const std::string& modelStatus() const { return modelStatus_; }
 

@@ -12,6 +12,7 @@
 //              [--view front|back|left|right|top|bottom|free]
 //              [--render solid|wire|points] [--quad] [--no-hud]
 #include "app.h"
+#include "forest.h"
 #include "input.h"
 #include "robot.h"
 
@@ -282,6 +283,23 @@ int runSelfTest()
               "walk-freeze: forward leg pivots about the hip (center drops by 1-cos)");
 
         robotSetTimeOverride(-1.0f);
+    }
+
+    // ---- L-system 分形森林：确定性与迭代单调性 ----
+    {
+        std::printf("  -- fractal forest (L-system) --\n");
+        std::vector<Vec3> path{ v3(0.0f, 0.0f, 0.0f) };
+        MeshData a, b, c;
+        buildForest(a, 20, 4, path, 2.0f, 7u);
+        buildForest(b, 20, 4, path, 2.0f, 7u);
+        check(a.indices.size() == b.indices.size(),
+              "same seed => identical forest geometry (reproducible)");
+
+        forestSetDetail(+1);
+        buildForest(c, 20, 4, path, 2.0f, 7u);
+        forestSetDetail(0);
+        check(c.indices.size() > a.indices.size(),
+              "+1 L-system iteration grows geometry (fractal self-similarity)");
     }
 
     std::printf("=== %s (%d failure(s)) ===\n", g_failures ? "FAILED" : "ALL PASS", g_failures);
