@@ -247,6 +247,43 @@ int runSelfTest()
               "Camera::fly translates (preserves distance) rather than dollying");
     }
 
+    // ---- 机器人层级建模的几何不变量（交互变换没法截图，用断言钉死）----
+    // 绕 Y 的根朝向不改变高度，所以这些 y 值与朝向无关，是干净的断言目标。
+    {
+        std::printf("  -- robot hierarchy --\n");
+        Scene s;
+        robotCreate(s);
+
+        // T-pose：手臂水平伸直 -> 臂中心与肩同高（kShoulderY）
+        robotSetPose(RobotPose::TPose, /*snap=*/true);
+        robotSetTimeOverride(0.0f);
+        robotUpdate(s, 0.0f);
+        float p[3];
+        bool ok = robotPartPosition(s, "Robot Arm L", p);
+        check(ok && nearf(p[1], 1.66f, 1e-3f), "T-pose: arm center sits at shoulder height");
+
+        // 站立：手臂自然下垂 -> 臂中心 = 肩高 - 半臂长
+        robotSetPose(RobotPose::Stand, true);
+        robotUpdate(s, 0.0f);
+        ok = robotPartPosition(s, "Robot Arm L", p);
+        check(ok && nearf(p[1], 1.66f - 0.31f, 1e-3f), "stand: arm hangs below shoulder by half arm");
+
+        // 站立：脚底贴地 -> 腿中心 = 髋高 - 半腿长（0.54），即脚底正好在 y=0
+        ok = robotPartPosition(s, "Robot Leg L", p);
+        check(ok && nearf(p[1], 0.54f, 1e-3f) && nearf(p[1] - 0.54f, 0.0f, 1e-3f),
+              "stand: leg center at hip-half-leg => feet on the ground");
+
+        // 行走定格：左腿前摆 30 度 -> 臂长杆绕髋转动，中心下降 0.54*(1-cos30)
+        // （该姿势还带 0.03 的重心下沉 bodyBob，一并计入期望值）
+        robotSetPose(RobotPose::WalkFreeze, true);
+        robotUpdate(s, 0.0f);
+        ok = robotPartPosition(s, "Robot Leg L", p);
+        check(ok && nearf(p[1], 0.03f + 1.08f - 0.54f * std::cos(30.0f * 3.14159265f / 180.0f), 1e-3f),
+              "walk-freeze: forward leg pivots about the hip (center drops by 1-cos)");
+
+        robotSetTimeOverride(-1.0f);
+    }
+
     std::printf("=== %s (%d failure(s)) ===\n", g_failures ? "FAILED" : "ALL PASS", g_failures);
     return g_failures ? 1 : 0;
 }

@@ -392,3 +392,16 @@ void robotSetTimeOverride(float t)
     g_robot.tOverride = t;
     g_robot.lastT = -1.0f;
 }
+
+bool robotPartPosition(const Scene& scene, const char* partName, float out[3])
+{
+    for (const Object& o : scene.objects)
+    {
+        if (o.name == partName)
+        {
+            out[0] = o.pos[0]; out[1] = o.pos[1]; out[2] = o.pos[2];
+            return true;
+        }
+    }
+    return false;
+}

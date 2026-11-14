@@ -42,5 +42,9 @@ bool  robotWalking();
 // 锁定时关节直接取该时刻的目标值（不做平滑），用于渲染行走循环的任意相位定格。
 void  robotSetTimeOverride(float t);
 
+// 按部件名查它在场景里的当前世界坐标（--selftest 断言层级矩阵用）。
+// 找不到返回 false。
+bool  robotPartPosition(const Scene& scene, const char* partName, float out[3]);
+
 // 场景里有没有机器人（--scene studio 时为 false，输入侧据此忽略 n/b 键）。
 bool  robotAlive();
