@@ -8,9 +8,11 @@
 #include "robot.h"
 
 #include <GL/freeglut.h>
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <vector>
 
 AppState g_app;
@@ -207,68 +209,75 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
 // ---------------------------------------------------------------------------
 void drawHelpScreen()
 {
-        static const char* kHelp[] = {
-            "Mouse",
-            "  Left drag ......... transform selected object (per Transform mode)",
-            "  Right drag ........ orbit / rotate camera",
-            "  Shift + Left drag . pan camera",
-            "  Middle click ...... popup menu",
-            "  Wheel ............. dolly (zoom)",
-            "",
-            "Geometry transform (Lab 5/6)",
-            "  t / r / y ......... Translate / Rotate / Scale mode",
-            "  0 ................. reset selected object transform",
-            "",
-            "Object",
-            "  Tab ............... select next object",
-            "",
-            "Robot (2026 project)",
-            "  n ................. next pose: stand / wave / T-pose / walk-freeze",
-            "  b ................. walk animation on / off (legs & arms joints)",
-            "  select 'Robot' + t/r/y ... translate / rotate / scale whole robot",
-            "",
-            "Forest fractal (2026 bonus)",
-            "  f ................. L-system depth cycle (0 -> +1 -> -1)",
-            "  u / j ............. branch angle - / + (rebuilds the forest)",
-            "  middle-click menu . Forest (fractal) submenu",
-            "",
-            "Projection (Lab 7 + oblique bonus)",
-            "  3 ................. perspective        o ... orthographic",
-            "  7 / 9 ............. cavalier / cabinet oblique parallel",
-            "  - / = ............. oblique angle down / up",
-            "  [ / ] ............. decrease / increase FOV",
-            "",
-            "Views - orthographic three views (Lab 7)",
-            "  2 / 8 ............. front / back",
-            "  4 / 6 ............. left / right",
-            "  5 ................. top",
-            "  v ................. 4-viewport layout (3 views + perspective)",
-            "",
-            "Camera roam (Lab 7 bonus)",
-            "  W A S D ........... forward / left / back / right",
-            "  Q / E ............. down / up",
-            "  Shift+0 ........... reset camera",
-            "",
-            "Animation preview",
-            "  Space ............. play / pause (roam = bunny in the forest)",
-            "                      use --anim to pick: turntable/orbit/",
-            "                      projections/transforms/roam",
-            "",
-            "Render options",
-            "  1 ................. solid / wireframe / points",
-            "  c ................. back-face culling",
-            "  m ................. smooth / flat shading",
-            "  l ................. lighting",
-            "  T ................. texture",
-            "  F2 / F3 ........... GLSL / shadows toggle",
-            "  g / x / p ......... grid / axes / ground",
-            "  F12 ............... save screenshot",
-            "  ESC ............... quit",
-            nullptr
-        };
+    // 两栏排版：800 高的窗口单栏放不下 60 行，底下几行会被裁掉。
+    static const char* kHelpL[] = {
+        "Mouse",
+        "  Left drag ......... transform selected object (per mode)",
+        "  Right drag ........ orbit / rotate camera",
+        "  Shift + Left drag . pan camera",
+        "  Middle click ...... popup menu",
+        "  Wheel ............. dolly (zoom)",
+        "",
+        "Geometry transform (Lab 5/6)",
+        "  t / r / y ......... Translate / Rotate / Scale mode",
+        "  0 ................. reset selected object transform",
+        "",
+        "Object",
+        "  Tab ............... select next object",
+        "",
+        "Robot (2026 project)",
+        "  n ................. next pose: stand / wave / T-pose / walk-freeze",
+        "  b ................. walk animation on / off (legs & arms joints)",
+        "  P ................. bezier path walk on / off (constant speed)",
+        "  B ................. show / hide path curve, anchors & handles",
+        "  select 'Robot' + t/r/y ... translate / rotate / scale robot",
+        "",
+        "Forest fractal (2026 bonus)",
+        "  f ................. L-system depth cycle (0 -> +1 -> -1)",
+        "  u / j ............. branch angle - / + (rebuilds the forest)",
+        "  middle-click menu . Forest (fractal) submenu",
+        "",
+        "Animation preview",
+        "  Space ............. play / pause (roam = bunny in the forest)",
+        "  --anim ............ turntable / orbit / projections / roam",
+        nullptr
+    };
 
-    int lines = 0;
-    for (; kHelp[lines]; ++lines) {}
+    static const char* kHelpR[] = {
+        "Projection (Lab 7 + oblique bonus)",
+        "  3 ................. perspective        o ... orthographic",
+        "  7 / 9 ............. cavalier / cabinet oblique parallel",
+        "  - / = ............. oblique angle down / up",
+        "  [ / ] ............. decrease / increase FOV",
+        "",
+        "Views - orthographic three views (Lab 7)",
+        "  2 / 8 ............. front / back",
+        "  4 / 6 ............. left / right",
+        "  5 ................. top",
+        "  v ................. 4-viewport layout (3 views + perspective)",
+        "",
+        "Camera roam (Lab 7 bonus)",
+        "  W A S D ........... forward / left / back / right",
+        "  Q / E ............. down / up",
+        "  Shift+0 ........... reset camera",
+        "",
+        "Render options",
+        "  1 ................. solid / wireframe / points",
+        "  c ................. back-face culling",
+        "  m ................. smooth / flat shading",
+        "  l ................. lighting",
+        "  T ................. texture",
+        "  F2 / F3 ........... GLSL / shadows toggle",
+        "  g / x / p ......... grid / axes / ground",
+        "  F12 ............... save screenshot",
+        "  ESC ............... quit",
+        nullptr
+    };
+
+    int linesL = 0, linesR = 0;
+    for (; kHelpL[linesL]; ++linesL) {}
+    for (; kHelpR[linesR]; ++linesR) {}
+    const int lines = std::max(linesL, linesR);
 
     const float W = (float)g_app.winW;
     const float H = (float)g_app.winH;
@@ -276,18 +285,17 @@ void drawHelpScreen()
     hudBegin(g_app.winW, g_app.winH);
 
     // 面板尺寸按实测文字宽度定，不用写死的数字
-    float maxW = 0.0f;
-    for (int i = 0; i < lines; ++i)
-    {
-        const float w = hudTextWidth(kHelp[i]);
-        if (w > maxW) maxW = w;
-    }
+    float maxL = 0.0f, maxR = 0.0f;
+    for (int i = 0; i < linesL; ++i) maxL = std::max(maxL, hudTextWidth(kHelpL[i]));
+    for (int i = 0; i < linesR; ++i) maxR = std::max(maxR, hudTextWidth(kHelpR[i]));
+
     const float pad  = 18.0f;
+    const float gap  = 30.0f;
     const int   rows = lines + 1;                 // +1 是标题行
 
     float ph = rows * kHudLineH + pad * 2.0f;
     if (ph > H - 16.0f) ph = H - 16.0f;
-    float pw = maxW + pad * 2.0f;
+    float pw = maxL + gap + maxR + pad * 2.0f;
     if (pw > W - 16.0f) pw = W - 16.0f;
 
     const float px = (W - pw) * 0.5f;
@@ -303,7 +311,8 @@ void drawHelpScreen()
     for (int i = 0; i < lines; ++i)
     {
         if (ty < py + 6.0f) break;
-        hudText(px + pad, ty, kHelp[i]);
+        if (i < linesL) hudText(px + pad, ty, kHelpL[i]);
+        if (i < linesR) hudText(px + pad + maxL + gap, ty, kHelpR[i]);
         ty -= kHudLineH;
     }
 
@@ -327,16 +336,22 @@ void drawOverlay()
     const Object* selected=g_app.scene.selectedObject();
     int triangles=0;
     for(const auto& mesh:g_app.scene.meshes) if(mesh) triangles+=mesh->data().triangleCount;
+    std::string robotStatus;
+    if (robotAlive())
+    {
+        robotStatus = robotPoseName(robotPose());
+        if (robotWalking()) robotStatus += " + walking";
+        if (robotOnPath())  robotStatus += " + path";
+    }
     hudColor(0.66f,0.76f,0.85f);
     hudTextf(16,H-41,"%s  |  %s  |  %d triangles  |  %s%s%s",
              selected?selected->name.c_str():"No selection",projModeName(g_app.projMode),triangles,
              g_app.transMode==TransMode::Translate?"TRANSLATE":g_app.transMode==TransMode::Rotate?"ROTATE":"SCALE",
              robotAlive()?"  |  Robot: ":"",
-             robotAlive()?(robotWalking()?std::string(robotPoseName(robotPose()))+" + walking"
-                                        :std::string(robotPoseName(robotPose()))).c_str():"");
+             robotAlive()?robotStatus.c_str():"");
     hudPanel(0,0,W,30,0.82f);
     hudColor(0.72f,0.80f,0.87f);
-    hudText(16,10,"H Help   F2 Renderer   F3 Shadows   Space Animate   Tab Select   N Pose   B Walk   F12 Screenshot");
+    hudText(16,10,"H Help   F2 Renderer   F3 Shadows   Space Animate   Tab Select   N Pose   b Walk   P Path   B Guide   F12 Shot");
     hudEnd();
 }
 

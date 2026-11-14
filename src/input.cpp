@@ -139,6 +139,8 @@ void inputAction(int action)
     case M_ROBOT_TPOSE:      robotSetPose(RobotPose::TPose);      break;
     case M_ROBOT_WALKFREEZE: robotSetPose(RobotPose::WalkFreeze); break;
     case M_ROBOT_TOGGLE_WALK: robotToggleWalk();                  break;
+    case M_ROBOT_TOGGLE_PATH: robotTogglePath();                  break;
+    case M_ROBOT_TOGGLE_PATHGUIDE: robotTogglePathGuide();        break;
 
     // ---- 森林分形参数（L-system 迭代深度 / 分支角，调整后即时重建）----
     case M_FOREST_DETAIL_UP:   forestSetDetail(std::min(1, forestDetail() + 1));
@@ -209,6 +211,13 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
         return;
     case 'b':
         if (robotAlive()) { robotToggleWalk(); glutPostRedisplay(); }
+        return;
+    // 大写字母：W3 贝塞尔路径（P 走/停，B 显示曲线与控制点）
+    case 'P':
+        if (robotAlive()) { robotTogglePath(); glutPostRedisplay(); }
+        return;
+    case 'B':
+        if (robotAlive()) { robotTogglePathGuide(); glutPostRedisplay(); }
         return;
 
     // 森林分形参数：f 循环迭代深度 (0 → +1 → -1 → 0)，u/j 调分支角（调整即重建）
@@ -421,6 +430,8 @@ void inputBuildMenu()
     glutAddMenuEntry("Pose: T-pose      ",  M_ROBOT_TPOSE);
     glutAddMenuEntry("Pose: walk freeze ",  M_ROBOT_WALKFREEZE);
     glutAddMenuEntry("Walk animation (b)",  M_ROBOT_TOGGLE_WALK);
+    glutAddMenuEntry("Bezier path walk (P)", M_ROBOT_TOGGLE_PATH);
+    glutAddMenuEntry("Path curve guide (B)", M_ROBOT_TOGGLE_PATHGUIDE);
 
     const int mForest = glutCreateMenu(inputMenu);
     glutAddMenuEntry("L-system depth +   (f)", M_FOREST_DETAIL_UP);

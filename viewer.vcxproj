@@ -148,6 +148,7 @@
     <ClCompile Include="src\hud.cpp" />
     <ClCompile Include="src\robot.cpp" />
     <ClCompile Include="src\animals.cpp" />
+    <ClCompile Include="src\bezier.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\types.h" />

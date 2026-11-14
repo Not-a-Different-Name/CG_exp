@@ -28,6 +28,7 @@
     <ClCompile Include="src\hud.cpp"><Filter>源文件</Filter></ClCompile>
     <ClCompile Include="src\robot.cpp"><Filter>源文件</Filter></ClCompile>
     <ClCompile Include="src\animals.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\bezier.cpp"><Filter>源文件</Filter></ClCompile>
   </ItemGroup>
 
   <ItemGroup>

@@ -1,11 +1,13 @@
 #include "robot.h"
 #include "scene.h"
+#include "bezier.h"
 #include "math3d.h"
 
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <vector>
 
 namespace {
 
@@ -44,6 +46,9 @@ constexpr float kTorsoY = 1.42f;
 constexpr float kRootYawDeg = 32.0f;
 constexpr float kRootSpawn[3] = { 0.0f, 0.0f, 0.4f };
 
+// 贝塞尔漫步路径：绕林间空地一圈（半径约 2 单位），速度恒定。
+constexpr float kPathSpeed = 1.05f;      // 世界单位/秒
+
 struct RobotCtl
 {
     bool      exists   = false;
@@ -54,6 +59,12 @@ struct RobotCtl
     RobotJoints j;                                 // 当前关节角（向目标平滑逼近）
     float     lastT = -1.0f;
     float     tOverride = -1.0f;                   // --time：锁定时间轴出图用
+
+    bool      onPath    = false;                   // 沿贝塞尔曲线漫步
+    bool      wasWalking = false;                  // 开路径前的走路开关（关路径时还原）
+    bool      showPath  = false;                   // 显示曲线/锚点/控制柄
+    float     yawDeg    = kRootYawDeg;             // 根朝向（路径行走时随切线转动）
+    int       guide     = -1;                      // "Path Guide" 物体
 };
 RobotCtl g_robot;
 
@@ -187,6 +198,35 @@ void composeLimb(float out[16], const float Mbase[16],
     mat4Multiply(out, tmp, To);
 }
 
+// ---------------------------------------------------------------------------
+// 贝塞尔漫步路径的锚点（y 恒为 0，曲线贴地）。
+// 顺序绕空地一圈；相邻锚点间距不完全相等，正好能体现「按弧长而不是按 u
+// 参数化」的必要性 —— 用 u 均匀走会在长短段之间忽快忽慢。
+// ---------------------------------------------------------------------------
+BezierPath& pathStorage()
+{
+    static BezierPath p;
+    static bool built = false;
+    if (!built)
+    {
+        // 圆心略偏 +Z（0, 0.4）：避开右侧兔子（3.3,-2.6）与左侧鹿圈
+        //（-4.2,0.6,r1.5），同时整圈仍在默认机位画面内。
+        const Vec3 anchors[] = {
+            v3( 1.70f, 0.0f,  0.40f),
+            v3( 1.20f, 0.0f,  1.60f),
+            v3( 0.00f, 0.0f,  2.10f),
+            v3(-1.20f, 0.0f,  1.60f),
+            v3(-1.70f, 0.0f,  0.40f),
+            v3(-1.20f, 0.0f, -0.80f),
+            v3( 0.00f, 0.0f, -1.30f),
+            v3( 1.20f, 0.0f, -0.80f),
+        };
+        p.buildClosed(std::vector<Vec3>(anchors, anchors + sizeof(anchors) / sizeof(anchors[0])));
+        built = true;
+    }
+    return p;
+}
+
 } // namespace
 
 // ---------------------------------------------------------------------------
@@ -240,10 +280,34 @@ void robotCreate(Scene& scene)
         R.root = (int)scene.objects.size() - 1;
     }
 
+    // 贝塞尔路径可视化：曲线本体 + 锚点 + 控制柄合成一个网格，默认隐藏。
+    {
+        MeshData d;
+        const float curveCol [3] = { 0.25f, 0.85f, 0.95f };
+        const float anchorCol[3] = { 1.00f, 0.78f, 0.20f };
+        const float handleCol[3] = { 0.62f, 0.72f, 0.88f };
+        buildBezierVisual(d, pathStorage(), curveCol, anchorCol, handleCol);
+
+        auto mesh = std::make_shared<Mesh>();
+        mesh->adopt(std::move(d));
+        scene.meshes.push_back(mesh);
+
+        Object o;
+        o.name       = "Path Guide";
+        o.kind       = PrimKind::Mesh;
+        o.mesh       = mesh;
+        o.selectable = false;
+        o.visible    = false;
+        mat4Identity(o.xform);
+        scene.objects.push_back(o);
+        R.guide = (int)scene.objects.size() - 1;
+    }
+
     R.j     = poseTarget(RobotPose::Stand, 0.0f);
     R.lastT = -1.0f;
     R.exists = true;
-    std::printf("[robot] created: %d box parts, height ~2.35\n", P_Count);
+    std::printf("[robot] created: %d box parts, height ~2.35, path length %.2f\n",
+                P_Count, pathStorage().total);
 }
 
 // ---------------------------------------------------------------------------
@@ -278,12 +342,35 @@ void robotUpdate(Scene& scene, float t)
     for (auto& b : blend) b.cur += (b.tgt - b.cur) * k;
     }
 
+    // ---- 路径可视化开关（同步到物体，headless 单帧出图也能生效）----
+    if (R.guide >= 0)
+        scene.objects[R.guide].visible = R.showPath;
+
+    // ---- W3-1：沿贝塞尔闭曲线漫步 ----
+    // 位置用「弧长」求值（evalAtDistance），所以速度恒定；朝向取切线方向。
+    // 机器人模型面朝 +Z，Ry(yaw) 把 +Z 转到 (sin yaw, 0, cos yaw)，
+    // 因此 yaw = atan2(tangent.x, tangent.z)。
+    if (R.onPath)
+    {
+        const float s = kPathSpeed * t;
+        const Vec3 p   = pathStorage().evalAtDistance(s);
+        const Vec3 tan = pathStorage().tangentAtDistance(s);
+
+        Object& root = scene.objects[R.root];
+        root.pos[0] = p.x;
+        root.pos[1] = 0.0f;
+        root.pos[2] = p.z;
+
+        R.yawDeg = std::atan2(tan.x, tan.z) * 180.0f / kPi;
+        R.walking = true;                          // 沿路径走，腿当然要动
+    }
+
     // ---- 根：T(出生/用户平移) · 用户累积变换 · Ry(朝向) · T(重心起伏) ----
-    const Object& root = scene.objects[R.root];
+    Object& root = scene.objects[R.root];
     float Tpos[16], A[16], Ry[16], Tbob[16], Mbase[16];
     mat4FromTranslation(Tpos, root.pos[0], root.pos[1], root.pos[2]);
     mat4Multiply(A, Tpos, root.xform);
-    mat4FromAxisAngle(Ry, kRootYawDeg, 0.0f, 1.0f, 0.0f);
+    mat4FromAxisAngle(Ry, R.yawDeg, 0.0f, 1.0f, 0.0f);
     mat4Multiply(A, A, Ry);
     mat4FromTranslation(Tbob, 0.0f, R.j.bodyBob, 0.0f);
     mat4Multiply(Mbase, A, Tbob);
@@ -386,6 +473,46 @@ void robotToggleWalk()
     g_robot.walking = !g_robot.walking;
     if (g_robot.walking) g_robot.pose = RobotPose::WalkFreeze;  // 停下时停在行走姿态
 }
+
+// ---------------------------------------------------------------------------
+// W3-1 贝塞尔路径漫步
+// ---------------------------------------------------------------------------
+const BezierPath& robotPath() { return pathStorage(); }
+float robotPathSpeed()        { return kPathSpeed; }
+
+bool robotOnPath()      { return g_robot.exists && g_robot.onPath; }
+bool robotPathGuide()   { return g_robot.exists && g_robot.showPath; }
+
+void robotSetPathWalk(bool on)
+{
+    if (!g_robot.exists) return;
+    if (on == g_robot.onPath) return;
+
+    g_robot.onPath = on;
+    if (on)
+    {
+        // 记住进入路径前的走路状态，退出时还原（避免 P 键偷偷改掉 b 键的状态）
+        g_robot.wasWalking = g_robot.walking;
+        g_robot.walking    = true;
+        g_robot.pose       = RobotPose::WalkFreeze;
+    }
+    else
+    {
+        g_robot.walking = g_robot.wasWalking;
+    }
+    std::printf("[robot] bezier path walk: %s\n", on ? "on" : "off");
+}
+
+void robotTogglePath() { robotSetPathWalk(!g_robot.onPath); }
+
+void robotSetPathGuide(bool on)
+{
+    if (!g_robot.exists) return;
+    g_robot.showPath = on;      // 物体可见性在下一帧 robotUpdate 里同步
+    std::printf("[robot] path guide: %s\n", on ? "on" : "off");
+}
+
+void robotTogglePathGuide() { robotSetPathGuide(!g_robot.showPath); }
 
 void robotSetTimeOverride(float t)
 {

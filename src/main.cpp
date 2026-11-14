@@ -13,12 +13,15 @@
 //              [--render solid|wire|points] [--quad] [--no-hud]
 #include "app.h"
 #include "animals.h"
+#include "bezier.h"
 #include "forest.h"
 #include "input.h"
 #include "robot.h"
 
 #include <GL/freeglut.h>
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -92,6 +95,12 @@ struct Options
     std::string robotPose;     // --pose stand|wave|tpose|walk，出图用（直接定格到位）
     float       robotTime = -1.0f;   // --time 秒：锁定机器人时间轴（行走相位定格）
     bool        robotWalk = false;   // --robot-walk：开启行走循环（配合 --time 出序列图）
+    bool        robotPath = false;   // --path：沿贝塞尔曲线漫步（配合 --time 定格）
+    bool        pathGuide = false;   // --path-guide：显示曲线与控制点
+
+    // 出图用的机位覆盖（自由相机）：--eye 3,4,5  --target 0,0.5,0
+    bool        hasEye = false, hasTarget = false;
+    float       eye[3] = { 0, 0, 0 }, target[3] = { 0, 0, 0 };
 
     // 视频录制
     std::string recordPath;
@@ -120,6 +129,21 @@ Options parseArgs(int argc, char** argv)
         else if (a == "--scene")   next(o.sceneName);
         else if (a == "--pose")    next(o.robotPose);
         else if (a == "--robot-walk") o.robotWalk = true;
+        else if (a == "--path")       o.robotPath = true;
+        else if (a == "--path-guide") o.pathGuide = true;
+        else if (a == "--eye" || a == "--target")
+        {
+            std::string s; next(s);
+            float v[3];
+            if (std::sscanf(s.c_str(), "%f,%f,%f", &v[0], &v[1], &v[2]) == 3)
+            {
+                float* dst = (a == "--eye") ? o.eye : o.target;
+                dst[0] = v[0]; dst[1] = v[1]; dst[2] = v[2];
+                (a == "--eye" ? o.hasEye : o.hasTarget) = true;
+            }
+            else
+                std::printf("[main] %s expects x,y,z (got '%s')\n", a.c_str(), s.c_str());
+        }
         else if (a == "--time")
         {
             std::string s; next(s);
@@ -177,6 +201,8 @@ bool nearf(float a, float b, float eps = 1e-2f) { return std::fabs(a - b) < eps;
 
 int runSelfTest()
 {
+    // 无缓冲输出：自检若崩溃，已跑过的断言也能看到（管道下默认全缓冲会丢日志）
+    std::setvbuf(stdout, nullptr, _IONBF, 0);
     std::printf("=== self-test: math / camera logic ===\n");
 
     {
@@ -283,7 +309,68 @@ int runSelfTest()
         check(ok && nearf(p[1], 0.03f + 1.08f - 0.54f * std::cos(30.0f * 3.14159265f / 180.0f), 1e-3f),
               "walk-freeze: forward leg pivots about the hip (center drops by 1-cos)");
 
+        // 机器人沿贝塞尔路径行走：根位置 = eval(speed * t)，且全程留在空地里。
+        // 注意 robotCreate 是全局单例，必须复用上面这个 Scene（再建一个空 Scene
+        // 调 robotUpdate 会拿旧下标越界 —— 第一版自检就是这样段错误的）。
+        std::printf("  -- bezier path walk --\n");
+        robotSetPathWalk(true);
+        robotSetTimeOverride(3.0f);
+        robotUpdate(s, 3.0f);
+
+        const Vec3 want = robotPath().evalAtDistance(robotPathSpeed() * 3.0f);
+        ok = robotPartPosition(s, "Robot", p);
+        check(ok && nearf(p[0], want.x, 1e-3f) && nearf(p[2], want.z, 1e-3f),
+              "path walk: robot root follows the curve at s = speed * t");
+
+        float maxR = 0.0f;
+        for (const Vec3& q : robotPath().samples)
+            maxR = std::max(maxR, std::sqrt(q.x * q.x + q.z * q.z));
+        check(maxR < 7.0f, "robot path stays inside the forest clearing (r < 7)");
+
+        robotSetPathWalk(false);
         robotSetTimeOverride(-1.0f);
+    }
+
+    // ---- W3-1 贝塞尔闭曲线 + 弧长参数化漫步 ----
+    {
+        std::printf("  -- bezier path (W3-1) --\n");
+
+        // 锚点间距刻意不均匀：若按参数 u 匀速走，步长会忽长忽短。
+        std::vector<Vec3> anchors = {
+            v3( 2.0f, 0.0f,  0.0f),
+            v3( 0.5f, 0.0f,  1.2f),
+            v3(-1.9f, 0.0f,  0.5f),
+            v3(-1.0f, 0.0f, -1.8f),
+        };
+        BezierPath path;
+        path.buildClosed(anchors);
+
+        check(path.segments.size() == anchors.size() && path.total > 8.0f,
+              "closed bezier: one cubic segment per anchor, nonzero arc length");
+
+        // 每段起点/终点就是锚点 => 曲线穿过全部锚点
+        bool hits = true;
+        for (size_t i = 0; i < anchors.size(); ++i)
+        {
+            const Vec3 q = path.evalProportional((float)i / (float)anchors.size());
+            if (v3len(q - anchors[i]) > 1e-3f) hits = false;
+        }
+        check(hits, "curve passes through every anchor (Catmull-Rom handles)");
+
+        // 弧长参数化：等弧长距离求值，相邻点间距必须≈常量
+        float maxErr = 0.0f;
+        const float step = 0.15f;
+        for (int i = 0; i < 20; ++i)
+        {
+            const float s = 0.9f * path.total * (float)i / 20.0f;
+            const Vec3 a = path.evalAtDistance(s);
+            const Vec3 b = path.evalAtDistance(s + step);
+            const float d = std::sqrt((a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z));
+            maxErr = std::max(maxErr, std::fabs(d - step));
+        }
+        check(maxErr < 5e-3f,
+              "arc-length parameterization => constant speed (|step-0.15| < 0.005)");
+
     }
 
     // ---- L-system 分形森林：确定性与迭代单调性 ----
@@ -314,8 +401,8 @@ int runSelfTest()
         bool ok = animalPartPosition(s, "Deer", p);
         check(ok && std::fabs(p[1]) < 0.1f, "deer stays on the ground (|y| < 0.1)");
         const float deerX0 = p[0], deerZ0 = p[2];
-        check(std::fabs(deerX0 - (-3.5f)) <= 1.8f + 0.01f &&
-              std::fabs(deerZ0 - 0.5f)    <= 1.8f + 0.01f,
+        check(std::fabs(deerX0 - (-3.7f)) <= 1.4f + 0.01f &&
+              std::fabs(deerZ0 - 0.7f)    <= 1.4f + 0.01f,
               "deer stays inside its walking circle");
 
         animalsUpdate(s, 40.0f);
@@ -422,7 +509,17 @@ int main(int argc, char** argv)
                         opt.robotPose.c_str());
     }
     if (opt.robotWalk) robotToggleWalk();               // 行走循环（供 --time 出序列定格）
+    if (opt.robotPath) robotSetPathWalk(true);          // 贝塞尔路径漫步
+    if (opt.pathGuide) robotSetPathGuide(true);         // 曲线/控制点可视化
     if (opt.robotTime >= 0.0f) robotSetTimeOverride(opt.robotTime);
+
+    // 出图机位覆盖（在 appSetup 的默认机位之后生效）
+    if (opt.hasEye || opt.hasTarget)
+    {
+        g_app.viewPreset = ViewPreset::Free;
+        if (opt.hasEye)    g_app.camera.eye    = v3(opt.eye[0], opt.eye[1], opt.eye[2]);
+        if (opt.hasTarget) g_app.camera.target = v3(opt.target[0], opt.target[1], opt.target[2]);
+    }
 
     if (opt.quad)     g_app.quadView = true;
     if (opt.noHud)    g_app.showHUD  = false;

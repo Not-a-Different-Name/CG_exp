@@ -18,6 +18,7 @@
 #include <string>
 
 class Scene;
+struct BezierPath;
 
 enum class RobotPose { Stand = 0, Wave, TPose, WalkFreeze, Count };
 
@@ -37,6 +38,22 @@ bool  robotParsePose(const std::string& s, RobotPose& out);   // stand|wave|tpos
 
 void  robotToggleWalk();
 bool  robotWalking();
+
+// ---- W3-1：三次贝塞尔闭曲线漫步（2026 加分项）----
+// 路径是在林间空地里绕行的一圈；行走时按「弧长」参数化，速度恒定。
+// 开/关路径散步；开启期间 robotUpdate 会覆写根物体的位置和朝向。
+void  robotTogglePath();
+void  robotSetPathWalk(bool on);
+bool  robotOnPath();
+
+// 曲线/控制点可视化（B 键）。路径网格在 robotCreate 时生成，默认隐藏。
+void  robotTogglePathGuide();
+void  robotSetPathGuide(bool on);
+bool  robotPathGuide();
+
+// 供出图/自检读取机器人行走的曲线（对象内部静态数据）。
+const BezierPath& robotPath();
+float robotPathSpeed();          // 沿路径的恒定速度（世界单位/秒）
 
 // 测试/出图钩子：锁定机器人的时间轴（--time）。负值解除锁定。
 // 锁定时关节直接取该时刻的目标值（不做平滑），用于渲染行走循环的任意相位定格。

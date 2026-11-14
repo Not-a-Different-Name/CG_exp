@@ -25,7 +25,7 @@ void buildForestPath(std::vector<Vec3>& path)
 
     // 鹿与狐狸的绕圈路线（圆心/半径与 animals.cpp 的 kDefs 一致）
     const float circles[][3] = {
-        { -3.5f,  0.5f, 1.8f },     // Deer
+        { -3.7f,  0.7f, 1.4f },     // Deer（W3：为机器人贝塞尔环让出空间）
         { -5.5f, -3.0f, 1.5f },     // Fox
     };
     for (const auto& c : circles)
@@ -241,9 +241,11 @@ bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::
             // 森林地面在 y = 0，而模型原点在包围球中心，所以要垫到脚底刚好贴地。
             // 2026 实验的主角是机器人（robot.cpp，站在林间空地原点），
             // 兔子挪到空地边缘作陪衬；漫游动画播放时会沿 roamPath 走，不受此影响。
-            o.pos[0] = 2.6f;
+            // W3：机器人贝塞尔环半径 1.7，兔子从 (2.6,-1.6) 后移到环外，
+            // 否则机器人经过右侧锚点时会从兔子身体里穿过去。
+            o.pos[0] = 3.3f;
             o.pos[1] = -model->data().bboxMin[1];
-            o.pos[2] = -1.6f;
+            o.pos[2] = -2.6f;
             o.useMeshMaterial = true;
             mat4Identity(o.xform);
             objects.push_back(o);                             // 先加兔子：findFirstMesh 要拿到它
