@@ -147,6 +147,7 @@
     <ClCompile Include="src\recorder.cpp" />
     <ClCompile Include="src\hud.cpp" />
     <ClCompile Include="src\robot.cpp" />
+    <ClCompile Include="src\animals.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\types.h" />
@@ -168,6 +169,7 @@
     <ClInclude Include="src\gl_api.h" />
     <ClInclude Include="src\app.h" />
     <ClInclude Include="src\robot.h" />
+    <ClInclude Include="src\animals.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

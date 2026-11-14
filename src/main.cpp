@@ -12,6 +12,7 @@
 //              [--view front|back|left|right|top|bottom|free]
 //              [--render solid|wire|points] [--quad] [--no-hud]
 #include "app.h"
+#include "animals.h"
 #include "forest.h"
 #include "input.h"
 #include "robot.h"
@@ -300,6 +301,37 @@ int runSelfTest()
         forestSetDetail(0);
         check(c.indices.size() > a.indices.size(),
               "+1 L-system iteration grows geometry (fractal self-similarity)");
+    }
+
+    // ---- 小动物行为：贴地、在各自路线圆内、位置随时间推进 ----
+    {
+        std::printf("  -- animals (deer & fox) --\n");
+        Scene s;
+        animalsCreate(s);
+
+        animalsUpdate(s, 3.0f);
+        float p[3];
+        bool ok = animalPartPosition(s, "Deer", p);
+        check(ok && std::fabs(p[1]) < 0.1f, "deer stays on the ground (|y| < 0.1)");
+        const float deerX0 = p[0], deerZ0 = p[2];
+        check(std::fabs(deerX0 - (-6.0f)) <= 3.2f + 0.01f &&
+              std::fabs(deerZ0 - 4.5f)  <= 3.2f + 0.01f,
+              "deer stays inside its walking circle");
+
+        animalsUpdate(s, 40.0f);
+        ok = animalPartPosition(s, "Deer", p);
+        const bool moved = ok && (std::fabs(p[0] - deerX0) > 0.05f || std::fabs(p[2] - deerZ0) > 0.05f);
+        check(moved, "deer advances along its route over time");
+
+        // 吃草窗口内位置冻结（走-停节律）。fmod(57,15)=12 > 11，正在吃草。
+        animalsUpdate(s, 57.0f);
+        float q[3];
+        animalPartPosition(s, "Deer", q);
+        animalsUpdate(s, 58.0f);
+        animalPartPosition(s, "Deer", p);
+        const bool frozen = (std::fmod(57.0f, 15.0f) > 11.0f) &&
+                            std::fabs(p[0] - q[0]) < 1e-3f && std::fabs(p[2] - q[2]) < 1e-3f;
+        check(frozen, "deer freezes while grazing (walk 11s / graze 4s)");
     }
 
     std::printf("=== %s (%d failure(s)) ===\n", g_failures ? "FAILED" : "ALL PASS", g_failures);

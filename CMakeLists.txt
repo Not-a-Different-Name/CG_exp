@@ -63,6 +63,7 @@ add_executable(viewer WIN32
     src/forest.cpp
     src/recorder.cpp
     src/robot.cpp
+    src/animals.cpp
 )
 
 set_target_properties(viewer PROPERTIES WIN32_EXECUTABLE TRUE)

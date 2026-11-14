@@ -1,4 +1,5 @@
 #include "app.h"
+#include "animals.h"
 #include "hud.h"
 #include "lighting.h"
 #include "projection.h"
@@ -395,7 +396,11 @@ void appSetup(const std::string& modelPath)
     g_app.modelStatus = g_app.scene.modelStatus();
 
     // 2026 实验主角：机器人在森林场景登场（Studio 展示台保持原样）
-    if (g_app.sceneKind == SceneKind::Forest) robotCreate(g_app.scene);
+    if (g_app.sceneKind == SceneKind::Forest)
+    {
+        robotCreate(g_app.scene);
+        animalsCreate(g_app.scene);      // 小动物：鹿 + 狐狸（兔子归 roam 动画管）
+    }
 
     g_app.camera.reset(g_app.scene.radius());
 
@@ -507,13 +512,14 @@ void appDisplay()
         applyAnimation(g_preview.anim, t, g_preview.seconds);
     }
 
-    // 机器人关节动画：与录制/预览共用同一时间轴（录制=帧号/fps，其余=真实时钟），
-    // 且在阴影 pass 之前更新，保证本帧的层级矩阵在所有绘制路径里一致。
+    // 机器人关节动画与小动物行为：与录制/预览共用同一时间轴
+    //（录制=帧号/fps，其余=真实时钟），且在阴影 pass 之前更新。
     if (robotAlive())
     {
         const float rt = g_rec.active ? (float)g_rec.frame / (float)g_rec.fps
                                       : (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
         robotUpdate(g_app.scene, rt);
+        animalsUpdate(g_app.scene, rt);
     }
 
     renderer::shadowPass(g_app.scene, g_app.sceneKind, g_app.showGround,
