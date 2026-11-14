@@ -88,6 +88,8 @@ struct Options
     std::string upAxis;        // --up y|z|auto，空表示 auto
     std::string sceneName;     // --scene studio|forest
     std::string robotPose;     // --pose stand|wave|tpose|walk，出图用（直接定格到位）
+    float       robotTime = -1.0f;   // --time 秒：锁定机器人时间轴（行走相位定格）
+    bool        robotWalk = false;   // --robot-walk：开启行走循环（配合 --time 出序列图）
 
     // 视频录制
     std::string recordPath;
@@ -115,6 +117,13 @@ Options parseArgs(int argc, char** argv)
         else if (a == "--up")      next(o.upAxis);
         else if (a == "--scene")   next(o.sceneName);
         else if (a == "--pose")    next(o.robotPose);
+        else if (a == "--robot-walk") o.robotWalk = true;
+        else if (a == "--time")
+        {
+            std::string s; next(s);
+            const double v = atof(s.c_str());
+            if (v >= 0.0) o.robotTime = (float)v;
+        }
         else if (a == "--record")  next(o.recordPath);
         else if (a == "--anim")    next(o.animName);
         else if (a == "--fps")
@@ -325,6 +334,8 @@ int main(int argc, char** argv)
             std::printf("[main] unknown --pose '%s' (expected: stand | wave | tpose | walk)\n",
                         opt.robotPose.c_str());
     }
+    if (opt.robotWalk) robotToggleWalk();               // 行走循环（供 --time 出序列定格）
+    if (opt.robotTime >= 0.0f) robotSetTimeOverride(opt.robotTime);
 
     if (opt.quad)     g_app.quadView = true;
     if (opt.noHud)    g_app.showHUD  = false;

@@ -38,5 +38,9 @@ bool  robotParsePose(const std::string& s, RobotPose& out);   // stand|wave|tpos
 void  robotToggleWalk();
 bool  robotWalking();
 
+// 测试/出图钩子：锁定机器人的时间轴（--time）。负值解除锁定。
+// 锁定时关节直接取该时刻的目标值（不做平滑），用于渲染行走循环的任意相位定格。
+void  robotSetTimeOverride(float t);
+
 // 场景里有没有机器人（--scene studio 时为 false，输入侧据此忽略 n/b 键）。
 bool  robotAlive();

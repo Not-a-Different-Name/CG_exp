@@ -53,6 +53,7 @@ struct RobotCtl
     int       part[P_Count] = { -1, -1, -1, -1, -1, -1, -1, -1, -1 };
     RobotJoints j;                                 // 当前关节角（向目标平滑逼近）
     float     lastT = -1.0f;
+    float     tOverride = -1.0f;                   // --time：锁定时间轴出图用
 };
 RobotCtl g_robot;
 
@@ -253,6 +254,14 @@ void robotUpdate(Scene& scene, float t)
     if (!g_robot.exists) return;
     RobotCtl& R = g_robot;
 
+    if (R.tOverride >= 0.0f)
+    {
+        // 时间轴锁定（--time 出图）：直接取该时刻目标，跳过平滑
+        t = R.tOverride;
+        R.j = R.walking ? walkTarget(t) : poseTarget(R.pose, t);
+    }
+    else
+    {
     float dt = (R.lastT < 0.0f) ? 0.0f : (t - R.lastT);
     R.lastT = t;
     if (dt < 0.0f) dt = 0.0f;                          // 时间倒退（新录制开始）时保持现状
@@ -267,6 +276,7 @@ void robotUpdate(Scene& scene, float t)
         { R.j.headYaw,   target.headYaw   }, { R.j.bodyBob,   target.bodyBob   },
     };
     for (auto& b : blend) b.cur += (b.tgt - b.cur) * k;
+    }
 
     // ---- 根：T(出生/用户平移) · 用户累积变换 · Ry(朝向) · T(重心起伏) ----
     const Object& root = scene.objects[R.root];
@@ -375,4 +385,10 @@ void robotToggleWalk()
     if (!g_robot.exists) return;
     g_robot.walking = !g_robot.walking;
     if (g_robot.walking) g_robot.pose = RobotPose::WalkFreeze;  // 停下时停在行走姿态
+}
+
+void robotSetTimeOverride(float t)
+{
+    g_robot.tOverride = t;
+    g_robot.lastT = -1.0f;
 }
