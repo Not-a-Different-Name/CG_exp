@@ -1,0 +1,25 @@
+# 构建产物
+build/          # CMake 构建目录（x64）
+build32/        # CMake 构建目录（Win32）
+bin/            # VS 工程 viewer.sln 的输出（bin/<平台>/<配置>/）
+obj/            # VS 工程的中间文件
+x64/            # 旧版 VS 默认输出，保留忽略以防手滑
+Release/
+Debug/
+out/
+.vs/
+
+# 注意：不要忽略 *.sln / *.vcxproj —— viewer.sln / viewer.vcxproj 是本项目
+# 手写并提交的经典 VS 工程，不是生成物。只有 .user / .suo 这类用户级状态才忽略。
+
+# 用户级状态
+*.user
+*.suo
+*.opendb
+*.VC.db
+
+# 截图：BMP 单张 3 MB，只保留 shots/ 下的 PNG
+*.bmp
+
+# 编辑器
+.vscode/

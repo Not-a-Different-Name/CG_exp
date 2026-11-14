@@ -1,0 +1,3 @@
+@echo off
+cd /d "%~dp0"
+start "" "%~dp0viewer.exe" --scene forest --anim roam

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 只影响解决方案资源管理器里的分组显示，不影响构建 -->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClCompile Include="src\renderer.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\main.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\app.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\input.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\scene.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\mesh.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\obj_loader.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\texture.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\camera.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\projection.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\lighting.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\forest.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\anim.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\recorder.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\hud.cpp"><Filter>源文件</Filter></ClCompile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClInclude Include="src\types.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\math3d.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\obj_loader.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\mesh.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\texture.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\camera.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\projection.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\lighting.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\forest.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\scene.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\anim.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\recorder.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\hud.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\input.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\renderer.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\gl_api.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\shaders.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\app.h"><Filter>头文件</Filter></ClInclude>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
+</Project>
