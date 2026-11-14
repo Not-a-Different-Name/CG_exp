@@ -1,4 +1,5 @@
 #include "input.h"
+#include "animals.h"
 #include "app.h"
 #include "forest.h"
 #include "math3d.h"
@@ -142,6 +143,13 @@ void inputAction(int action)
     case M_ROBOT_TOGGLE_PATH: robotTogglePath();                  break;
     case M_ROBOT_TOGGLE_PATHGUIDE: robotTogglePathGuide();        break;
 
+    // ---- 追赶演示（鹿逃跑、机器人跟随）----
+    case M_ANIMALS_CHASE:
+        animalsToggleChase();
+        if (animalsChase()) robotSetPathWalk(false);   // 两条运动线互斥
+        else                robotClearChasePose();
+        break;
+
     // ---- 森林分形参数（L-system 迭代深度 / 分支角，调整后即时重建）----
     case M_FOREST_DETAIL_UP:   forestSetDetail(std::min(1, forestDetail() + 1));
                                g_app.scene.rebuildForest(); break;
@@ -218,6 +226,9 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
         return;
     case 'B':
         if (robotAlive()) { robotTogglePathGuide(); glutPostRedisplay(); }
+        return;
+    case 'G':
+        if (animalsAlive()) inputAction(M_ANIMALS_CHASE);
         return;
 
     // 森林分形参数：f 循环迭代深度 (0 → +1 → -1 → 0)，u/j 调分支角（调整即重建）
@@ -432,6 +443,7 @@ void inputBuildMenu()
     glutAddMenuEntry("Walk animation (b)",  M_ROBOT_TOGGLE_WALK);
     glutAddMenuEntry("Bezier path walk (P)", M_ROBOT_TOGGLE_PATH);
     glutAddMenuEntry("Path curve guide (B)", M_ROBOT_TOGGLE_PATHGUIDE);
+    glutAddMenuEntry("Chase deer demo (G)",  M_ANIMALS_CHASE);
 
     const int mForest = glutCreateMenu(inputMenu);
     glutAddMenuEntry("L-system depth +   (f)", M_FOREST_DETAIL_UP);

@@ -230,6 +230,7 @@ void drawHelpScreen()
         "  b ................. walk animation on / off (legs & arms joints)",
         "  P ................. bezier path walk on / off (constant speed)",
         "  B ................. show / hide path curve, anchors & handles",
+        "  G ................. chase demo: deer flees, robot follows",
         "  select 'Robot' + t/r/y ... translate / rotate / scale robot",
         "",
         "Forest fractal (2026 bonus)",
@@ -342,16 +343,18 @@ void drawOverlay()
         robotStatus = robotPoseName(robotPose());
         if (robotWalking()) robotStatus += " + walking";
         if (robotOnPath())  robotStatus += " + path";
+        if (robotChasing()) robotStatus += " + chase";
     }
     hudColor(0.66f,0.76f,0.85f);
-    hudTextf(16,H-41,"%s  |  %s  |  %d triangles  |  %s%s%s",
+    hudTextf(16,H-41,"%s  |  %s  |  %d triangles  |  %s%s%s%s",
              selected?selected->name.c_str():"No selection",projModeName(g_app.projMode),triangles,
              g_app.transMode==TransMode::Translate?"TRANSLATE":g_app.transMode==TransMode::Rotate?"ROTATE":"SCALE",
              robotAlive()?"  |  Robot: ":"",
-             robotAlive()?robotStatus.c_str():"");
+             robotAlive()?robotStatus.c_str():"",
+             animalsAlive()?("  |  " + std::string(animalsStatusText())).c_str():"");
     hudPanel(0,0,W,30,0.82f);
     hudColor(0.72f,0.80f,0.87f);
-    hudText(16,10,"H Help   F2 Renderer   F3 Shadows   Space Animate   Tab Select   N Pose   b Walk   P Path   B Guide   F12 Shot");
+    hudText(16,10,"H Help   F2 Renderer   F3 Shadows   Space Animate   Tab Select   N Pose   b Walk   P Path   B Guide   G Chase   F12 Shot");
     hudEnd();
 }
 
@@ -535,10 +538,23 @@ void appDisplay()
     //（录制=帧号/fps，其余=真实时钟），且在阴影 pass 之前更新。
     if (robotAlive())
     {
-        const float rt = g_rec.active ? (float)g_rec.frame / (float)g_rec.fps
-                                      : (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-        robotUpdate(g_app.scene, rt);
+        float rt = g_rec.active ? (float)g_rec.frame / (float)g_rec.fps
+                                : (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+
+        // --time 锁定的是「整个场景」的时间轴（机器人 + 动物），否则无头出图时
+        // 动物仍按真实时钟走，同一组 --time 会得到不同的动物位置。
+        if (robotTimeOverride() >= 0.0f) rt = robotTimeOverride();
+
+        // 先更新动物，再让机器人取「鹿身后」的追赶位姿，最后统一摆机器人层级。
+        // （动物只能用上一帧的机器人位置做「警觉」判定，33ms 的延迟看不出来。）
         animalsUpdate(g_app.scene, rt);
+        if (animalsChase())
+        {
+            float cp[3], yaw = 0.0f;
+            if (animalsChaseTarget(g_app.scene, cp, &yaw))
+                robotSetChasePose(cp[0], cp[2], yaw);
+        }
+        robotUpdate(g_app.scene, rt);
     }
 
     renderer::shadowPass(g_app.scene, g_app.sceneKind, g_app.showGround,

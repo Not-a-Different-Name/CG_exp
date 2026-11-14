@@ -97,6 +97,7 @@ struct Options
     bool        robotWalk = false;   // --robot-walk：开启行走循环（配合 --time 出序列图）
     bool        robotPath = false;   // --path：沿贝塞尔曲线漫步（配合 --time 定格）
     bool        pathGuide = false;   // --path-guide：显示曲线与控制点
+    bool        chase     = false;   // --chase：追赶演示（鹿逃跑）
 
     // 出图用的机位覆盖（自由相机）：--eye 3,4,5  --target 0,0.5,0
     bool        hasEye = false, hasTarget = false;
@@ -131,6 +132,7 @@ Options parseArgs(int argc, char** argv)
         else if (a == "--robot-walk") o.robotWalk = true;
         else if (a == "--path")       o.robotPath = true;
         else if (a == "--path-guide") o.pathGuide = true;
+        else if (a == "--chase")      o.chase = true;
         else if (a == "--eye" || a == "--target")
         {
             std::string s; next(s);
@@ -327,6 +329,14 @@ int runSelfTest()
             maxR = std::max(maxR, std::sqrt(q.x * q.x + q.z * q.z));
         check(maxR < 7.0f, "robot path stays inside the forest clearing (r < 7)");
 
+        // 追赶位姿优先于路径：把根直接放到指定点
+        robotSetChasePose(0.5f, -0.7f, 120.0f);
+        robotUpdate(s, 3.0f);
+        ok = robotPartPosition(s, "Robot", p);
+        check(ok && nearf(p[0], 0.5f, 1e-3f) && nearf(p[2], -0.7f, 1e-3f),
+              "chase pose overrides the root position (chase > path)");
+        robotClearChasePose();
+
         robotSetPathWalk(false);
         robotSetTimeOverride(-1.0f);
     }
@@ -390,7 +400,7 @@ int runSelfTest()
               "+1 L-system iteration grows geometry (fractal self-similarity)");
     }
 
-    // ---- 小动物行为：贴地、在各自路线圆内、位置随时间推进 ----
+    // ---- 小动物行为：贴地、在各自贝塞尔路线内、位置随时间推进 ----
     {
         std::printf("  -- animals (deer & fox) --\n");
         Scene s;
@@ -401,9 +411,9 @@ int runSelfTest()
         bool ok = animalPartPosition(s, "Deer", p);
         check(ok && std::fabs(p[1]) < 0.1f, "deer stays on the ground (|y| < 0.1)");
         const float deerX0 = p[0], deerZ0 = p[2];
-        check(std::fabs(deerX0 - (-3.7f)) <= 1.4f + 0.01f &&
-              std::fabs(deerZ0 - 0.7f)    <= 1.4f + 0.01f,
-              "deer stays inside its walking circle");
+        check(std::fabs(deerX0 - (-3.7f)) <= 1.55f + 0.01f &&
+              std::fabs(deerZ0 - 0.7f)    <= 1.55f + 0.01f,
+              "deer stays inside its bezier loop");
 
         animalsUpdate(s, 40.0f);
         ok = animalPartPosition(s, "Deer", p);
@@ -419,6 +429,50 @@ int runSelfTest()
         const bool frozen = (std::fmod(57.0f, 15.0f) > 11.0f) &&
                             std::fabs(p[0] - q[0]) < 1e-3f && std::fabs(p[2] - q[2]) < 1e-3f;
         check(frozen, "deer freezes while grazing (walk 11s / graze 4s)");
+
+        // W3-2 追赶：鹿进入逃跑状态（更快、不吃草），机器人目标点在鹿身后 1.25
+        animalsUpdate(s, 3.0f);
+        animalPartPosition(s, "Deer", p);
+        animalsSetChase(true);
+        animalsUpdate(s, 3.0f);
+        float f[3];
+        animalPartPosition(s, "Deer", f);
+        const float fleeMoved = std::sqrt((f[0] - p[0]) * (f[0] - p[0]) +
+                                          (f[2] - p[2]) * (f[2] - p[2]));
+        check(fleeMoved > 0.05f, "chase: deer flees faster than its normal walk");
+
+        float target[3];
+        float yaw = 0.0f;
+        const bool hasTarget = animalsChaseTarget(s, target, &yaw);
+        const float behind = std::sqrt((target[0] - f[0]) * (target[0] - f[0]) +
+                                       (target[2] - f[2]) * (target[2] - f[2]));
+        check(hasTarget && nearf(behind, 1.25f, 0.01f),
+              "chase target sits 1.25 units behind the deer");
+
+        // 朝向回归测试：机器人的前进方向必须与鹿的「实际运动方向」一致。
+        // 鹿面朝 +X、机器人面朝 +Z，两者 yaw 公式不同；曾把动物的
+        // atan2(-hz, hx) 直接套到机器人上，结果机器人倒着追（点积 = -1）。
+        // 这里用前后两帧鹿的位置差求方向，避免拿同一套公式自证。
+        animalsUpdate(s, 6.0f);
+        animalPartPosition(s, "Deer", f);
+        animalsUpdate(s, 6.05f);
+        animalPartPosition(s, "Deer", p);
+        float hx = p[0] - f[0], hz = p[2] - f[2];
+        const float hl = std::sqrt(hx * hx + hz * hz);
+        const bool headingOk = hl > 1e-4f;
+        if (headingOk) { hx /= hl; hz /= hl; }
+        float t2[3], yaw2 = 0.0f;
+        animalsChaseTarget(s, t2, &yaw2);
+        const float kDeg2Rad = 3.14159265358979323846f / 180.0f;
+        const float dot = std::sin(yaw2 * kDeg2Rad) * hx +
+                          std::cos(yaw2 * kDeg2Rad) * hz;
+        check(headingOk && nearf(dot, 1.0f, 0.01f),
+              "chase: robot forward matches the deer's heading (dot = +1)");
+        std::printf("    deer=(%.2f,%.2f) heading=(%.2f,%.2f) robot=(%.2f,%.2f) yaw=%.1f dot=%.3f\n",
+                    f[0], f[2], hx, hz, t2[0], t2[2], yaw2, dot);
+
+        animalsSetChase(false);
+        animalsUpdate(s, 3.0f);
     }
 
     std::printf("=== %s (%d failure(s)) ===\n", g_failures ? "FAILED" : "ALL PASS", g_failures);
@@ -511,6 +565,7 @@ int main(int argc, char** argv)
     if (opt.robotWalk) robotToggleWalk();               // 行走循环（供 --time 出序列定格）
     if (opt.robotPath) robotSetPathWalk(true);          // 贝塞尔路径漫步
     if (opt.pathGuide) robotSetPathGuide(true);         // 曲线/控制点可视化
+    if (opt.chase) { animalsSetChase(true); robotSetPathWalk(false); }   // 追赶演示
     if (opt.robotTime >= 0.0f) robotSetTimeOverride(opt.robotTime);
 
     // 出图机位覆盖（在 appSetup 的默认机位之后生效）

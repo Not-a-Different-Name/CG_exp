@@ -51,6 +51,12 @@ void  robotTogglePathGuide();
 void  robotSetPathGuide(bool on);
 bool  robotPathGuide();
 
+// W3-2 追赶演示：由 app 每帧把「鹿身后的位置」喂给机器人。
+// 优先级高于贝塞尔路径；清除后恢复原地行走。
+void  robotSetChasePose(float x, float z, float yawDeg);
+void  robotClearChasePose();
+bool  robotChasing();
+
 // 供出图/自检读取机器人行走的曲线（对象内部静态数据）。
 const BezierPath& robotPath();
 float robotPathSpeed();          // 沿路径的恒定速度（世界单位/秒）
@@ -58,6 +64,7 @@ float robotPathSpeed();          // 沿路径的恒定速度（世界单位/秒�
 // 测试/出图钩子：锁定机器人的时间轴（--time）。负值解除锁定。
 // 锁定时关节直接取该时刻的目标值（不做平滑），用于渲染行走循环的任意相位定格。
 void  robotSetTimeOverride(float t);
+float robotTimeOverride();       // <0 表示未锁定（供 app 把同一时间轴给动物）
 
 // 按部件名查它在场景里的当前世界坐标（--selftest 断言层级矩阵用）。
 // 找不到返回 false。

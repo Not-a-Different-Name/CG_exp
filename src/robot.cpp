@@ -61,6 +61,8 @@ struct RobotCtl
     float     tOverride = -1.0f;                   // --time：锁定时间轴出图用
 
     bool      onPath    = false;                   // 沿贝塞尔曲线漫步
+    bool      chase     = false;                   // 追赶演示：外部指定的位姿优先
+    float     chaseX = 0.0f, chaseZ = 0.0f, chaseYaw = 0.0f;
     bool      wasWalking = false;                  // 开路径前的走路开关（关路径时还原）
     bool      showPath  = false;                   // 显示曲线/锚点/控制柄
     float     yawDeg    = kRootYawDeg;             // 根朝向（路径行走时随切线转动）
@@ -350,7 +352,17 @@ void robotUpdate(Scene& scene, float t)
     // 位置用「弧长」求值（evalAtDistance），所以速度恒定；朝向取切线方向。
     // 机器人模型面朝 +Z，Ry(yaw) 把 +Z 转到 (sin yaw, 0, cos yaw)，
     // 因此 yaw = atan2(tangent.x, tangent.z)。
-    if (R.onPath)
+    if (R.chase)
+    {
+        // 追赶：位置/朝向由 app 从鹿的状态推出（优先于路径）
+        Object& root = scene.objects[R.root];
+        root.pos[0] = R.chaseX;
+        root.pos[1] = 0.0f;
+        root.pos[2] = R.chaseZ;
+        R.yawDeg = R.chaseYaw;
+        R.walking = true;
+    }
+    else if (R.onPath)
     {
         const float s = kPathSpeed * t;
         const Vec3 p   = pathStorage().evalAtDistance(s);
@@ -495,6 +507,7 @@ void robotSetPathWalk(bool on)
         g_robot.wasWalking = g_robot.walking;
         g_robot.walking    = true;
         g_robot.pose       = RobotPose::WalkFreeze;
+        g_robot.chase      = false;                // 路径与追赶互斥
     }
     else
     {
@@ -514,11 +527,38 @@ void robotSetPathGuide(bool on)
 
 void robotTogglePathGuide() { robotSetPathGuide(!g_robot.showPath); }
 
+// ---------------------------------------------------------------------------
+// W3-2 追赶演示
+// ---------------------------------------------------------------------------
+void robotSetChasePose(float x, float z, float yawDeg)
+{
+    if (!g_robot.exists) return;
+    g_robot.chase     = true;
+    g_robot.onPath    = false;                 // 追赶优先，退出路径模式
+    g_robot.chaseX    = x;
+    g_robot.chaseZ    = z;
+    g_robot.chaseYaw  = yawDeg;
+    g_robot.walking   = true;
+    g_robot.pose      = RobotPose::WalkFreeze;
+}
+
+void robotClearChasePose()
+{
+    if (!g_robot.chase) return;
+    g_robot.chase   = false;
+    g_robot.walking = false;                   // 追完停下
+    std::printf("[robot] chase pose cleared\n");
+}
+
+bool robotChasing() { return g_robot.exists && g_robot.chase; }
+
 void robotSetTimeOverride(float t)
 {
     g_robot.tOverride = t;
     g_robot.lastT = -1.0f;
 }
+
+float robotTimeOverride() { return g_robot.tOverride; }
 
 bool robotPartPosition(const Scene& scene, const char* partName, float out[3])
 {

@@ -1,5 +1,6 @@
 #include "animals.h"
 #include "scene.h"
+#include "bezier.h"       // W3-2：动物的漫游路线同样是三次贝塞尔闭曲线
 #include "forest.h"       // 形状库：addCylinderSide / addCone / addEllipsoid / appendTransformed
 #include "math3d.h"
 
@@ -7,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <vector>
 
 namespace {
 
@@ -107,44 +109,70 @@ void buildFox(MeshData& out)
 
 // ---------------------------------------------------------------------------
 // 行为参数
+//
+// 走路路线从「圆」升级成三次贝塞尔闭曲线（W3-2）：锚点手摆成不规则环，
+// 更像动物自己踩出来的小径；同样用弧长参数化，速度恒定。
 // ---------------------------------------------------------------------------
+const Vec3 kDeerAnchors[] = {
+    v3(-2.45f, 0.0f,  0.80f),
+    v3(-3.05f, 0.0f,  1.95f),
+    v3(-4.45f, 0.0f,  1.90f),
+    v3(-5.05f, 0.0f,  0.75f),
+    v3(-4.45f, 0.0f, -0.55f),
+    v3(-3.05f, 0.0f, -0.65f),
+};
+
+const Vec3 kFoxAnchors[] = {
+    v3(-4.20f, 0.0f, -2.90f),
+    v3(-4.75f, 0.0f, -1.90f),
+    v3(-5.75f, 0.0f, -2.05f),
+    v3(-6.20f, 0.0f, -3.00f),
+    v3(-5.55f, 0.0f, -3.75f),
+    v3(-4.55f, 0.0f, -3.65f),
+};
+
 struct AnimalDef
 {
     const char* name;
-    float cx, cz;             // 路线圆心
-    float radius;
-    float angSpeed;           // 弧度/秒（负 = 逆时针反着走）
-    float phase0;             // 起始角
-    float grazePitchDeg;      // 吃草俯身角
+    const Vec3* anchors;
+    int         anchorCount;
+    float       walkSpeed;      // 弧长速度（世界单位/秒）
+    float       fleeSpeed;      // 被追时的逃跑速度
+    float       phase0;         // 起始弧长偏移
+    float       grazePitchDeg;  // 吃草俯身角
 };
 
 const AnimalDef kDefs[] = {
-    // 路线圆心/半径与 scene.cpp buildForestPath 的避让圆一致（树不挡动物）。
-    // 两条路线都放在默认机位 (2.6,2.2,4.6) 的视野内：
-    // 鹿在机器人左前方，狐狸在更左后方。
-    // 旧的鹿圆心 (-4.5,3.2) 落在相机背后、狐狸圆从兔子身上穿过去 ——
-    // 截图里两只动物都看不见（2026-11-14 实测）。
-    // W3：机器人沿半径 1.7 的贝塞尔环行走，鹿圈收小到 r1.4 并略左移，
-    // 两圈之间留出约 0.6 单位空隙（否则机器人和鹿会在空地里互相穿插）。
-    { "Deer", -3.7f,  0.7f, 1.4f,  0.10f, 0.6f,  9.0f },
-    { "Fox",  -5.5f, -3.0f, 1.5f, -0.16f, 2.1f, 12.0f },
+    // 路线与 scene.cpp buildForestPath 的避让圆一致（树不挡动物）。
+    // 鹿在机器人左前方，狐狸在更左后方；两圈互不重叠。
+    { "Deer", kDeerAnchors, 6, 0.38f, 1.60f, 0.0f,  9.0f },
+    { "Fox",  kFoxAnchors,  6, 0.50f, 1.80f, 2.0f, 12.0f },
 };
 
-// 「走 11 秒 → 吃草 4 秒」：返回从 0 到 t 实际行走的弧长对应角（吃草时冻结）
-float walkedAngle(float t, float angSpeed)
+// 路线在 create 时构建一次（锚点数组是常量）。
+BezierPath g_loop[2];
+bool       g_loopsBuilt = false;
+
+// 「走 11 秒 → 吃草 4 秒」：返回从 0 到 t 实际行走的弧长（吃草时冻结）。
+// alwaysWalk=true 用于逃跑：不休息、按逃跑速度一直跑。
+float walkedDistance(float t, float speed, bool alwaysWalk)
 {
     constexpr float kWalk = 11.0f, kCycle = 15.0f;
+    if (alwaysWalk) return speed * t;
+
     const float n    = std::floor(t / kCycle);
     const float rest = t - n * kCycle;                       // 本周期内时间
     const float walk = n * kWalk + std::min(rest, kWalk);
-    return angSpeed * walk;
+    return speed * walk;
 }
 
 struct AnimalsCtl
 {
-    bool exists = false;
-    int  obj[2] = { -1, -1 };
-    char status[48] = "";
+    bool  exists = false;
+    int   obj[2] = { -1, -1 };
+    float heading[2][2] = { { 1, 0 }, { 1, 0 } };   // 当前前进方向（单位向量）
+    bool  chase = false;                             // W3-2 追赶演示
+    char  status[64] = "";
 };
 AnimalsCtl g_animals;
 
@@ -154,6 +182,16 @@ AnimalsCtl g_animals;
 bool animalsCreate(Scene& scene)
 {
     if (g_animals.exists) return true;
+
+    if (!g_loopsBuilt)
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            const AnimalDef& d = kDefs[i];
+            g_loop[i].buildClosed(std::vector<Vec3>(d.anchors, d.anchors + d.anchorCount));
+        }
+        g_loopsBuilt = true;
+    }
 
     for (int i = 0; i < 2; ++i)
     {
@@ -186,6 +224,14 @@ void animalsUpdate(Scene& scene, float t)
 {
     if (!g_animals.exists) return;
 
+    // 机器人位置（「警觉」判定）。场景里没有机器人时视为很远。
+    bool  hasRobot = false;
+    float rx = 0.0f, rz = 0.0f;
+    for (const Object& o : scene.objects)
+        if (o.name == "Robot") { hasRobot = true; rx = o.pos[0]; rz = o.pos[2]; break; }
+
+    const char* state[2] = { "walking", "walking" };
+
     for (int i = 0; i < 2; ++i)
     {
         const AnimalDef& d = kDefs[i];
@@ -194,28 +240,38 @@ void animalsUpdate(Scene& scene, float t)
         // 狐狸的作息整体错开 4 秒，避免两只动物同步低头吃草
         const float bt = t + (i == 1 ? 4.0f : 0.0f);
 
-        const float ang  = d.phase0 + walkedAngle(bt, d.angSpeed);
-        const float px   = d.cx + d.radius * std::cos(ang);
-        const float pz   = d.cz + d.radius * std::sin(ang);
+        // 追赶演示：鹿被追时一直跑（不进入吃草窗口）
+        const bool fleeing = g_animals.chase && (i == 0);
+        const float speed  = fleeing ? d.fleeSpeed : d.walkSpeed;
+        const float dist   = d.phase0 + walkedDistance(bt, speed, fleeing);
 
-        // 朝向 = 路线切线（模型面朝 +X：Ry(θ) 把 +X 转到 (cosθ,0,-sinθ)）
-        const float tang = ang + (d.angSpeed > 0.0f ? kPi * 0.5f : -kPi * 0.5f);
-        const float hx   = -std::sin(tang), hz = std::cos(tang);   // 切向单位向量
+        const Vec3 p   = g_loop[i].evalAtDistance(dist);
+        const Vec3 tan = g_loop[i].tangentAtDistance(dist);
+        const float hx = tan.x, hz = tan.z;          // 前进方向（单位向量）
         const float yawDeg = std::atan2(-hz, hx) * 180.0f / kPi;
 
-        // 吃草窗口：俯身 + 高度略降；行走：轻微起伏
+        g_animals.heading[i][0] = hx;
+        g_animals.heading[i][1] = hz;
+
+        // 吃草窗口：俯身 + 高度略降；机器人靠得太近则警觉（抬头、不吃草）
         constexpr float kWalk = 11.0f, kCycle = 15.0f;
-        const bool grazing = std::fmod(bt, kCycle) > kWalk;
+        const bool grazing = !fleeing && std::fmod(bt, kCycle) > kWalk;
+        const bool alert   = hasRobot && !fleeing &&
+                             std::sqrt((p.x - rx) * (p.x - rx) + (p.z - rz) * (p.z - rz)) < 1.35f;
 
         float pitchDeg = 0.0f, bob = 0.0f;
         if (grazing)
         {
             pitchDeg = d.grazePitchDeg * (0.75f + 0.25f * std::sin(bt * 2.3f));  // 啄食起伏
             bob = -0.025f;
+            state[i] = "grazing";
         }
         else
         {
-            bob = 0.016f * (0.5f - 0.5f * std::cos(2.0f * walkedAngle(bt, d.angSpeed)));
+            // 步频与走过的弧长挂钩：每 ~1 单位起伏一次
+            bob = 0.016f * (0.5f - 0.5f * std::cos(6.0f * dist));
+            if (fleeing)   state[i] = "fleeing";
+            else if (alert) state[i] = "alert";
         }
 
         float mYaw[16], mPitch[16];
@@ -223,15 +279,49 @@ void animalsUpdate(Scene& scene, float t)
         mat4FromAxisAngle(mPitch, pitchDeg, 0.0f, 0.0f, 1.0f);
         mat4Multiply(o.xform, mYaw, mPitch);
 
-        o.pos[0] = px;
+        o.pos[0] = p.x;
         o.pos[1] = bob;
-        o.pos[2] = pz;
+        o.pos[2] = p.z;
     }
 
     std::snprintf(g_animals.status, sizeof(g_animals.status), "deer %s / fox %s",
-                  (std::fmod(t, 15.0f) > 11.0f) ? "grazing" : "walking",
-                  (std::fmod(t + 4.0f, 15.0f) > 11.0f) ? "grazing" : "walking");
+                  state[0], state[1]);
 }
+// ---------------------------------------------------------------------------
+// W3-2 追赶演示：鹿切换成逃跑状态，机器人跟在鹿身后 1.25 单位。
+// ---------------------------------------------------------------------------
+bool animalsChase() { return g_animals.exists && g_animals.chase; }
+
+void animalsSetChase(bool on)
+{
+    if (!g_animals.exists || on == g_animals.chase) return;
+    g_animals.chase = on;
+    std::printf("[animals] chase demo: %s\n", on ? "on (deer flees)" : "off");
+}
+
+void animalsToggleChase() { animalsSetChase(!g_animals.chase); }
+
+bool animalsChaseTarget(const Scene& scene, float outPos[3], float* yawDeg)
+{
+    if (!g_animals.exists || g_animals.obj[0] < 0 ||
+        g_animals.obj[0] >= (int)scene.objects.size())
+        return false;
+
+    const Object& deer = scene.objects[g_animals.obj[0]];
+    const float hx = g_animals.heading[0][0], hz = g_animals.heading[0][1];
+
+    // 站在鹿的正后方，朝同一个方向追
+    outPos[0] = deer.pos[0] - hx * 1.25f;
+    outPos[1] = 0.0f;
+    outPos[2] = deer.pos[2] - hz * 1.25f;
+
+    // 注意：动物模型面朝 +X，机器人模型面朝 +Z，两者的 yaw 公式不同。
+    // 动物用 atan2(-hz, hx)；机器人 Ry(θ) 把 +Z 转到 (sinθ, cosθ)，
+    // 所以这里必须是 atan2(hx, hz)。用错会让机器人一边追一边背对鹿。
+    if (yawDeg) *yawDeg = std::atan2(hx, hz) * 180.0f / kPi;
+    return true;
+}
+
 bool animalsAlive()               { return g_animals.exists; }
 const char* animalsStatusText()   { return g_animals.status; }
 

@@ -25,8 +25,8 @@ void buildForestPath(std::vector<Vec3>& path)
 
     // 鹿与狐狸的绕圈路线（圆心/半径与 animals.cpp 的 kDefs 一致）
     const float circles[][3] = {
-        { -3.7f,  0.7f, 1.4f },     // Deer（W3：为机器人贝塞尔环让出空间）
-        { -5.5f, -3.0f, 1.5f },     // Fox
+        { -3.7f,  0.7f, 1.60f },    // Deer（W3：贝塞尔环的外接圆）
+        { -5.2f, -2.8f, 1.15f },    // Fox
     };
     for (const auto& c : circles)
         for (int i = 0; i < 32; ++i)

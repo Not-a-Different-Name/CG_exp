@@ -38,6 +38,7 @@ enum MenuId
     M_ROBOT_TOGGLE_WALK,
     M_ROBOT_TOGGLE_PATH,          // W3-1：贝塞尔曲线漫步
     M_ROBOT_TOGGLE_PATHGUIDE,     // 曲线/控制点可视化
+    M_ANIMALS_CHASE,              // W3-2：追赶演示（鹿逃跑）
 
     // 森林分形参数（2026 加分项：分形算法）
     M_FOREST_DETAIL_UP = 720, M_FOREST_DETAIL_DOWN,
