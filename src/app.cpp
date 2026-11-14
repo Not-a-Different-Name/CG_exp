@@ -4,6 +4,7 @@
 #include "projection.h"
 #include "recorder.h"
 #include "renderer.h"
+#include "robot.h"
 
 #include <GL/freeglut.h>
 #include <cmath>
@@ -216,6 +217,11 @@ void drawHelpScreen()
             "Object",
             "  Tab ............... select next object",
             "",
+            "Robot (2026 project)",
+            "  n ................. next pose: stand / wave / T-pose / walk-freeze",
+            "  b ................. walk animation on / off (legs & arms joints)",
+            "  select 'Robot' + t/r/y ... translate / rotate / scale whole robot",
+            "",
             "Projection (Lab 7 + oblique bonus)",
             "  3 ................. perspective        o ... orthographic",
             "  7 / 9 ............. cavalier / cabinet oblique parallel",
@@ -312,12 +318,15 @@ void drawOverlay()
     int triangles=0;
     for(const auto& mesh:g_app.scene.meshes) if(mesh) triangles+=mesh->data().triangleCount;
     hudColor(0.66f,0.76f,0.85f);
-    hudTextf(16,H-41,"%s  |  %s  |  %d triangles  |  %s",
+    hudTextf(16,H-41,"%s  |  %s  |  %d triangles  |  %s%s%s",
              selected?selected->name.c_str():"No selection",projModeName(g_app.projMode),triangles,
-             g_app.transMode==TransMode::Translate?"TRANSLATE":g_app.transMode==TransMode::Rotate?"ROTATE":"SCALE");
+             g_app.transMode==TransMode::Translate?"TRANSLATE":g_app.transMode==TransMode::Rotate?"ROTATE":"SCALE",
+             robotAlive()?"  |  Robot: ":"",
+             robotAlive()?(robotWalking()?std::string(robotPoseName(robotPose()))+" + walking"
+                                        :std::string(robotPoseName(robotPose()))).c_str():"");
     hudPanel(0,0,W,30,0.82f);
     hudColor(0.72f,0.80f,0.87f);
-    hudText(16,10,"H Help   F2 Renderer   F3 Shadows   Space Animate   Tab Select   F12 Screenshot");
+    hudText(16,10,"H Help   F2 Renderer   F3 Shadows   Space Animate   Tab Select   N Pose   B Walk   F12 Screenshot");
     hudEnd();
 }
 
@@ -379,6 +388,9 @@ void appSetup(const std::string& modelPath)
     std::string err;
     g_app.scene.build(modelPath, g_app.modelUp, g_app.sceneKind, &err);
     g_app.modelStatus = g_app.scene.modelStatus();
+
+    // 2026 实验主角：机器人在森林场景登场（Studio 展示台保持原样）
+    if (g_app.sceneKind == SceneKind::Forest) robotCreate(g_app.scene);
 
     g_app.camera.reset(g_app.scene.radius());
 
@@ -488,6 +500,15 @@ void appDisplay()
             t = std::fmod(t, g_preview.seconds);
 
         applyAnimation(g_preview.anim, t, g_preview.seconds);
+    }
+
+    // 机器人关节动画：与录制/预览共用同一时间轴（录制=帧号/fps，其余=真实时钟），
+    // 且在阴影 pass 之前更新，保证本帧的层级矩阵在所有绘制路径里一致。
+    if (robotAlive())
+    {
+        const float rt = g_rec.active ? (float)g_rec.frame / (float)g_rec.fps
+                                      : (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+        robotUpdate(g_app.scene, rt);
     }
 
     renderer::shadowPass(g_app.scene, g_app.sceneKind, g_app.showGround,

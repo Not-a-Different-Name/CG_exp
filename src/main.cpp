@@ -13,6 +13,7 @@
 //              [--render solid|wire|points] [--quad] [--no-hud]
 #include "app.h"
 #include "input.h"
+#include "robot.h"
 
 #include <GL/freeglut.h>
 
@@ -86,6 +87,7 @@ struct Options
 
     std::string upAxis;        // --up y|z|auto，空表示 auto
     std::string sceneName;     // --scene studio|forest
+    std::string robotPose;     // --pose stand|wave|tpose|walk，出图用（直接定格到位）
 
     // 视频录制
     std::string recordPath;
@@ -112,6 +114,7 @@ Options parseArgs(int argc, char** argv)
         else if (a == "--show-help") o.showHelp = true;
         else if (a == "--up")      next(o.upAxis);
         else if (a == "--scene")   next(o.sceneName);
+        else if (a == "--pose")    next(o.robotPose);
         else if (a == "--record")  next(o.recordPath);
         else if (a == "--anim")    next(o.animName);
         else if (a == "--fps")
@@ -312,6 +315,16 @@ int main(int argc, char** argv)
     if      (opt.render == "solid")  g_app.renderMode = RenderMode::Solid;
     else if (opt.render == "wire")   g_app.renderMode = RenderMode::Wireframe;
     else if (opt.render == "points") g_app.renderMode = RenderMode::Points;
+
+    // 机器人定格姿势：snap=true 立即到位，headless 单帧出图等不到插值收敛
+    if (!opt.robotPose.empty())
+    {
+        RobotPose p;
+        if (robotParsePose(opt.robotPose, p)) robotSetPose(p, /*snap=*/true);
+        else
+            std::printf("[main] unknown --pose '%s' (expected: stand | wave | tpose | walk)\n",
+                        opt.robotPose.c_str());
+    }
 
     if (opt.quad)     g_app.quadView = true;
     if (opt.noHud)    g_app.showHUD  = false;

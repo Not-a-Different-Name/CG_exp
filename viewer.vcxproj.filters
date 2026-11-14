@@ -26,6 +26,7 @@
     <ClCompile Include="src\anim.cpp"><Filter>源文件</Filter></ClCompile>
     <ClCompile Include="src\recorder.cpp"><Filter>源文件</Filter></ClCompile>
     <ClCompile Include="src\hud.cpp"><Filter>源文件</Filter></ClCompile>
+    <ClCompile Include="src\robot.cpp"><Filter>源文件</Filter></ClCompile>
   </ItemGroup>
 
   <ItemGroup>
@@ -47,6 +48,7 @@
     <ClInclude Include="src\gl_api.h"><Filter>头文件</Filter></ClInclude>
     <ClInclude Include="src\shaders.h"><Filter>头文件</Filter></ClInclude>
     <ClInclude Include="src\app.h"><Filter>头文件</Filter></ClInclude>
+    <ClInclude Include="src\robot.h"><Filter>头文件</Filter></ClInclude>
   </ItemGroup>
 
   <ItemGroup>

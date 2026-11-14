@@ -1,6 +1,7 @@
 #include "input.h"
 #include "app.h"
 #include "math3d.h"
+#include "robot.h"
 
 #include <GL/freeglut.h>
 #include <algorithm>
@@ -131,6 +132,13 @@ void inputAction(int action)
     case M_SCREENSHOT: appSaveScreenshot("screenshot.bmp"); break;
     case M_QUIT:       glutLeaveMainLoop(); return;
 
+    // ---- 机器人（2026 实验主角：局部几何变换 / 关节动画加分项）----
+    case M_ROBOT_STAND:      robotSetPose(RobotPose::Stand);      break;
+    case M_ROBOT_WAVE:       robotSetPose(RobotPose::Wave);       break;
+    case M_ROBOT_TPOSE:      robotSetPose(RobotPose::TPose);      break;
+    case M_ROBOT_WALKFREEZE: robotSetPose(RobotPose::WalkFreeze); break;
+    case M_ROBOT_TOGGLE_WALK: robotToggleWalk();                  break;
+
     default: break;
     }
 
@@ -182,6 +190,14 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
     case '5': inputAction(M_VIEW_TOP);    return;
 
     case 'v': inputAction(M_TOGGLE_QUAD); return;
+
+    // 机器人：姿势切换与走路循环（数字键已被视图/投影占满，用字母）
+    case 'n':
+        if (robotAlive()) robotNextPose();
+        return;
+    case 'b':
+        if (robotAlive()) robotToggleWalk();
+        return;
 
     // 空格：播放 / 暂停动画预览。森林场景里默认就是兔子漫步。
     case ' ': appTogglePreview(); return;
@@ -367,12 +383,20 @@ void inputBuildMenu()
     glutAddMenuEntry("Ground  (p)", M_TOGGLE_GROUND);
     glutAddMenuEntry("HUD",         M_TOGGLE_HUD);
 
+    const int mRobot = glutCreateMenu(inputMenu);
+    glutAddMenuEntry("Pose: stand       ",  M_ROBOT_STAND);
+    glutAddMenuEntry("Pose: wave        ",  M_ROBOT_WAVE);
+    glutAddMenuEntry("Pose: T-pose      ",  M_ROBOT_TPOSE);
+    glutAddMenuEntry("Pose: walk freeze ",  M_ROBOT_WALKFREEZE);
+    glutAddMenuEntry("Walk animation (b)",  M_ROBOT_TOGGLE_WALK);
+
     glutCreateMenu(inputMenu);
     glutAddSubMenu("Transform",   mTrans);
     glutAddSubMenu("Projection",  mProj);
     glutAddSubMenu("View",        mView);
     glutAddSubMenu("Render",      mRender);
     glutAddSubMenu("Show",        mShow);
+    glutAddSubMenu("Robot",       mRobot);
     glutAddMenuEntry("Save screenshot (F12)", M_SCREENSHOT);
     glutAddMenuEntry("Toggle help (h)",       M_HELP);
     glutAddMenuEntry("Quit (ESC)",            M_QUIT);

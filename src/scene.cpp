@@ -223,8 +223,12 @@ bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::
             o.kind = PrimKind::Mesh;
             o.mesh = model;
             o.size = 1.0f;
-            // 森林地面在 y = 0，而模型原点在包围球中心，所以要垫到脚底刚好贴地
+            // 森林地面在 y = 0，而模型原点在包围球中心，所以要垫到脚底刚好贴地。
+            // 2026 实验的主角是机器人（robot.cpp，站在林间空地原点），
+            // 兔子挪到空地边缘作陪衬；漫游动画播放时会沿 roamPath 走，不受此影响。
+            o.pos[0] = 2.6f;
             o.pos[1] = -model->data().bboxMin[1];
+            o.pos[2] = -1.6f;
             o.useMeshMaterial = true;
             mat4Identity(o.xform);
             objects.push_back(o);                             // 先加兔子：findFirstMesh 要拿到它

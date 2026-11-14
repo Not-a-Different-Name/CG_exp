@@ -31,7 +31,11 @@ enum MenuId
     M_TOGGLE_GRID = 500, M_TOGGLE_AXES, M_TOGGLE_GROUND, M_TOGGLE_HUD,
 
     // 其他
-    M_SCREENSHOT = 600, M_HELP, M_QUIT
+    M_SCREENSHOT = 600, M_HELP, M_QUIT,
+
+    // 机器人（2026 实验主角）
+    M_ROBOT_STAND = 700, M_ROBOT_WAVE, M_ROBOT_TPOSE, M_ROBOT_WALKFREEZE,
+    M_ROBOT_TOGGLE_WALK
 };
 
 void inputKeyboard(unsigned char key, int x, int y);
