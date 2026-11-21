@@ -75,6 +75,9 @@ void appPostRedisplay();
 // 顶部状态条的操作提示：ms 毫秒后自动消失（0 = 常驻）。
 void appSetStatus(const std::string& msg, int ms = 3000);
 
+// 启动/首帧阶段日志：GUI 程序崩溃时控制台可能看不到输出，写入文件便于定位。
+void appLogStage(const char* stage);
+
 // 左键点击拾取：把屏幕坐标拾取到的可选物体设为当前选中（空处保持原选择）。
 bool appPickAt(int mouseX, int mouseY);
 

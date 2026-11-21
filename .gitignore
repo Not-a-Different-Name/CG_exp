@@ -34,5 +34,8 @@ __pycache__/
 # 用 tools/fetch_skins.ps1 重新获取
 Skins/
 
+# 启动/首帧阶段日志（崩溃排查用，每次启动重写）
+viewer_startup.log
+
 # 编辑器
 .vscode/

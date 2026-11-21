@@ -9,6 +9,8 @@
 #include <sstream>
 #include <unordered_map>
 
+void appLogStage(const char* stage);   // app.cpp 中的启动阶段日志
+
 namespace {
 
 // ---------------------------------------------------------------------------
@@ -171,6 +173,7 @@ bool loadOBJ(const std::string& path, MeshData& out, std::string* errOut)
 
     std::ifstream ifs(std::filesystem::u8path(path));
     if (!ifs.is_open()) return fail("cannot open OBJ file: " + path);
+    appLogStage("obj: opened");
 
     const std::string objDir = dirOf(path);
 
@@ -192,8 +195,15 @@ bool loadOBJ(const std::string& path, MeshData& out, std::string* errOut)
     std::vector<bool> missingNormals;
 
     std::string line;
+    size_t lineCount = 0;
     while (std::getline(ifs, line))
     {
+        if (++lineCount % 20000 == 0)
+        {
+            char buf[64];
+            std::snprintf(buf, sizeof(buf), "obj: line %d", (int)lineCount);
+            appLogStage(buf);
+        }
         chompCR(line);
         const auto first = line.find_first_not_of(" \t");
         if (first == std::string::npos) continue;
@@ -338,6 +348,7 @@ bool loadOBJ(const std::string& path, MeshData& out, std::string* errOut)
         }
     }
 
+    appLogStage("obj: parse done");
     if (!sawFace || out.indices.empty()) return fail("no face data in OBJ: " + path);
     // Area-weighted normals for missing vn entries; accumulate by source position
     // so a UV seam does not introduce a lighting seam. Authored normals survive.
@@ -354,6 +365,7 @@ bool loadOBJ(const std::string& path, MeshData& out, std::string* errOut)
         out.normals[i*3]=n.x; out.normals[i*3+1]=n.y; out.normals[i*3+2]=n.z;
     }
     out.hasNormals=true;
+    appLogStage("obj: normals done");
 
     // ---- 材质与贴图 ----
     if (!mtlFile.empty())
@@ -405,5 +417,6 @@ bool loadOBJ(const std::string& path, MeshData& out, std::string* errOut)
     out.triangleCount     = (int)(out.indices.size() / 3);
     out.srcVertexCount    = (int)V.size();
     out.valid             = true;
+    appLogStage("obj: done");
     return true;
 }

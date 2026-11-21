@@ -628,6 +628,7 @@ bool robotInspectSkin(const std::string& path, bool slim, std::string& out)
     }
     const bool legacy = (w == 64 && h == 32);
     const bool hd     = (w > 64);
+    const bool slimLayout = slim && !legacy;
     std::vector<unsigned char> norm;
     normalizeSkin(src, w, h, norm);
 
@@ -643,7 +644,7 @@ bool robotInspectSkin(const std::string& path, bool slim, std::string& out)
     std::snprintf(buf, sizeof(buf),
                   "%dx%d %s%s -> 64x64; left arm %dpx, left leg %dpx, overlay arm %dpx",
                   w, h, legacy ? "legacy " : hd ? "HD " : "modern ",
-                  slim ? "slim" : "classic",
+                  slimLayout ? "slim" : "classic",
                   opaque(32, 48, 12, 16), opaque(16, 48, 12, 16), opaque(48, 48, 12, 16));
     out = buf;
     return true;

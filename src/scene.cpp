@@ -5,6 +5,8 @@
 #include <cmath>
 #include <cstdio>
 
+void appLogStage(const char* stage);   // app.cpp 中的启动阶段日志
+
 namespace {
 
 // 森林生成参数（初次建场景与运行期重建共用，保证两次生成完全一致）
@@ -184,6 +186,7 @@ void Scene::drawAll(bool useTexture) const
 
 bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::string* errOut)
 {
+    appLogStage("scene: begin");
     objects.clear();
     meshes.clear();
     selected = 0;
@@ -192,6 +195,7 @@ bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::
     std::shared_ptr<Mesh> model;
     if (!modelPath.empty())
     {
+        appLogStage("scene: model load begin");
         model = std::make_shared<Mesh>();
         std::string err;
         if (model->loadFromOBJ(modelPath, up, /*normalize=*/true, &err))
@@ -212,6 +216,7 @@ bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::
             modelStatus_ = "model load failed: " + err;
             if (errOut) *errOut = err;
         }
+        appLogStage("scene: model load done");
     }
 
     // ---- 森林场景 ----
@@ -219,13 +224,16 @@ bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::
     {
         std::vector<Vec3> path;
         buildForestPath(path);
+        appLogStage("scene: forest path");
 
         MeshData forestData;
         buildForest(forestData, kForestHalf, kForestTrees, path, kForestClear, kForestSeed);
+        appLogStage("scene: forest generated");
 
         auto forestMesh = std::make_shared<Mesh>();
         forestMesh->adopt(std::move(forestData));
         meshes.push_back(forestMesh);
+        appLogStage("scene: forest adopted");
 
         std::printf("[scene] forest: %d vertices, %d triangles\n",
                     (int)(forestMesh->data().positions.size() / 3),
@@ -264,6 +272,7 @@ bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::
 
         radius_  = 10.0f;      // 供自由相机取景与投影 near/far 使用
         selected = nextSelectable(-1);
+        appLogStage("scene: done");
         return true;
     }
 

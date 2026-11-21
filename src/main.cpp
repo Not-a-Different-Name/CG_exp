@@ -24,8 +24,9 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <string>
-#include <sys/stat.h>
+#include <system_error>
 
 #ifndef WIN32_LEAN_AND_MEAN
   #define WIN32_LEAN_AND_MEAN
@@ -37,43 +38,29 @@
 
 namespace {
 
-bool fileExists(const std::string& p)
-{
-    struct stat st;
-    return stat(p.c_str(), &st) == 0;
-}
-
-std::string dirOf(const std::string& path)
-{
-    const size_t pos = path.find_last_of("/\\");
-    return (pos == std::string::npos) ? std::string() : path.substr(0, pos + 1);
-}
-
-std::string parentDir(const std::string& dir)
-{
-    if (dir.size() < 2) return std::string();
-    std::string d = dir;
-    while (d.size() > 1 && (d.back() == '/' || d.back() == '\\')) d.pop_back();
-    const size_t pos = d.find_last_of("/\\");
-    return (pos == std::string::npos) ? std::string() : d.substr(0, pos + 1);
-}
-
 // 可执行文件在 build/Release/ 下，而模型在仓库根的 Models/ 下。
 // 从 exe 所在目录逐级向上找，这样从 VS 里启动、从命令行启动、双击启动都能找到。
+//
+// 必须用宽字符 API：桌面路径可能含中文，GetModuleFileNameA 返回的是 ANSI/GBK，
+// 再喂给 std::filesystem::u8path 会因非法 UTF-8 抛 filesystem_error，
+// 未捕获时进程直接 0xC0000409 退出（白屏后闪退）。
 std::string findDefaultModel()
 {
-    char exePath[MAX_PATH] = { 0 };
-    if (GetModuleFileNameA(nullptr, exePath, MAX_PATH) == 0)
+    wchar_t exePath[MAX_PATH] = { 0 };
+    if (GetModuleFileNameW(nullptr, exePath, MAX_PATH) == 0)
         return std::string();
 
-    const std::string rel = "Models/bunny_10k.obj";   // 默认模型（Stanford Bunny 10k）
-    std::string dir = dirOf(exePath);
+    std::filesystem::path dir = std::filesystem::path(exePath).parent_path();
+    const std::filesystem::path rel =
+        std::filesystem::path(L"Models") / L"bunny_10k.obj";
 
     for (int i = 0; i < 6 && !dir.empty(); ++i)
     {
-        const std::string cand = dir + rel;
-        if (fileExists(cand)) return cand;
-        dir = parentDir(dir);
+        const std::filesystem::path cand = dir / rel;
+        std::error_code ec;
+        if (std::filesystem::is_regular_file(cand, ec))
+            return cand.u8string();
+        dir = dir.parent_path();
     }
     return std::string();
 }
@@ -101,6 +88,7 @@ struct Options
     bool        robotPath = false;   // --path：沿贝塞尔曲线漫步（配合 --time 定格）
     bool        pathGuide = false;   // --path-guide：显示曲线与控制点
     bool        chase     = false;   // --chase：追赶演示（鹿逃跑）
+    bool        welcome   = false;   // --welcome：强制显示进入操作清单（出图用）
 
     // 出图用的机位覆盖（自由相机）：--eye 3,4,5  --target 0,0.5,0
     bool        hasEye = false, hasTarget = false;
@@ -139,6 +127,7 @@ Options parseArgs(int argc, char** argv)
         else if (a == "--path")       o.robotPath = true;
         else if (a == "--path-guide") o.pathGuide = true;
         else if (a == "--chase")      o.chase = true;
+        else if (a == "--welcome")    o.welcome = true;
         else if (a == "--eye" || a == "--target")
         {
             std::string s; next(s);
@@ -586,12 +575,15 @@ int main(int argc, char** argv)
     // GUI 子系统下批量截图也依赖重定向日志，及时写出，避免 GLUT 退出时丢失缓冲。
     std::setvbuf(stdout, nullptr, _IONBF, 0);
     std::setvbuf(stderr, nullptr, _IONBF, 0);
+    std::remove("viewer_startup.log");
+    appLogStage("main: start");
     // 自检不需要窗口，在 glutInit 之前就返回
     for (int i = 1; i < argc; ++i)
         if (std::string(argv[i]) == "--selftest")
             return runSelfTest();
 
     const Options opt = parseArgs(argc, argv);
+    appLogStage("main: args parsed");
 
     // --skin-info：不创建窗口，只解码并归一化皮肤，用于验证下载的皮肤格式。
     if (!opt.skinInfo.empty())
@@ -609,12 +601,15 @@ int main(int argc, char** argv)
     else
         std::printf("[main] model: %s\n", opt.modelPath.c_str());
 
+    appLogStage("main: before glutInit");
     glutInit(&argc, argv);
+    appLogStage("main: after glutInit");
     // GLUT_MULTISAMPLE 若当前像素格式不支持，freeglut 会自动降级
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
     glutInitWindowSize(opt.winW, opt.winH);
     glutInitWindowPosition(60, 40);
     glutCreateWindow("3D Model Viewer");
+    appLogStage("main: after glutCreateWindow");
 
     // 要求 3：点窗口 X 关闭时，让 glutMainLoop 正常返回，而不是从回调里 exit()。
     // 默认的 GLUT_ACTION_EXIT 会跳过后面所有清理代码。
@@ -646,6 +641,7 @@ int main(int argc, char** argv)
     g_app.enhanced = !opt.classic;
     g_app.shadows = !opt.noShadows;
     appSetup(opt.modelPath);
+    appLogStage("main: after appSetup");
     glutCloseFunc(appCleanup);
     if (!opt.characterPath.empty() && !appImportCharacter(opt.characterPath, opt.slimSkin) &&
         (!opt.shotPath.empty() || !opt.recordPath.empty()))
@@ -697,6 +693,7 @@ int main(int argc, char** argv)
     if (opt.quad)     g_app.quadView = true;
     if (opt.noHud)    g_app.showHUD  = false;
     if (opt.showHelp) g_app.showHelp = true;
+    if (opt.welcome)  g_app.showWelcome = true;
 
     // 首次进入时显示操作清单：只给实时窗口，批量出图/录制不显示。
     if (opt.shotPath.empty() && opt.recordPath.empty() && !opt.noHud && !opt.showHelp)
@@ -785,6 +782,7 @@ int main(int argc, char** argv)
         robotSetPathWalk(true);
     }
 
+    appLogStage("main: before glutMainLoop");
     std::printf("[main] entering main loop  (h = help, ESC = quit)\n");
     glutMainLoop();
 

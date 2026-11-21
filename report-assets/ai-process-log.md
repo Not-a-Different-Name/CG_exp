@@ -218,6 +218,14 @@ W3-5 报告正文与答辩知识卡片。（当时按用户要求先暂停开发
 - 文件对话框默认打开 `Skins/`（不存在时回退 `Models/`）；新增 `Start-Character.bat` 直接用 Steve 皮肤启动。
 - 验证：四种皮肤 `--skin-info` 全部通过（modern/slim、legacy 左肢镜像 176px、HD 降采样），Release 零警告，`--selftest` 42/42。
 
+### 11-21 续：白屏闪退修复（中文路径）
+
+- 现象：双击启动后窗口白屏、进程以 0xC0000409 退出；事件日志显示错误模块 ucrtbase.dll。
+- 定位：加入启动阶段日志（`viewer_startup.log`）后，最后一行停在 `scene: model load begin` / `mesh: loadOBJ begin`。根因是默认模型查找用 `GetModuleFileNameA` 取得 ANSI/GBK 路径，再交给 `std::filesystem::u8path` 按 UTF-8 解析，非法序列抛 `filesystem_error`，未捕获导致 CRT fail-fast。命令行显式传 `Models/bunny_10k.obj` 时绕过了这段代码，所以之前的批量出图没有暴露。
+- 修复：`findDefaultModel` 改用 `GetModuleFileNameW` + `std::filesystem::path` 逐级查找，返回 UTF-8 路径；OBJ/贴图加载继续用 `u8path`。桌面路径含中文可正常启动。
+- 验证：无参数 `--shot` 出图成功；实时启动运行 4 秒保持存活；Steve/Alex/旧版/HD 四张皮肤截图与操作清单截图逐张目检通过。
+- 附带：新增 `--welcome` 出图钩子；`viewer_startup.log` 加入 `.gitignore`。
+
 ## 2026-11-21 · W3-5 报告全稿与答辩知识卡
 
 - 拉取并合入异地推送的 `a28d7c7`（森林巡游打磨 + 角色导入 + 演示视频），快进无冲突。

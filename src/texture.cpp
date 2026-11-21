@@ -21,6 +21,8 @@
   #define GL_CLAMP_TO_EDGE 0x812F
 #endif
 
+void appLogStage(const char* stage);   // app.cpp 中的启动阶段日志
+
 namespace {
 std::FILE* openImage(const std::string& path)
 {
@@ -40,6 +42,7 @@ GLuint loadTexture2D(const std::string& path, int* wOut, int* hOut)
 
     stbi_set_flip_vertically_on_load(1);   // OBJ 的 vt 原点在左下，stb 首行是图像顶部
 
+    appLogStage("texture: decode begin");
     int w = 0, h = 0, comp = 0;
     std::unique_ptr<std::FILE, decltype(&std::fclose)> file(openImage(path), std::fclose);
     unsigned char* pixels = file ? stbi_load_from_file(file.get(), &w, &h, &comp, STBI_rgb_alpha) : nullptr;
@@ -49,16 +52,19 @@ GLuint loadTexture2D(const std::string& path, int* wOut, int* hOut)
                      file ? stbi_failure_reason() : "unable to open image");
         return 0;
     }
+    appLogStage("texture: decoded");
 
     const GLenum fmt = GL_RGBA;
 
     GLuint tex = 0;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
+    appLogStage("texture: gl begin");
 
     // 用 gluBuild2DMipmaps 而不是裸 glTexImage2D：它会对非 2 的幂尺寸自动缩放，
     // 这样任意贴图都不会因 NPOT 而失效。
     gluBuild2DMipmaps(GL_TEXTURE_2D, fmt, w, h, fmt, GL_UNSIGNED_BYTE, pixels);
+    appLogStage("texture: mipmaps done");
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

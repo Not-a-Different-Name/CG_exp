@@ -35,6 +35,8 @@ powershell -NoProfile -File tools/fetch_skins.ps1
 
 `Start-Character.bat` 直接用 `Skins/steve_64x64.png` 启动；没有该文件时回退到普通森林。`--skin-info` 不创建窗口，只打印解析出的尺寸、格式和左肢采样像素数，用来确认皮肤被正确接受。
 
+启动失败（白屏后闪退）时，根目录 `viewer_startup.log` 会记录最后执行的阶段；默认模型查找已改用宽字符路径，桌面路径含中文也不会再触发 `u8path` 异常。
+
 ## 2026-11-14 成果复查
 
 当前进度、已修复问题、未完成事项及扩展优先级见 [复查与扩展清单](docs/REVIEW_AND_EXTENSIONS.md)；
@@ -326,6 +328,7 @@ cmd / PowerShell 下同理，用完整路径替换即可：
 | `--character <png\|obj>` | 启动时导入角色皮肤或模型（出图用） |
 | `--slim-skin` | 配合 `--character` 的 PNG，按 Slim（3px 手臂）布局采样 |
 | `--skin-info <png>` | 不创建窗口，检查皮肤尺寸/格式/旧版镜像是否生效 |
+| `--welcome` | 出图时强制显示进入界面的操作清单 |
 | `--time <秒>` | 锁定动画时间轴（机器人与动物共用），出图 / 自检可复现 |
 | `--eye x,y,z`、`--target x,y,z` | 覆盖自由相机的机位与看向点（出图取景） |
 | `--record demo.mp4` | 录制演示视频（H.264 mp4），见下 |

@@ -572,11 +572,13 @@ bool writeBMP(const char* path, int w, int h, const unsigned char* rgb)
 // ---------------------------------------------------------------------------
 void appSetup(const std::string& modelPath)
 {
+    appLogStage("setup: begin");
     g_app.modelPath = modelPath;
 
     std::string err;
     g_app.scene.build(modelPath, g_app.modelUp, g_app.sceneKind, &err);
     g_app.modelStatus = g_app.scene.modelStatus();
+    appLogStage("setup: scene built");
 
     // 2026 实验主角：机器人在森林场景登场（Studio 展示台保持原样）
     if (g_app.sceneKind == SceneKind::Forest)
@@ -593,6 +595,7 @@ void appSetup(const std::string& modelPath)
                 break;
             }
     }
+    appLogStage("setup: characters");
 
     appResetCamera();
 
@@ -613,6 +616,7 @@ void appSetup(const std::string& modelPath)
 
     initLighting();
     renderer::initialize();
+    appLogStage("setup: renderer");
 
     // 打印显卡 / 驱动信息。性能不对劲时第一眼就该看这里 ——
     // 如果 renderer 是 "GDI Generic" 之类，说明在用软件光栅化，
@@ -624,6 +628,7 @@ void appSetup(const std::string& modelPath)
 
     std::printf("[app] scene ready, radius %.3f\n", g_app.scene.radius());
     std::printf("[app] %s\n", g_app.modelStatus.c_str());
+    appLogStage("setup: done");
 }
 
 void appReshape(int w, int h)
@@ -649,6 +654,9 @@ void appReshape(int w, int h)
 
 void appDisplay()
 {
+    static int dbgFrames = 0;
+    const bool dbg = dbgFrames < 3;
+    if (dbg) appLogStage("display: begin");
     // ---- 录制：启动子进程 + 按帧序号推进动画 ----
     if (g_rec.requested && !g_rec.active)
     {
@@ -719,6 +727,7 @@ void appDisplay()
 
     renderer::shadowPass(g_app.scene, g_app.sceneKind, g_app.showGround,
                          g_app.enhanced && g_app.shadows && g_app.lighting && g_app.renderMode == RenderMode::Solid);
+    if (dbg) appLogStage("display: shadow pass done");
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (g_app.quadView)
@@ -743,8 +752,10 @@ void appDisplay()
                      g_app.projMode, g_app.viewPreset, nullptr);
     }
 
+    if (dbg) appLogStage("display: viewports done");
     glViewport(0, 0, g_app.winW, g_app.winH);
     drawOverlay();
+    if (dbg) appLogStage("display: overlay done");
 
     // 一次性截图：在交换缓冲之前从后缓冲读，所以窗口隐藏也能正常截。
     if (!g_pendingShot.empty())
@@ -791,6 +802,7 @@ void appDisplay()
         recDone = (g_rec.frame >= g_rec.total);
     }
 
+    if (dbg) { appLogStage("display: before swap"); ++dbgFrames; }
     glutSwapBuffers();
 
     if (recDone)
@@ -922,6 +934,14 @@ void appClickHelp(int x, int y)
         return;
     g_app.helpPage = (int)(relativeX / tabW);
     glutPostRedisplay();
+}
+
+void appLogStage(const char* stage)
+{
+    std::FILE* f = std::fopen("viewer_startup.log", "a");
+    if (!f) return;
+    std::fprintf(f, "%s\n", stage ? stage : "(null)");
+    std::fclose(f);
 }
 
 void appSetStatus(const std::string& msg, int ms)

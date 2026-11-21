@@ -5,6 +5,8 @@
 #include <cmath>
 #include <cstdio>
 
+void appLogStage(const char* stage);   // app.cpp 中的启动阶段日志
+
 namespace {
 
 // Z-up → Y-up：绕 X 轴 -90°，(x,y,z) → (x, z, -y)。
@@ -124,7 +126,9 @@ void Mesh::adoptSkin(MeshData&& data, const unsigned char* pixels, int width, in
 bool Mesh::loadFromOBJ(const std::string& path, UpAxis up, bool normalize, std::string* errOut)
 {
     MeshData loaded;
+    appLogStage("mesh: loadOBJ begin");
     if (!loadOBJ(path, loaded, errOut)) return false;
+    appLogStage("mesh: loadOBJ done");
     release();
     data_ = std::move(loaded);
 
@@ -132,6 +136,7 @@ bool Mesh::loadFromOBJ(const std::string& path, UpAxis up, bool normalize, std::
     if (up == UpAxis::Z) rotateZUpToYUp(data_);
     recomputeBounds(data_);
     if (normalize) normalizeToUnitSphere(data_);
+    appLogStage("mesh: post-process done");
 
     if (!data_.diffuseMapPath.empty())
     {
