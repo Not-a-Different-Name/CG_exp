@@ -25,6 +25,7 @@
 ### 本地皮肤测试
 
 `tools/fetch_skins.ps1` 从 PrismarineJS/minecraft-assets 下载 Steve（Classic）和 Alex（Slim）皮肤到 `Skins/`，并生成 64×32 旧版与 128×128 HD 样本；`Skins/` 已在 `.gitignore` 中，不随仓库分发。
+已有有效的 64×64 文件时直接跳过下载（`-Force` 强制重下）；CDN 抖动会自动换源并重试，全部失败时保留已有文件，必要时回退到内置的 TrailSurveyor 皮肤。
 
 ```powershell
 powershell -NoProfile -File tools/fetch_skins.ps1
