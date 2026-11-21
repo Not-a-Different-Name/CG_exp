@@ -141,6 +141,8 @@ void inputAction(int action)
     case M_RESET_OBJ: appResetObjects(); break;
     case M_SELECT_NEXT:
         g_app.scene.selected = g_app.scene.nextSelectable(g_app.scene.selected);
+        if (const Object* sel = g_app.scene.selectedObject())
+            appSetStatus("Selected: " + sel->name);
         appUpdateTitle();
         break;
 
