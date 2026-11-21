@@ -29,7 +29,9 @@ void chooseCharacter(bool slim)
     dialog.lStructSize = sizeof(dialog);
     dialog.hwndOwner = GetActiveWindow();
     dialog.lpstrFilter = L"Character files (*.png;*.obj)\0*.png;*.obj\0";
-    dialog.lpstrInitialDir = L"Models";                 // 默认从项目模型目录开始找
+    // 默认从 Skins/（下载的测试皮肤）开始，没有则回退到 Models/。
+    dialog.lpstrInitialDir = (GetFileAttributesW(L"Skins") != INVALID_FILE_ATTRIBUTES)
+                                 ? L"Skins" : L"Models";
     dialog.lpstrFile = file;
     dialog.nMaxFile = (DWORD)(sizeof(file) / sizeof(file[0]));
     dialog.lpstrTitle = slim ? L"Import a slim skin PNG or OBJ" : L"Import a classic skin PNG or OBJ";
@@ -260,6 +262,12 @@ void inputAction(int action)
 // ---------------------------------------------------------------------------
 void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
 {
+    if (g_app.showWelcome)
+    {
+        g_app.showWelcome = false;       // 第一下操作只用于关掉清单
+        glutPostRedisplay();
+        return;
+    }
     if (g_app.showHelp)
     {
         if (key == 27 || key == 'h' || key == 'H') inputAction(M_HELP);
@@ -390,6 +398,12 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
 
 void inputSpecial(int key, int /*x*/, int /*y*/)
 {
+    if (g_app.showWelcome)
+    {
+        g_app.showWelcome = false;
+        glutPostRedisplay();
+        return;
+    }
     if (g_app.showHelp && key != GLUT_KEY_F1) return;
     switch (key)
     {
@@ -411,6 +425,12 @@ void inputSpecial(int key, int /*x*/, int /*y*/)
 // ---------------------------------------------------------------------------
 void inputMouseButton(int button, int state, int x, int y)
 {
+    if (g_app.showWelcome)
+    {
+        g_app.showWelcome = false;       // 点击只关清单，不触发拾取/拖动
+        glutPostRedisplay();
+        return;
+    }
     if (g_app.showHelp)
     {
         g_app.dragMode = AppState::DragMode::None;

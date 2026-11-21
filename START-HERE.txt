@@ -4,9 +4,13 @@
 
 一、直接运行（无需安装 Visual Studio / Python / CMake）
 双击 viewer.exe 或 Start-Forest.bat：打开森林场景，机器人从林间小径开始巡游。
+双击 Start-Character.bat：用本地 Skins/ 里的 Steve 皮肤启动（没有则回退到森林）。
 双击 Start-Bunny-Hop.bat：兔子自动蹦跳漫游。
 双击 Start-Studio.bat：打开课程展示台。
 请保留 exe 旁边的 DLL 文件和 Models 文件夹。
+
+进入界面会显示一张操作清单，按任意键或点击关闭。
+本地测试皮肤可用 powershell -NoProfile -File tools\fetch_skins.ps1 下载到 Skins/（不随仓库分发）。
 
 空格：播放/暂停兔子动画；手动操作会停止动画。
 右键拖动/WASD/QE：相机；左键拖动：物体变换。
@@ -29,7 +33,7 @@ k 在内置机器人、已加载的 PNG 和 OBJ 间切换；M 在拼装机器人
 可选 CMake 构建方式见 README.md；课程参考资料在 docs/。
 
 三、文件说明
-src/：完整渲染器源码；Models/：兔子模型、角色导入样例（TrailSurveyor/）与贴图。
+src/：完整渲染器源码；Models/：兔子模型、角色导入样例（TrailSurveyor/）与贴图；Skins/：本地下载的测试皮肤。
 third_party/：freeglut 的头文件、Win32/x64 库及 DLL，以及 stb_image。
 tests/ 和 tools/：自检、截图验证及打包脚本。
 MANIFEST.sha256：包内文件校验值。

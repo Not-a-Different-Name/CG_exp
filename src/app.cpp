@@ -398,6 +398,49 @@ void drawHelpScreen()
 }
 
 // ---------------------------------------------------------------------------
+// 进入界面的一次性操作清单（任意键/点击后消失）
+// ---------------------------------------------------------------------------
+void drawWelcome()
+{
+    struct Row { const char* keys; const char* action; };
+    static const Row rows[] = {
+        { "Click / Tab",     "Select an object (gold ring on the ground)" },
+        { "t / r / y",       "Move / rotate / scale with left drag" },
+        { "WASD / right drag","Roam / look around (wheel zooms)" },
+        { "n / b",           "Change pose / walk in place" },
+        { "P / B / G",       "Patrol / show route / chase the deer" },
+        { "I / M",           "Import a skin or OBJ / swap character" },
+        { "F2 / F3",         "Classic vs GLSL / shadows" },
+        { "v / 3 / o",       "Four views / perspective / ortho" },
+        { "H / Esc",         "All controls / quit" },
+    };
+    const int   n     = (int)(sizeof(rows) / sizeof(rows[0]));
+    const float rowH  = 19.0f;
+    const float panelW = std::min(680.0f, (float)g_app.winW - 60.0f);
+    const float panelH = 82.0f + rowH * n;
+    const float x = ((float)g_app.winW - panelW) * 0.5f;
+    const float y = ((float)g_app.winH - panelH) * 0.5f;
+
+    hudBegin(g_app.winW, g_app.winH);
+    hudPanel(x, y, panelW, panelH, 0.88f);
+    hudColor(0.97f, 0.99f, 0.95f);
+    hudTitle(x + 20.0f, y + panelH - 28.0f, "Quick start");
+
+    float ty = y + panelH - 54.0f;
+    for (int i = 0; i < n; ++i)
+    {
+        hudColor(1.00f, 0.82f, 0.35f);
+        hudText(x + 24.0f, ty, rows[i].keys);
+        hudColor(0.92f, 0.95f, 0.92f);
+        hudText(x + 190.0f, ty, rows[i].action);
+        ty -= rowH;
+    }
+    hudColor(0.60f, 0.84f, 0.75f);
+    hudText(x + 24.0f, y + 14.0f, "Press any key or click to start   -   H opens all controls");
+    hudEnd();
+}
+
+// ---------------------------------------------------------------------------
 // In-scene controls and contextual selection
 // ---------------------------------------------------------------------------
 void drawOverlay()
@@ -411,6 +454,7 @@ void drawOverlay()
     }
     if (g_app.showHelp) { drawHelpScreen(); return; }
     if (!g_app.showHUD) return;
+    if (g_app.showWelcome) drawWelcome();
     const float width = (float)g_app.winW;
     const float height = (float)g_app.winH;
     const bool forest = g_app.sceneKind == SceneKind::Forest;

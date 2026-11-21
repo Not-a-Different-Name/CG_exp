@@ -29,6 +29,7 @@ struct AppState
     bool showGround = true;
     bool showHUD    = true;
     bool showHelp   = false;
+    bool showWelcome = false;              // 进入界面的一次性操作清单
     int  helpPage   = 0;
 
     bool quadView   = false;                       // 四视口：三视图 + 透视同屏

@@ -30,5 +30,9 @@ __pycache__/
 # 截图：BMP 单张 3 MB，只保留 shots/ 下的 PNG
 *.bmp
 
+# 本地下载的测试皮肤（版权归原资源方，不随仓库分发）
+# 用 tools/fetch_skins.ps1 重新获取
+Skins/
+
 # 编辑器
 .vscode/

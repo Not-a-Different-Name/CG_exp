@@ -1,7 +1,8 @@
 # 三维模型查看器 —— 计算机图形学总结实验
 
 双击 `viewer.exe` 或 `Start-Forest.bat`，原创方块机器人会沿林间小径巡游。
-`Shift+P` 暂停或继续，`Shift+B` 显示或隐藏曲线与控制点，`H` 打开操作页。
+进入界面会先弹出一张**操作清单**，按任意键或点击关闭；`H` 随时打开完整操作页。
+`Shift+P` 暂停或继续，`Shift+B` 显示或隐藏曲线与控制点。
 操作页可用鼠标点页签或按 `1` / `2` / `3` 切换。按 `Tab` 选中机器人后，底部会提示整体变换。
 
 ### 导入角色
@@ -20,6 +21,19 @@
 .\viewer.exe --character Models/TrailSurveyor/TrailSurveyor.png
 .\viewer.exe --character Models/TrailSurveyor/TrailSurveyor.obj
 ```
+
+### 本地皮肤测试
+
+`tools/fetch_skins.ps1` 从 PrismarineJS/minecraft-assets 下载 Steve（Classic）和 Alex（Slim）皮肤到 `Skins/`，并生成 64×32 旧版与 128×128 HD 样本；`Skins/` 已在 `.gitignore` 中，不随仓库分发。
+
+```powershell
+powershell -NoProfile -File tools/fetch_skins.ps1
+.\viewer.exe --skin-info Skins\steve_64x64.png
+.\viewer.exe --skin-info Skins\steve_legacy_64x32.png
+.\viewer.exe --skin-info Skins\steve_hd_128x128.png
+```
+
+`Start-Character.bat` 直接用 `Skins/steve_64x64.png` 启动；没有该文件时回退到普通森林。`--skin-info` 不创建窗口，只打印解析出的尺寸、格式和左肢采样像素数，用来确认皮肤被正确接受。
 
 ## 2026-11-14 成果复查
 
@@ -311,6 +325,7 @@ cmd / PowerShell 下同理，用完整路径替换即可：
 | `--chase` | 追赶演示（鹿逃跑，机器人跟随） |
 | `--character <png\|obj>` | 启动时导入角色皮肤或模型（出图用） |
 | `--slim-skin` | 配合 `--character` 的 PNG，按 Slim（3px 手臂）布局采样 |
+| `--skin-info <png>` | 不创建窗口，检查皮肤尺寸/格式/旧版镜像是否生效 |
 | `--time <秒>` | 锁定动画时间轴（机器人与动物共用），出图 / 自检可复现 |
 | `--eye x,y,z`、`--target x,y,z` | 覆盖自由相机的机位与看向点（出图取景） |
 | `--record demo.mp4` | 录制演示视频（H.264 mp4），见下 |

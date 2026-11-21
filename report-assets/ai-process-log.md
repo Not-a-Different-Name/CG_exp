@@ -210,6 +210,14 @@ W3-5 报告正文与答辩知识卡片。（当时按用户要求先暂停开发
 - 拾取：左键点击用射线-包围球选中光标下的物体（四视口与非透视投影暂不参与），选中后拖动直接变换；Tab 切换也显示 Selected 提示。
 - 验证：Release x64 零警告；`--selftest` 42/42。
 
+### 11-21 续：真实皮肤、入口清单与无窗口校验
+
+- 从 PrismarineJS/minecraft-assets 下载 Steve（Classic）与 Alex（Slim）64×64 皮肤，本地生成 64×32 旧版和 128×128 HD 样本；`Skins/` 加入 `.gitignore`，用 `tools/fetch_skins.ps1` 可重新获取。
+- 新增 `--skin-info <png>`：不创建窗口，打印原始尺寸、格式、归一化结果和左肢采样像素数，用于确认旧版镜像/HD 降采样生效。
+- 进入界面新增操作清单（Click/Tab 选中、t/r/y 变换、WASD 相机、n/b、P/B/G、I/M、F2/F3、v/3/o、H/Esc），任意键或点击关闭；`H` 仍是完整操作页。
+- 文件对话框默认打开 `Skins/`（不存在时回退 `Models/`）；新增 `Start-Character.bat` 直接用 Steve 皮肤启动。
+- 验证：四种皮肤 `--skin-info` 全部通过（modern/slim、legacy 左肢镜像 176px、HD 降采样），Release 零警告，`--selftest` 42/42。
+
 ## 2026-11-21 · W3-5 报告全稿与答辩知识卡
 
 - 拉取并合入异地推送的 `a28d7c7`（森林巡游打磨 + 角色导入 + 演示视频），快进无冲突。

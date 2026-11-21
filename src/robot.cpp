@@ -616,6 +616,39 @@ bool robotHasImportedCharacter()
     return g_robot.exists && (!g_robot.skinLabel.empty() || !g_robot.modelLabel.empty());
 }
 
+// 无 GL 的皮肤检查：只做解码 + 归一化，不创建纹理，可作 --skin-info 使用。
+bool robotInspectSkin(const std::string& path, bool slim, std::string& out)
+{
+    std::vector<unsigned char> src;
+    int w = 0, h = 0;
+    if (!readSkinPixels(path, src, &w, &h))
+    {
+        out = "unsupported: expected 64x64, 64x32 legacy or HD (64*n) PNG";
+        return false;
+    }
+    const bool legacy = (w == 64 && h == 32);
+    const bool hd     = (w > 64);
+    std::vector<unsigned char> norm;
+    normalizeSkin(src, w, h, norm);
+
+    auto opaque = [&](int x, int y, int rw, int rh)
+    {
+        int n = 0;
+        for (int r = 0; r < rh; ++r)
+            for (int c = 0; c < rw; ++c)
+                if (norm[((size_t)(y + r) * 64 + x + c) * 4 + 3]) ++n;
+        return n;
+    };
+    char buf[256];
+    std::snprintf(buf, sizeof(buf),
+                  "%dx%d %s%s -> 64x64; left arm %dpx, left leg %dpx, overlay arm %dpx",
+                  w, h, legacy ? "legacy " : hd ? "HD " : "modern ",
+                  slim ? "slim" : "classic",
+                  opaque(32, 48, 12, 16), opaque(16, 48, 12, 16), opaque(48, 48, 12, 16));
+    out = buf;
+    return true;
+}
+
 const std::string& robotCharacterSource()
 {
     static const std::string original = "Built-in robot";

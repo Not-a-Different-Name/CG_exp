@@ -38,6 +38,10 @@ bool  robotHasImportedCharacter();
 
 const std::string& robotCharacterSource();
 
+// 无 GL 的皮肤检查（--skin-info）：读取并归一化，返回可打印摘要。
+// 用于在启动窗口前验证 64x64 / 64x32 旧版 / HD 皮肤是否被正确接受。
+bool robotInspectSkin(const std::string& path, bool slim, std::string& out);
+
 // 每帧推进关节并写回各部件。t 用「录制=帧号/fps，预览=真实时钟」的时间轴。
 void  robotUpdate(Scene& scene, float t);
 

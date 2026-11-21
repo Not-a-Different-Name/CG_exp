@@ -84,6 +84,7 @@ struct Options
     std::string modelPath;
     std::string characterPath;
     bool slimSkin = false;
+    std::string skinInfo;            // --skin-info：无窗口检查皮肤格式
     std::string shotPath;
     std::string proj, view, render;
     int  winW = 1280, winH = 800;
@@ -132,6 +133,7 @@ Options parseArgs(int argc, char** argv)
         else if (a == "--scene")   next(o.sceneName);
         else if (a == "--character") next(o.characterPath);
         else if (a == "--slim-skin") o.slimSkin = true;
+        else if (a == "--skin-info") next(o.skinInfo);
         else if (a == "--pose")    next(o.robotPose);
         else if (a == "--robot-walk") o.robotWalk = true;
         else if (a == "--path")       o.robotPath = true;
@@ -591,6 +593,15 @@ int main(int argc, char** argv)
 
     const Options opt = parseArgs(argc, argv);
 
+    // --skin-info：不创建窗口，只解码并归一化皮肤，用于验证下载的皮肤格式。
+    if (!opt.skinInfo.empty())
+    {
+        std::string info;
+        const bool ok = robotInspectSkin(opt.skinInfo, opt.slimSkin, info);
+        std::printf("[skin-info] %s\n           %s\n", opt.skinInfo.c_str(), info.c_str());
+        return ok ? 0 : 1;
+    }
+
     std::printf("=== 3D Model Viewer ===\n");
     if (opt.modelPath.empty())
         std::printf("[main] no OBJ model found; built-in primitives only.\n"
@@ -687,9 +698,9 @@ int main(int argc, char** argv)
     if (opt.noHud)    g_app.showHUD  = false;
     if (opt.showHelp) g_app.showHelp = true;
 
-    // 首次进入时的操作提示：只给实时窗口，批量出图/录制不显示。
+    // 首次进入时显示操作清单：只给实时窗口，批量出图/录制不显示。
     if (opt.shotPath.empty() && opt.recordPath.empty() && !opt.noHud && !opt.showHelp)
-        appSetStatus("H Controls   I Import character   M Switch", 5000);
+        g_app.showWelcome = true;
 
     glutDisplayFunc(appDisplay);
     glutReshapeFunc(appReshape);
