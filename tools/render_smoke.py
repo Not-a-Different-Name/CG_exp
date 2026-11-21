@@ -1,9 +1,13 @@
 """Actual OpenGL integration checks. Run after building; requires a GPU context."""
 from pathlib import Path
-import subprocess, sys, struct, json
+import argparse, subprocess, sys, struct, json
 root = Path(__file__).resolve().parents[1]
-exe = Path(sys.argv[1]).resolve() if len(sys.argv)>1 else root/'build/Release/viewer.exe'
-out = root/'shots/refactor'; out.mkdir(parents=True,exist_ok=True)
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('exe', nargs='?', type=Path, default=root/'build/Release/viewer.exe')
+parser.add_argument('--out', type=Path, default=root/'out/review/render')
+options = parser.parse_args()
+exe = options.exe.resolve()
+out = options.out.resolve(); out.mkdir(parents=True,exist_ok=True)
 cases = {
  'after': ['--no-hud'],
  'classic': ['--classic','--no-hud'],
@@ -17,15 +21,32 @@ cases = {
  'points': ['--scene','studio','--render','points'],
  'wide': ['--size','1600x300','--no-hud'],
  'textured': ['Models/Rabbit/10037_Rabbit_v1_L3.obj','--scene','studio','--no-hud'],
+ 'robot-wave': ['--pose','wave','--no-hud'],
+ 'robot-walk': ['--robot-walk','--no-hud'],
+ 'forest-quad': ['--quad'],
+ 'forest-front': ['--proj','ortho','--view','front'],
+ 'forest-top': ['--proj','ortho','--view','top'],
+ 'forest-cavalier': ['--proj','cav','--view','front'],
+ 'path-guide': ['--path','--path-guide','--no-hud'],
+ 'chase': ['--chase','--no-hud'],
+ 'grazing': ['--time','12','--no-hud'],
+ 'help': ['--show-help'],
+ 'import-skin': ['--character','Models/TrailSurveyor/TrailSurveyor.png','--pose','wave','--time','0'],
+ 'import-model': ['--character','Models/TrailSurveyor/TrailSurveyor.obj','--path','--time','0.4'],
 }
 report=[]
 for name,args in cases.items():
  shot=out/(name+'.bmp')
- result=subprocess.run([str(exe),'--shot',str(shot),*args],cwd=root,capture_output=True,timeout=60)
+ result=subprocess.run([str(exe),'--shot',str(shot),'--time','3',*args],cwd=root,capture_output=True,timeout=60)
  log=(result.stdout+result.stderr).decode('utf-8',errors='replace')
  (out/(name+'.log')).write_text(log,encoding='utf-8')
  assert result.returncode==0,(name,result.returncode,log)
  assert 'GLSL initialized' in log,(name,log)
+ assert '[gl] error:' not in log,(name,log)
+ if name == 'import-skin':
+  assert '[character] imported .png:' in log,(name,log)
+ if name == 'import-model':
+  assert '[character] imported .obj:' in log,(name,log)
  data=shot.read_bytes(); w,h=struct.unpack_from('<ii',data,18)
  assert len(data)==struct.unpack_from('<I',data,2)[0] and len(set(data[54:]))>32,name
  subprocess.run([sys.executable,str(root/'tools/bmp2png.py'),str(shot)],check=True,capture_output=True)

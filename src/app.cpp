@@ -155,10 +155,10 @@ bool objectVisible(const Object& o)
     }
 }
 
-void drawSceneFiltered()
+void drawSceneFiltered(bool subjectsOnly = false)
 {
     for (const Object& o : g_app.scene.objects)
-        if (objectVisible(o))
+        if (objectVisible(o) && !(subjectsOnly && o.name == "Forest"))
             renderer::draw(o, g_app.textureOn);
 }
 
@@ -175,9 +175,21 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     Camera cam = g_app.camera;                 // 副本：视图预设不能污染真实相机
+    // 外围树木与地面合在同一网格，正交相机从林外看会完全被树冠遮挡。
+    // 平行投影专注空地主体，透视视口仍显示完整环境。
+    const bool subjectsOnly = g_app.sceneKind == SceneKind::Forest && isParallelProjection(pm);
+    const float fitRadius = subjectsOnly ? 4.0f : g_app.scene.radius();
     if (vp != ViewPreset::Free)
-        cam.setPreset((int)vp, g_app.scene.radius());
-    applyProjection(pm, w, h, cam, g_app.scene.radius(), g_app.obliqueAngleDeg);
+    {
+        cam.setPreset((int)vp, fitRadius);
+        if (subjectsOnly)
+        {
+            const Vec3 center = v3(-1.0f, 1.0f, -1.0f);
+            cam.eye = cam.eye + center;
+            cam.target = center;
+        }
+    }
+    applyProjection(pm, w, h, cam, fitRadius, g_app.obliqueAngleDeg);
 
     // 2. 观察变换
     glMatrixMode(GL_MODELVIEW);
@@ -189,9 +201,10 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
 
     // 4. 其余渲染状态 + 场景
     setupRenderState();
-    renderer::beginView(cam, g_app.sceneKind, g_app.fog, g_app.fogDensity, g_app.fogColor,
+    if (subjectsOnly) glDisable(GL_FOG);
+    renderer::beginView(cam, g_app.sceneKind, g_app.fog && !subjectsOnly, g_app.fogDensity, g_app.fogColor,
                         g_app.enhanced && g_app.lighting && g_app.renderMode == RenderMode::Solid, g_app.smoothShade);
-    drawSceneFiltered();
+    drawSceneFiltered(subjectsOnly);
     renderer::endView();
 
     // 5. 视口标题
@@ -199,7 +212,7 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
     {
         hudBegin(w, h);
         hudColor(1.0f, 0.85f, 0.35f);
-        hudText(8.0f, (float)h - (y > 0 ? 74.0f : 20.0f), label);
+        hudText(8.0f, (float)h - (y > 0 ? 64.0f : 20.0f), label);
         hudEnd();
     }
 }
@@ -207,154 +220,170 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
 // ---------------------------------------------------------------------------
 // 帮助界面（整屏模态）
 // ---------------------------------------------------------------------------
+struct HelpPanel
+{
+    float width;
+    float height;
+    float left;
+    float bottom;
+    float top;
+    static constexpr float pad = 16.0f;
+
+    float tabWidth() const { return (width - 2.0f * pad) / 3.0f; }
+};
+
+HelpPanel helpPanel()
+{
+    const float width = std::min(690.0f, g_app.winW - 16.0f);
+    const float height = std::min(354.0f, g_app.winH - 16.0f);
+    const float left = (g_app.winW - width) * 0.5f;
+    const float bottom = (g_app.winH - height) * 0.5f;
+    return {width, height, left, bottom, bottom + height};
+}
+
 void drawHelpScreen()
 {
-    // 两栏排版：800 高的窗口单栏放不下 60 行，底下几行会被裁掉。
-    static const char* kHelpL[] = {
-        "Mouse",
-        "  Left drag ......... transform selected object (per mode)",
-        "  Right drag ........ orbit / rotate camera",
-        "  Shift + Left drag . pan camera",
-        "  Middle click ...... popup menu",
-        "  Wheel ............. dolly (zoom)",
-        "",
-        "Geometry transform (Lab 5/6)",
-        "  t / r / y ......... Translate / Rotate / Scale mode",
-        "  0 ................. reset selected object transform",
-        "",
-        "Object",
-        "  Tab ............... select next object",
-        "",
-        "Robot (2026 project)",
-        "  n ................. next pose: stand / wave / T-pose / walk-freeze",
-        "  b ................. walk animation on / off (legs & arms joints)",
-        "  P ................. bezier path walk on / off (constant speed)",
-        "  B ................. show / hide path curve, anchors & handles",
-        "  G ................. chase demo: deer flees, robot follows",
-        "  select 'Robot' + t/r/y ... translate / rotate / scale robot",
-        "",
-        "Forest fractal (2026 bonus)",
-        "  f ................. L-system depth cycle (0 -> +1 -> -1)",
-        "  u / j ............. branch angle - / + (rebuilds the forest)",
-        "  middle-click menu . Forest (fractal) submenu",
-        "",
-        "Animation preview",
-        "  Space ............. play / pause (roam = bunny in the forest)",
-        "  --anim ............ turntable / orbit / projections / roam",
-        nullptr
+    struct Shortcut { const char* keys; const char* action; };
+    static constexpr Shortcut pages[][6] = {
+        {
+            {"Right drag / wheel", "Look around / zoom"},
+            {"WASD / Q E", "Move / descend or climb"},
+            {"Tab", "Select the next object"},
+            {"t / r / y", "Move / rotate / scale with left drag"},
+            {"I / K", "Import PNG or OBJ / switch character"},
+            {"Middle click", "Open the full action menu"},
+        },
+        {
+            {"Shift+P", "Pause or resume the patrol"},
+            {"Shift+B", "Show or hide the curve and control points"},
+            {"Shift+G", "Start or stop the deer chase"},
+            {"n / b", "Change pose / step in place"},
+            {"f / u / j", "Cycle tree depth / change branch angle"},
+            {"Space", "Toggle the rabbit or studio preview"},
+        },
+        {
+            {"v / 2 4 5 6 8", "Four views / switch view"},
+            {"3 / o / 7 / 9", "Perspective / ortho / cavalier / cabinet"},
+            {"[ ] / - =", "Adjust FOV / oblique angle"},
+            {"1 / F2 / F3", "Draw mode / renderer / shadows"},
+            {"F12", "Save a screenshot"},
+            {"Esc (in scene)", "Exit the viewer"},
+        }
     };
-
-    static const char* kHelpR[] = {
-        "Projection (Lab 7 + oblique bonus)",
-        "  3 ................. perspective        o ... orthographic",
-        "  7 / 9 ............. cavalier / cabinet oblique parallel",
-        "  - / = ............. oblique angle down / up",
-        "  [ / ] ............. decrease / increase FOV",
-        "",
-        "Views - orthographic three views (Lab 7)",
-        "  2 / 8 ............. front / back",
-        "  4 / 6 ............. left / right",
-        "  5 ................. top",
-        "  v ................. 4-viewport layout (3 views + perspective)",
-        "",
-        "Camera roam (Lab 7 bonus)",
-        "  W A S D ........... forward / left / back / right",
-        "  Q / E ............. down / up",
-        "  Shift+0 ........... reset camera",
-        "",
-        "Render options",
-        "  1 ................. solid / wireframe / points",
-        "  c ................. back-face culling",
-        "  m ................. smooth / flat shading",
-        "  l ................. lighting",
-        "  T ................. texture",
-        "  F2 / F3 ........... GLSL / shadows toggle",
-        "  g / x / p ......... grid / axes / ground",
-        "  F12 ............... save screenshot",
-        "  ESC ............... quit",
-        nullptr
-    };
-
-    int linesL = 0, linesR = 0;
-    for (; kHelpL[linesL]; ++linesL) {}
-    for (; kHelpR[linesR]; ++linesR) {}
-    const int lines = std::max(linesL, linesR);
-
-    const float W = (float)g_app.winW;
-    const float H = (float)g_app.winH;
+    static constexpr const char* tabs[] = {"1  Explore", "2  Patrol", "3  Views"};
+    const float width = (float)g_app.winW;
+    const float height = (float)g_app.winH;
+    const int page = g_app.helpPage;
+    const auto [panelW, panelH, left, bottom, top] = helpPanel();
+    if (panelW < 90.0f || panelH < 70.0f) return;
+    const float pad = HelpPanel::pad;
+    const bool splitColumns = panelW >= 630.0f;
+    const float rowHeight = splitColumns ? 29.0f : panelH < 310.0f ? 28.0f : 35.0f;
 
     hudBegin(g_app.winW, g_app.winH);
+    hudPanel(0, 0, width, height, 0.63f);
+    hudPanel(left, bottom, panelW, panelH, 0.96f);
+    hudColor(0.95f, 0.97f, 0.96f);
+    hudTitle(left + pad, top - 28.0f, "Controls");
+    if (panelW >= 375.0f)
+        hudText(left + panelW - pad - hudTextWidth("H / Esc  Back"), top - 27.0f, "H / Esc  Back");
 
-    // 面板尺寸按实测文字宽度定，不用写死的数字
-    float maxL = 0.0f, maxR = 0.0f;
-    for (int i = 0; i < linesL; ++i) maxL = std::max(maxL, hudTextWidth(kHelpL[i]));
-    for (int i = 0; i < linesR; ++i) maxR = std::max(maxR, hudTextWidth(kHelpR[i]));
-
-    const float pad  = 18.0f;
-    const float gap  = 30.0f;
-    const int   rows = lines + 1;                 // +1 是标题行
-
-    float ph = rows * kHudLineH + pad * 2.0f;
-    if (ph > H - 16.0f) ph = H - 16.0f;
-    float pw = maxL + gap + maxR + pad * 2.0f;
-    if (pw > W - 16.0f) pw = W - 16.0f;
-
-    const float px = (W - pw) * 0.5f;
-    const float py = (H - ph) * 0.5f;
-    hudPanel(px, py, pw, ph, 0.92f);
-
-    float ty = py + ph - pad - 6.0f;
-    hudColor(1.0f, 0.85f, 0.35f);
-    hudText(px + pad, ty, "3D Model Viewer  -  help   (h or F1 to close)");
-
-    hudColor(0.95f, 0.95f, 0.98f);
-    ty -= kHudLineH * 1.5f;
-    for (int i = 0; i < lines; ++i)
+    const float tabW = (panelW - pad * 2.0f) / 3.0f;
+    for (int tab = 0; tab < 3; ++tab)
     {
-        if (ty < py + 6.0f) break;
-        if (i < linesL) hudText(px + pad, ty, kHelpL[i]);
-        if (i < linesR) hudText(px + pad + maxL + gap, ty, kHelpR[i]);
-        ty -= kHudLineH;
+        const float x = left + pad + tab * tabW;
+        if (tab == page) hudPanel(x, top - 66.0f, tabW - 4.0f, 26.0f, 1.0f);
+        hudColor(tab == page ? 1.0f : 0.67f, tab == page ? 0.80f : 0.77f, 0.66f);
+        const std::string label = tabW >= 104.0f ? tabs[tab] : std::to_string(tab + 1);
+        hudText(x + 6.0f, top - 57.0f, label);
     }
 
+    float y = top - 94.0f;
+    for (const auto& item : pages[page])
+    {
+        if (y - (splitColumns ? 0.0f : 15.0f) < bottom + 12.0f) break;
+        const float actionX = left + (splitColumns ? 207.0f : pad);
+        std::string action = item.action;
+        const float available = left + panelW - pad - actionX;
+        while (!action.empty() && hudTextWidth(action) > available) action.pop_back();
+
+        hudColor(0.58f, 0.84f, 0.75f);
+        hudText(left + pad, y, item.keys);
+        hudColor(0.93f, 0.96f, 0.94f);
+        hudText(actionX, y - (splitColumns ? 0.0f : 15.0f), action);
+        y -= rowHeight;
+    }
     hudEnd();
 }
 
 // ---------------------------------------------------------------------------
-// HUD 叠加层
+// In-scene controls and contextual selection
 // ---------------------------------------------------------------------------
 void drawOverlay()
 {
     if (g_app.showHelp) { drawHelpScreen(); return; }
     if (!g_app.showHUD) return;
-    const float W=(float)g_app.winW, H=(float)g_app.winH;
-    hudBegin(g_app.winW,g_app.winH);
-    // Keep the status in its own strip instead of overwriting viewport labels.
-    hudPanel(0,H-54,W,54,0.82f);
-    hudColor(0.91f,0.95f,1.0f);
-    hudTextf(16,H-21,"CG LAB  /  %s  /  %s",g_app.sceneKind==SceneKind::Forest?"FOREST":"STUDIO",
-             g_app.enhanced?renderer::name():"Classic OpenGL");
-    const Object* selected=g_app.scene.selectedObject();
-    int triangles=0;
-    for(const auto& mesh:g_app.scene.meshes) if(mesh) triangles+=mesh->data().triangleCount;
-    std::string robotStatus;
-    if (robotAlive())
+    const float width = (float)g_app.winW;
+    const float height = (float)g_app.winH;
+    const bool forest = g_app.sceneKind == SceneKind::Forest;
+    const Object* selection = g_app.scene.selectedObject();
+    const bool selectedRobot = selection && selection->name == "Robot";
+    const char* mode = g_app.transMode == TransMode::Translate ? "Move" :
+                       g_app.transMode == TransMode::Rotate ? "Rotate" : "Scale";
+    const char* activity = robotChasing() ? "Tracking deer" :
+                           robotOnPath() ? "On patrol" :
+                           robotWalking() ? "Walking in place" : "Patrol paused";
+    const char* title = forest ? "Forest Patrol" : "Model Studio";
+    const std::string help = "H  Controls";
+    std::string actions = "Tab  Select   Right drag  Look around";
+    if (selectedRobot)
+        actions = "Left drag  " + std::string(mode) + "   t Move   r Rotate   y Scale";
+    else if (forest)
+        actions = std::string("Shift+P  ") + (robotOnPath() ? "Pause" : "Patrol") +
+                  (robotPathGuide() ? "   Shift+B  Hide route" : "   Shift+B  Show route") +
+                  "   Tab  Select   I  Import   K  Switch";
+
+    hudBegin(g_app.winW, g_app.winH);
+    if (height >= 105.0f)
     {
-        robotStatus = robotPoseName(robotPose());
-        if (robotWalking()) robotStatus += " + walking";
-        if (robotOnPath())  robotStatus += " + path";
-        if (robotChasing()) robotStatus += " + chase";
+        hudPanel(0, height - 46.0f, width, 46.0f, 0.86f);
+        hudColor(0.96f, 0.98f, 0.94f);
+        hudTitle(16.0f, height - 29.0f, title);
+        const std::string status = forest ? activity : projModeName(g_app.projMode);
+        if (width >= 185.0f + hudTextWidth(status))
+        {
+            hudColor(0.60f, 0.84f, 0.75f);
+            hudText(164.0f, height - 28.0f, status);
+        }
+        const std::string source = forest ? robotCharacterSource() : (selection ? selection->name : "");
+        std::string label = g_app.statusMsg.empty() ? source : g_app.statusMsg;
+        for (char& c : label) if ((unsigned char)c >= 128) c = '?';
+        const int labelLimit = std::max(0, (g_app.winW - 340) / 9);
+        if (labelLimit >= 8 && (int)label.size() > labelLimit)
+            label = label.substr(0, labelLimit - 3) + "...";
+        if (labelLimit >= 8 && !label.empty())
+        {
+            hudColor(g_app.statusMsg.empty() ? 0.77f : 1.0f, 0.83f, 0.72f);
+            hudText(width - 16.0f - hudTextWidth(label), height - 28.0f, label);
+        }
+
+        if (width >= 130.0f)
+        {
+            hudPanel(0, 0, width, 31.0f, 0.86f);
+            hudColor(0.98f, 0.80f, 0.53f);
+            const float helpX = width - 16.0f - hudTextWidth(help);
+            hudText(helpX, 11.0f, help);
+            if (hudTextWidth(actions) <= helpX - 32.0f)
+            {
+                hudColor(0.89f, 0.94f, 0.92f);
+                hudText(16.0f, 11.0f, actions);
+            }
+            else if (helpX >= 130.0f)
+            {
+                hudText(16.0f, 11.0f, "Tab  Select");
+            }
+        }
     }
-    hudColor(0.66f,0.76f,0.85f);
-    hudTextf(16,H-41,"%s  |  %s  |  %d triangles  |  %s%s%s%s",
-             selected?selected->name.c_str():"No selection",projModeName(g_app.projMode),triangles,
-             g_app.transMode==TransMode::Translate?"TRANSLATE":g_app.transMode==TransMode::Rotate?"ROTATE":"SCALE",
-             robotAlive()?"  |  Robot: ":"",
-             robotAlive()?robotStatus.c_str():"",
-             animalsAlive()?("  |  " + std::string(animalsStatusText())).c_str():"");
-    hudPanel(0,0,W,30,0.82f);
-    hudColor(0.72f,0.80f,0.87f);
-    hudText(16,10,"H Help   F2 Renderer   F3 Shadows   Space Animate   Tab Select   N Pose   b Walk   P Path   B Guide   G Chase   F12 Shot");
     hudEnd();
 }
 
@@ -424,17 +453,7 @@ void appSetup(const std::string& modelPath)
         animalsCreate(g_app.scene);      // 小动物：鹿 + 狐狸（兔子归 roam 动画管）
     }
 
-    g_app.camera.reset(g_app.scene.radius());
-
-    // 森林场景的默认机位要显式给。
-    // camera.reset() 按「场景半径 × 2.8」摆机位，森林半径是 10（留给雾足够的景深）
-    // → 距离 28 单位，而兔子只有 1.5 单位高，才占画面高度的 6%，开进去几乎什么都看不见。
-    if (g_app.sceneKind == SceneKind::Forest)
-    {
-        g_app.camera.eye    = v3(2.6f, 2.2f, 4.6f);   // 斜前上方，距兔子约 5.7 单位
-        g_app.camera.target = v3(0.0f, 0.7f, 0.0f);   // 看向兔子身体中部
-        g_app.camera.up     = v3(0.0f, 1.0f, 0.0f);
-    }
+    appResetCamera();
 
     // 清屏色跟进雾色：否则地平线处会看到背景色和雾色对不上的硬边
     if (g_app.fog) glClearColor(g_app.fogColor[0], g_app.fogColor[1], g_app.fogColor[2], 1.0f);
@@ -713,8 +732,8 @@ void appResetCamera()
     g_app.camera.reset(g_app.scene.radius());
     g_app.camera.fovY = 45.0f;
     if (g_app.sceneKind == SceneKind::Forest) {
-        g_app.camera.eye = v3(2.6f,2.2f,4.6f);
-        g_app.camera.target = v3(0,0.7f,0);
+        g_app.camera.eye = v3(4.1f,3.35f,6.4f);
+        g_app.camera.target = v3(0.10f,0.96f,0.20f);
         g_app.camera.up = v3(0,1,0);
     }
     appUpdateTitle();
@@ -744,9 +763,33 @@ void appUpdateTitle()
     // 在中文系统上放中文可能变成乱码。
     char buf[256];
     const Object* sel = g_app.scene.selectedObject();
-    std::snprintf(buf, sizeof(buf), "3D Model Viewer  -  %s  -  %s",
-                  projModeName(g_app.projMode), sel ? sel->name.c_str() : "(none)");
+    const char* title = g_app.sceneKind == SceneKind::Forest ? "Forest Patrol" : "Model Studio";
+    std::snprintf(buf, sizeof(buf), "%s  -  %s  -  %s",
+                  title, projModeName(g_app.projMode), sel ? sel->name.c_str() : "(none)");
     glutSetWindowTitle(buf);
+}
+
+void appClickHelp(int x, int y)
+{
+    const HelpPanel panel = helpPanel();
+    if (panel.width < 90.0f || panel.height < 70.0f) return;
+    const float screenY = (float)(g_app.winH - 1 - y);
+    const float relativeX = x - panel.left - HelpPanel::pad;
+    const float tabW = panel.tabWidth();
+    if (screenY < panel.top - 66.0f || screenY > panel.top - 40.0f ||
+        relativeX < 0.0f || relativeX >= 3.0f * tabW)
+        return;
+    g_app.helpPage = (int)(relativeX / tabW);
+    glutPostRedisplay();
+}
+
+bool appImportCharacter(const std::string& path, bool slim)
+{
+    std::string error;
+    const bool imported = robotImportCharacter(g_app.scene, path, slim, error);
+    g_app.statusMsg = imported ? "" : error;
+    if (!imported) std::fprintf(stderr, "[character] %s: %s\n", path.c_str(), error.c_str());
+    return imported;
 }
 
 void appRequestShot(const char* path)

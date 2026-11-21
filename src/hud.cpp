@@ -55,6 +55,13 @@ void hudText(float x, float y, const std::string& s)
         glutBitmapCharacter(font(), (int)c);
 }
 
+void hudTitle(float x, float y, const std::string& s)
+{
+    glRasterPos2f(x, y);
+    for (unsigned char c : s)
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, (int)c);
+}
+
 void hudTextf(float x, float y, const char* fmt, ...)
 {
     char buf[512];

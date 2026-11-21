@@ -9,6 +9,7 @@ void hudEnd();
 
 void hudColor(float r, float g, float b);
 void hudText(float x, float y, const std::string& s);
+void hudTitle(float x, float y, const std::string& s);
 void hudTextf(float x, float y, const char* fmt, ...);
 
 // 一行文字的实际像素宽度（用 glutBitmapWidth 逐字符累加）。

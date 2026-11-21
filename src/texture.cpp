@@ -12,12 +12,25 @@
 #endif
 
 #include <cstdio>
+#include <filesystem>
+#include <memory>
 
 // GL_CLAMP_TO_EDGE 是 OpenGL 1.2 的令牌，Windows SDK 的 <GL/gl.h> 只到 1.1，
 // 所以这里自己定义，避免依赖 glext.h。
 #ifndef GL_CLAMP_TO_EDGE
   #define GL_CLAMP_TO_EDGE 0x812F
 #endif
+
+namespace {
+std::FILE* openImage(const std::string& path)
+{
+#ifdef _WIN32
+    return _wfopen(std::filesystem::u8path(path).c_str(), L"rb");
+#else
+    return std::fopen(path.c_str(), "rb");
+#endif
+}
+}
 
 GLuint loadTexture2D(const std::string& path, int* wOut, int* hOut)
 {
@@ -28,10 +41,12 @@ GLuint loadTexture2D(const std::string& path, int* wOut, int* hOut)
     stbi_set_flip_vertically_on_load(1);   // OBJ 的 vt 原点在左下，stb 首行是图像顶部
 
     int w = 0, h = 0, comp = 0;
-    unsigned char* pixels = stbi_load(path.c_str(), &w, &h, &comp, STBI_rgb_alpha);
+    std::unique_ptr<std::FILE, decltype(&std::fclose)> file(openImage(path), std::fclose);
+    unsigned char* pixels = file ? stbi_load_from_file(file.get(), &w, &h, &comp, STBI_rgb_alpha) : nullptr;
     if (!pixels)
     {
-        std::fprintf(stderr, "[texture] load failed: %s (%s)\n", path.c_str(), stbi_failure_reason());
+        std::fprintf(stderr, "[texture] load failed: %s (%s)\n", path.c_str(),
+                     file ? stbi_failure_reason() : "unable to open image");
         return 0;
     }
 
@@ -60,4 +75,38 @@ GLuint loadTexture2D(const std::string& path, int* wOut, int* hOut)
     if (hOut) *hOut = h;
     std::printf("[texture] %s -> %dx%d, %d channels\n", path.c_str(), w, h, comp);
     return tex;
+}
+
+bool readSkinPixels(const std::string& path, std::vector<unsigned char>& pixels)
+{
+    std::unique_ptr<std::FILE, decltype(&std::fclose)> file(openImage(path), std::fclose);
+    if (!file) return false;
+    const unsigned char signature[] = {137, 80, 78, 71, 13, 10, 26, 10};
+    for (unsigned char byte : signature)
+        if (std::fgetc(file.get()) != byte) return false;
+    std::rewind(file.get());
+    int w = 0, h = 0, channels = 0;
+    if (!stbi_info_from_file(file.get(), &w, &h, &channels) || w != 64 || h != 64)
+        return false;
+    std::rewind(file.get());
+    stbi_set_flip_vertically_on_load(0);
+    std::unique_ptr<unsigned char, decltype(&stbi_image_free)> decoded(
+        stbi_load_from_file(file.get(), &w, &h, &channels, STBI_rgb_alpha), stbi_image_free);
+    if (!decoded || w != 64 || h != 64) return false;
+    pixels.assign(decoded.get(), decoded.get() + 64 * 64 * 4);
+    return true;
+}
+
+GLuint uploadSkinPixels(const unsigned char* pixels)
+{
+    GLuint texture = 0;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texture;
 }

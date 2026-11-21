@@ -25,6 +25,7 @@ public:
 
     // 程序化构造（森林等）：直接塞顶点数据进去，不经过文件
     void adopt(MeshData&& data);
+    void adoptSkin(MeshData&& data, const unsigned char* pixels);
 
     // 用当前材质设定 + 纹理绘制。useTexture 关掉时退化为纯材质着色。
     void draw(bool useTexture) const;
@@ -38,6 +39,7 @@ public:
 
     const MeshData& data() const { return data_; }
     bool  hasTexture() const { return tex_ != 0; }
+    void  preserveSmallTexturePixels() const;
     float radius()     const { return data_.radius; }
     const float* center() const { return data_.center; }
 

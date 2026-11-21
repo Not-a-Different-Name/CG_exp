@@ -5,6 +5,7 @@
 #include "math3d.h"
 
 #include <cmath>
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <memory>
@@ -71,7 +72,7 @@ void buildDeer(MeshData& out)
         for (int fz = -1; fz <= 1; fz += 2)
         {
             MeshData p; addCylinderSide(p, 0.0f, 0.50f, 0.036f, 0.028f, dark, 5);
-            place(out, p, 0.21f * fx, 0.50f, 0.115f * fz);
+            place(out, p, 0.21f * fx, 0.0f, 0.115f * fz);
         }
     { MeshData p; addCone(p, 0.0f, 0.16f, 0.045f, body, 5);   // 短尾
       place(out, p, -0.36f, 0.72f, 0.0f, 120.0f); }
@@ -99,7 +100,7 @@ void buildFox(MeshData& out)
         for (int fz = -1; fz <= 1; fz += 2)
         {
             MeshData p; addCylinderSide(p, 0.0f, 0.22f, 0.026f, 0.020f, dark, 4);
-            place(out, p, 0.17f * fx, 0.22f, 0.085f * fz);
+            place(out, p, 0.17f * fx, 0.0f, 0.085f * fz);
         }
     { MeshData p; addEllipsoid(p, v3(0, 0, 0), 0.17f, 0.065f, 0.065f, fur, 8, 5);
       place(out, p, -0.34f, 0.33f, 0.0f, 8.0f); }                   // 蓬松尾
@@ -172,6 +173,9 @@ struct AnimalsCtl
     int   obj[2] = { -1, -1 };
     float heading[2][2] = { { 1, 0 }, { 1, 0 } };   // 当前前进方向（单位向量）
     bool  chase = false;                             // W3-2 追赶演示
+    bool  hasTime = false;
+    float lastTime = 0.0f;
+    float deerDistanceOffset = 0.0f;
     char  status[64] = "";
 };
 AnimalsCtl g_animals;
@@ -223,6 +227,8 @@ bool animalsCreate(Scene& scene)
 void animalsUpdate(Scene& scene, float t)
 {
     if (!g_animals.exists) return;
+    g_animals.hasTime = true;
+    g_animals.lastTime = t;
 
     // 机器人位置（「警觉」判定）。场景里没有机器人时视为很远。
     bool  hasRobot = false;
@@ -243,7 +249,8 @@ void animalsUpdate(Scene& scene, float t)
         // 追赶演示：鹿被追时一直跑（不进入吃草窗口）
         const bool fleeing = g_animals.chase && (i == 0);
         const float speed  = fleeing ? d.fleeSpeed : d.walkSpeed;
-        const float dist   = d.phase0 + walkedDistance(bt, speed, fleeing);
+        const float dist   = d.phase0 + walkedDistance(bt, speed, fleeing) +
+                             (i == 0 ? g_animals.deerDistanceOffset : 0.0f);
 
         const Vec3 p   = g_loop[i].evalAtDistance(dist);
         const Vec3 tan = g_loop[i].tangentAtDistance(dist);
@@ -255,15 +262,15 @@ void animalsUpdate(Scene& scene, float t)
 
         // 吃草窗口：俯身 + 高度略降；机器人靠得太近则警觉（抬头、不吃草）
         constexpr float kWalk = 11.0f, kCycle = 15.0f;
-        const bool grazing = !fleeing && std::fmod(bt, kCycle) > kWalk;
         const bool alert   = hasRobot && !fleeing &&
                              std::sqrt((p.x - rx) * (p.x - rx) + (p.z - rz) * (p.z - rz)) < 1.35f;
+        const bool grazing = !fleeing && !alert && std::fmod(bt, kCycle) > kWalk;
 
         float pitchDeg = 0.0f, bob = 0.0f;
         if (grazing)
         {
-            pitchDeg = d.grazePitchDeg * (0.75f + 0.25f * std::sin(bt * 2.3f));  // 啄食起伏
-            bob = -0.025f;
+            // 模型朝 +X，绕 Z 的负角才会低头。
+            pitchDeg = -d.grazePitchDeg * (0.75f + 0.25f * std::sin(bt * 2.3f));
             state[i] = "grazing";
         }
         else
@@ -278,6 +285,17 @@ void animalsUpdate(Scene& scene, float t)
         mat4FromAxisAngle(mYaw,   yawDeg,   0.0f, 1.0f, 0.0f);
         mat4FromAxisAngle(mPitch, pitchDeg, 0.0f, 0.0f, 1.0f);
         mat4Multiply(o.xform, mYaw, mPitch);
+
+        // 整体俯身会使一侧脚落到地面以下；按实际网格最低点补偿高度。
+        if (grazing)
+        {
+            float minY = 0.0f;
+            const auto& vertices = o.mesh->data().positions;
+            for (size_t v = 0; v < vertices.size(); v += 3)
+                minY = std::min(minY, mat4MulPoint(mPitch,
+                    v3(vertices[v], vertices[v + 1], vertices[v + 2])).y);
+            bob = -minY;
+        }
 
         o.pos[0] = p.x;
         o.pos[1] = bob;
@@ -295,6 +313,15 @@ bool animalsChase() { return g_animals.exists && g_animals.chase; }
 void animalsSetChase(bool on)
 {
     if (!g_animals.exists || on == g_animals.chase) return;
+    // 只改变后续速度，不把 speed*t 的历史路程整体换算，否则切换会瞬移。
+    if (g_animals.hasTime)
+    {
+        const AnimalDef& deer = kDefs[0];
+        const float t = g_animals.lastTime;
+        g_animals.deerDistanceOffset +=
+            walkedDistance(t, g_animals.chase ? deer.fleeSpeed : deer.walkSpeed, g_animals.chase) -
+            walkedDistance(t, on ? deer.fleeSpeed : deer.walkSpeed, on);
+    }
     g_animals.chase = on;
     std::printf("[animals] chase demo: %s\n", on ? "on (deer flees)" : "off");
 }

@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <filesystem>
 #include <sstream>
 #include <unordered_map>
 
@@ -84,7 +85,7 @@ bool parseCorner(const std::string& tok, CornerRef& out)
 // ---------------------------------------------------------------------------
 bool parseMTL(const std::string& mtlPath, ObjMaterial& out, std::string& mapOut)
 {
-    std::ifstream ifs(mtlPath);
+    std::ifstream ifs(std::filesystem::u8path(mtlPath));
     if (!ifs.is_open()) return false;
 
     const std::string mtlDir = dirOf(mtlPath);
@@ -168,7 +169,7 @@ bool loadOBJ(const std::string& path, MeshData& out, std::string* errOut)
         return false;
     };
 
-    std::ifstream ifs(path);
+    std::ifstream ifs(std::filesystem::u8path(path));
     if (!ifs.is_open()) return fail("cannot open OBJ file: " + path);
 
     const std::string objDir = dirOf(path);

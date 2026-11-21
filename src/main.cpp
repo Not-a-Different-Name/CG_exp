@@ -82,6 +82,8 @@ std::string findDefaultModel()
 struct Options
 {
     std::string modelPath;
+    std::string characterPath;
+    bool slimSkin = false;
     std::string shotPath;
     std::string proj, view, render;
     int  winW = 1280, winH = 800;
@@ -128,6 +130,8 @@ Options parseArgs(int argc, char** argv)
         else if (a == "--show-help") o.showHelp = true;
         else if (a == "--up")      next(o.upAxis);
         else if (a == "--scene")   next(o.sceneName);
+        else if (a == "--character") next(o.characterPath);
+        else if (a == "--slim-skin") o.slimSkin = true;
         else if (a == "--pose")    next(o.robotPose);
         else if (a == "--robot-walk") o.robotWalk = true;
         else if (a == "--path")       o.robotPath = true;
@@ -337,8 +341,35 @@ int runSelfTest()
               "chase pose overrides the root position (chase > path)");
         robotClearChasePose();
 
-        robotSetPathWalk(false);
+        robotSetPathWalk(true);
+        robotSetPose(RobotPose::TPose, true);
+        robotUpdate(s, 3.0f);
+        check(!robotOnPath() && !robotWalking() && !robotChasing(),
+              "manual pose takes control from path animation");
+        robotSetChasePose(0.5f, -0.7f, 120.0f);
+        robotToggleWalk();
+        robotUpdate(s, 3.0f);
+        check(!robotChasing() && !robotOnPath() && !robotWalking(),
+              "manual walk-stop takes control from chase animation");
+
         robotSetTimeOverride(-1.0f);
+        robotSetPathWalk(true);
+        robotUpdate(s, 10.0f);
+        robotUpdate(s, 10.5f);
+        robotPartPosition(s, "Robot", p);
+        robotSetPathWalk(false);
+        robotUpdate(s, 18.0f);
+        robotSetPathWalk(true);
+        robotUpdate(s, 23.0f);
+        float resumed[3] = {};
+        ok = robotPartPosition(s, "Robot", resumed);
+        check(ok && nearf(p[0], resumed[0], 1e-3f) && nearf(p[2], resumed[2], 1e-3f),
+              "patrol: resuming after a pause preserves the route position");
+        robotUpdate(s, 23.25f);
+        ok = robotPartPosition(s, "Robot", resumed);
+        check(ok && std::hypot(resumed[0] - p[0], resumed[2] - p[2]) > 0.1f,
+              "patrol: resuming advances along the route");
+        robotSetPathWalk(false);
     }
 
     // ---- W3-1 贝塞尔闭曲线 + 弧长参数化漫步 ----
@@ -390,7 +421,8 @@ int runSelfTest()
         MeshData a, b, c;
         buildForest(a, 20, 4, path, 2.0f, 7u);
         buildForest(b, 20, 4, path, 2.0f, 7u);
-        check(a.indices.size() == b.indices.size(),
+        check(a.indices == b.indices && a.positions == b.positions &&
+              a.normals == b.normals && a.colors == b.colors,
               "same seed => identical forest geometry (reproducible)");
 
         forestSetDetail(+1);
@@ -405,6 +437,18 @@ int runSelfTest()
         std::printf("  -- animals (deer & fox) --\n");
         Scene s;
         animalsCreate(s);
+
+        bool feetOnGround = true;
+        for (const Object& animal : s.objects)
+        {
+            if (!animal.mesh) continue;
+            const auto& vertices = animal.mesh->data().positions;
+            float minY = 100.0f;
+            for (size_t v = 1; v < vertices.size(); v += 3)
+                minY = std::min(minY, vertices[v]);
+            feetOnGround = feetOnGround && nearf(minY, 0.0f, 1e-4f);
+        }
+        check(feetOnGround, "animal mesh feet reach y=0 (not just the object origin)");
 
         animalsUpdate(s, 3.0f);
         float p[3];
@@ -430,6 +474,27 @@ int runSelfTest()
                             std::fabs(p[0] - q[0]) < 1e-3f && std::fabs(p[2] - q[2]) < 1e-3f;
         check(frozen, "deer freezes while grazing (walk 11s / graze 4s)");
 
+        animalsUpdate(s, 12.0f);
+        for (const Object& animal : s.objects)
+        {
+            if (animal.name != "Deer") continue;
+            check(animal.xform[1] < 0.0f, "grazing deer tilts its +X-facing head down");
+            float minY = 100.0f;
+            const auto& vertices = animal.mesh->data().positions;
+            for (size_t v = 0; v < vertices.size(); v += 3)
+                minY = std::min(minY, animal.pos[1] + mat4MulPoint(animal.xform,
+                    v3(vertices[v], vertices[v + 1], vertices[v + 2])).y);
+            check(nearf(minY, 0.0f, 1e-4f), "grazing mesh stays above the ground");
+        }
+        Object observer;
+        observer.name = "Robot";
+        animalPartPosition(s, "Deer", observer.pos);
+        s.objects.push_back(observer);
+        animalsUpdate(s, 12.0f);
+        check(std::string(animalsStatusText()).find("deer alert") != std::string::npos,
+              "nearby robot interrupts grazing and makes deer alert");
+        s.objects.pop_back();
+
         // W3-2 追赶：鹿进入逃跑状态（更快、不吃草），机器人目标点在鹿身后 1.25
         animalsUpdate(s, 3.0f);
         animalPartPosition(s, "Deer", p);
@@ -437,9 +502,14 @@ int runSelfTest()
         animalsUpdate(s, 3.0f);
         float f[3];
         animalPartPosition(s, "Deer", f);
+        check(nearf(f[0], p[0], 1e-4f) && nearf(f[2], p[2], 1e-4f),
+              "chase toggle preserves the deer's current position");
+        animalsUpdate(s, 3.1f);
+        animalPartPosition(s, "Deer", f);
         const float fleeMoved = std::sqrt((f[0] - p[0]) * (f[0] - p[0]) +
                                           (f[2] - p[2]) * (f[2] - p[2]));
-        check(fleeMoved > 0.05f, "chase: deer flees faster than its normal walk");
+        check(fleeMoved > 0.14f && fleeMoved < 0.17f,
+              "chase: deer travels at flee speed after the toggle");
 
         float target[3];
         float yaw = 0.0f;
@@ -472,6 +542,11 @@ int runSelfTest()
                     f[0], f[2], hx, hz, t2[0], t2[2], yaw2, dot);
 
         animalsSetChase(false);
+        animalsUpdate(s, 6.05f);
+        float stopped[3];
+        animalPartPosition(s, "Deer", stopped);
+        check(nearf(stopped[0], p[0], 1e-4f) && nearf(stopped[2], p[2], 1e-4f),
+              "ending chase also preserves the deer's current position");
         animalsUpdate(s, 3.0f);
     }
 
@@ -483,6 +558,9 @@ int runSelfTest()
 
 int main(int argc, char** argv)
 {
+    // GUI 子系统下批量截图也依赖重定向日志，及时写出，避免 GLUT 退出时丢失缓冲。
+    std::setvbuf(stdout, nullptr, _IONBF, 0);
+    std::setvbuf(stderr, nullptr, _IONBF, 0);
     // 自检不需要窗口，在 glutInit 之前就返回
     for (int i = 1; i < argc; ++i)
         if (std::string(argv[i]) == "--selftest")
@@ -535,6 +613,12 @@ int main(int argc, char** argv)
     g_app.shadows = !opt.noShadows;
     appSetup(opt.modelPath);
     glutCloseFunc(appCleanup);
+    if (!opt.characterPath.empty() && !appImportCharacter(opt.characterPath, opt.slimSkin) &&
+        (!opt.shotPath.empty() || !opt.recordPath.empty()))
+    {
+        appCleanup();
+        return 1;
+    }
 
     // ---- 命令行覆盖（必须在 glutCreateWindow 之后，appUpdateTitle 需要当前窗口）----
     if      (opt.proj == "persp")                          appSetProjection(ProjMode::Perspective);
@@ -626,7 +710,8 @@ int main(int argc, char** argv)
 
         if (opt.animName.empty())
         {
-            ro.anim = AnimKind::Turntable;      // 默认：模型自转
+            // 森林动画由机器人/动物自身驱动，保留默认或 --eye 指定机位。
+            ro.anim = g_app.sceneKind == SceneKind::Forest ? AnimKind::None : AnimKind::Turntable;
         }
         else if (!parseAnimKind(opt.animName, ro.anim))
         {
@@ -654,6 +739,12 @@ int main(int argc, char** argv)
             std::printf("[main] unknown --anim '%s'\n"
                         "       valid: turntable | orbit | projections | transforms | roam\n",
                         opt.animName.c_str());
+    }
+    else if (g_app.sceneKind == SceneKind::Forest && opt.robotPose.empty() &&
+             !opt.robotWalk && !opt.chase && opt.robotTime < 0.0f)
+    {
+        // Live forest entry starts the patrol. Batch captures still use explicit flags.
+        robotSetPathWalk(true);
     }
 
     std::printf("[main] entering main loop  (h = help, ESC = quit)\n");

@@ -7,18 +7,26 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+from datetime import date
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--vs', type=Path, default=Path(
-        r'C:\Program Files\Microsoft Visual Studio\2022\Community'))
-    parser.add_argument('--name', default='CG-Experiment-ReadyToRun-VS-20261030')
+    parser.add_argument('--vs', type=Path, help='VS installation root; detected with vswhere by default')
+    parser.add_argument('--name', default='CG-Experiment-ReadyToRun-VS-'+date.today().strftime('%Y%m%d'))
     args = parser.parse_args()
     if Path(args.name).name != args.name or any(c in args.name for c in '/\\:'):
         parser.error('--name must be a single filename component')
+    if args.vs is None:
+        import os
+        vswhere = Path(os.environ['ProgramFiles(x86)'])/'Microsoft Visual Studio/Installer/vswhere.exe'
+        args.vs = Path(subprocess.check_output([str(vswhere), '-latest', '-products', '*',
+            '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+            '-property', 'installationPath'], text=True).strip())
+    if not (args.vs/'MSBuild/Current/Bin/MSBuild.exe').is_file():
+        parser.error('VS C++ tools were not found; specify --vs explicitly')
     subprocess.run([str(args.vs/'MSBuild/Current/Bin/MSBuild.exe'),
                     str(ROOT/'viewer.sln'), '/t:Build', '/p:Configuration=Release',
                     '/p:Platform=x64', '/verbosity:minimal', '/nologo'], check=True)
@@ -32,12 +40,14 @@ def main():
     with tempfile.TemporaryDirectory(prefix='cg-share-') as temp:
         package = Path(temp)/'CG-Experiment'
         package.mkdir()
-        for name in ['src', 'Models', 'third_party', 'tests', 'tools', 'docs']:
+        for name in ['src', 'Models', 'third_party', 'tests', 'tools', 'docs', 'report-assets']:
             shutil.copytree(ROOT/name, package/name,
                             ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+        if (ROOT/'video').is_dir():
+            shutil.copytree(ROOT/'video', package/'video')
         for name in ['viewer.sln', 'viewer.vcxproj', 'viewer.vcxproj.filters',
                      'CMakeLists.txt', 'CMakePresets.json', 'build.bat', 'build.sh',
-                     'README.md', 'CG-Experiment-code.md', '.gitignore']:
+                     'README.md', 'CG-Experiment-code.md', '.gitignore', '.gitattributes']:
             shutil.copy2(ROOT/name, package/name)
         for name in ['viewer.exe', 'freeglut.dll']:
             shutil.copy2(ROOT/'bin/x64/Release'/name, package/name)
@@ -59,14 +69,18 @@ def main():
 请先完整解压，再运行；不要在 ZIP 压缩包内部直接双击 exe。
 
 一、直接运行（无需安装 Visual Studio / Python / CMake）
-双击 viewer.exe 或 Start-Forest.bat：打开森林场景。
+双击 viewer.exe 或 Start-Forest.bat：打开森林场景，机器人从林间小径开始巡游。
 双击 Start-Bunny-Hop.bat：兔子自动蹦跳漫游。
 双击 Start-Studio.bat：打开课程展示台。
 请保留 exe 旁边的 DLL 文件和 Models 文件夹。
 
 空格：播放/暂停兔子动画；手动操作会停止动画。
 右键拖动/WASD/QE：相机；左键拖动：物体变换。
-F2：增强/经典渲染；F3：阴影；H：帮助；Esc：退出。
+F2：增强/经典渲染；F3：阴影；H：操作页，点页签或按 1/2/3 切换。Esc 返回场景或退出。
+机器人：Shift+P 暂停/继续巡游，Shift+B 显示路径，Shift+G 追赶；n 换姿势，b 原地走/停。
+Tab 选 Robot，按 t/r/y 后左键拖动做整体平移/旋转/缩放。
+i 导入 64×64 Classic PNG 皮肤或 Y-up OBJ；Shift+I 导入 Slim 皮肤。
+k 在内置机器人、已加载的 PNG 和 OBJ 间切换；样例在 Models/TrailSurveyor/。
 
 运行环境：Windows 10/11 64 位，正常安装的显卡驱动。
 包内已带 freeglut 和微软可再分发的 VC++ 运行库。

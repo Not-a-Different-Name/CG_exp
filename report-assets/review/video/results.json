@@ -1,0 +1,103 @@
+[
+  {
+    "case": "robot-wave",
+    "seconds": 4,
+    "stream": {
+      "codec_name": "h264",
+      "width": 960,
+      "height": 600,
+      "r_frame_rate": "24/1",
+      "nb_frames": "96"
+    },
+    "command": [
+      "build/Release/viewer.exe",
+      "--record",
+      "report-assets/review/video/robot-wave.mp4",
+      "--anim",
+      "none",
+      "--seconds",
+      "4",
+      "--fps",
+      "24",
+      "--size",
+      "960x600",
+      "--pose",
+      "wave"
+    ]
+  },
+  {
+    "case": "robot-path",
+    "seconds": 10,
+    "stream": {
+      "codec_name": "h264",
+      "width": 960,
+      "height": 600,
+      "r_frame_rate": "24/1",
+      "nb_frames": "240"
+    },
+    "command": [
+      "build/Release/viewer.exe",
+      "--record",
+      "report-assets/review/video/robot-path.mp4",
+      "--anim",
+      "none",
+      "--seconds",
+      "10",
+      "--fps",
+      "24",
+      "--size",
+      "960x600",
+      "--path",
+      "--path-guide"
+    ]
+  },
+  {
+    "case": "animals",
+    "seconds": 16,
+    "stream": {
+      "codec_name": "h264",
+      "width": 960,
+      "height": 600,
+      "r_frame_rate": "24/1",
+      "nb_frames": "384"
+    },
+    "command": [
+      "build/Release/viewer.exe",
+      "--record",
+      "report-assets/review/video/animals.mp4",
+      "--anim",
+      "none",
+      "--seconds",
+      "16",
+      "--fps",
+      "24",
+      "--size",
+      "960x600"
+    ]
+  },
+  {
+    "case": "chase",
+    "seconds": 8,
+    "stream": {
+      "codec_name": "h264",
+      "width": 960,
+      "height": 600,
+      "r_frame_rate": "24/1",
+      "nb_frames": "192"
+    },
+    "command": [
+      "build/Release/viewer.exe",
+      "--record",
+      "report-assets/review/video/chase.mp4",
+      "--anim",
+      "none",
+      "--seconds",
+      "8",
+      "--fps",
+      "24",
+      "--size",
+      "960x600",
+      "--chase"
+    ]
+  }
+]

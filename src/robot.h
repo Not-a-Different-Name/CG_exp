@@ -24,6 +24,9 @@ enum class RobotPose { Stand = 0, Wave, TPose, WalkFreeze, Count };
 
 // 在 Forest 场景里创建机器人（appSetup 调用，Studio 场景不建）。
 void  robotCreate(Scene& scene);
+bool  robotImportCharacter(Scene& scene, const std::string& path, bool slim, std::string& error);
+bool  robotToggleCharacter(Scene& scene);
+const std::string& robotCharacterSource();
 
 // 每帧推进关节并写回各部件。t 用「录制=帧号/fps，预览=真实时钟」的时间轴。
 void  robotUpdate(Scene& scene, float t);

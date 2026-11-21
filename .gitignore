@@ -13,6 +13,9 @@ x64/
 Release/
 Debug/
 out/
+dist/
+__pycache__/
+*.pyc
 .vs/
 
 # 注意：不要忽略 *.sln / *.vcxproj —— viewer.sln / viewer.vcxproj 是本项目

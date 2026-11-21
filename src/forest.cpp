@@ -1,4 +1,6 @@
 #include "forest.h"
+#include "robot.h"
+#include "bezier.h"
 
 #include <cmath>
 #include <cstring>
@@ -173,9 +175,12 @@ void addGround(MeshData& m, float halfSize, int div)
         float x=-halfSize+step*i, z=-halfSize+step*j;
         float g=0.5f+0.5f*std::sin(x*0.23f)*std::cos(z*0.19f);
         float d=0.5f+0.5f*std::sin(x*0.07f+2.1f)*std::sin(z*0.09f-1.3f);
+        const float clearing = std::exp(-(x*x + z*z) / 40.0f);
         m.positions.insert(m.positions.end(),{x,0.0f,z});
         m.normals.insert(m.normals.end(),{0.0f,1.0f,0.0f});
-        m.colors.insert(m.colors.end(),{0.12f+0.09f*g+0.07f*d,0.25f+0.15f*g+0.03f*d,0.09f+0.06f*g+0.03f*d});
+        m.colors.insert(m.colors.end(),{0.12f+0.09f*g+0.07f*d+0.11f*clearing,
+                                        0.25f+0.15f*g+0.03f*d+0.11f*clearing,
+                                        0.09f+0.06f*g+0.03f*d+0.04f*clearing});
     }
     for(int i=0;i<div;++i) for(int j=0;j<div;++j) {
         GLuint a=base+i*(div+1)+j, b=a+1, c=b+div+1, d=a+div+1;
@@ -485,6 +490,31 @@ void buildForest(MeshData& out,
     Rng rng(seed);
 
     addGround(out, halfSize, 48);
+
+    // Use the same curve for the visible trail and the robot's patrol.
+    const BezierPath& trail = robotPath();
+    constexpr int trailSteps = 96;
+    constexpr float trailColor[3] = { 0.44f, 0.32f, 0.21f };
+    Vec3 edge[2];
+    for (int step = 0; step <= trailSteps; ++step)
+    {
+        const float distance = trail.total * (step % trailSteps) / trailSteps;
+        Vec3 center = trail.evalAtDistance(distance);
+        center.y = 0.014f;
+        const Vec3 tangent = trail.tangentAtDistance(distance);
+        const float phase = 6.2831853f * step / trailSteps;
+        const float halfWidth = 0.25f + 0.025f * std::cos(phase * 5.0f);
+        const Vec3 offset = v3(-tangent.z, 0.0f, tangent.x) * halfWidth;
+        const Vec3 left = center + offset;
+        const Vec3 right = center - offset;
+        if (step > 0)
+        {
+            pushTri(out, edge[0], left, right, trailColor);
+            pushTri(out, edge[0], right, edge[1], trailColor);
+        }
+        edge[0] = left;
+        edge[1] = right;
+    }
 
     // 拒绝采样：太靠近漫步路线的点丢弃
     const float clearSq = clearance * clearance;

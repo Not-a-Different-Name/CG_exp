@@ -10,8 +10,8 @@
 
 | 项 | 值 |
 |---|---|
-| 源文件 | 44 个 |
-| 代码总行数 | 5718 行（不含本页的 README 部分）| 
+| 源文件 | 54 个 |
+| 代码总行数 | 8660 行（不含本页的 README 部分）|
 | 模型 | `Models/bunny_10k.obj`（Stanford Bunny，10000 面，Y-up）|
 | 依赖 | 已 vendor：freeglut（x64）+ stb_image v2.30，**离线可构建** |
 
@@ -30,56 +30,1951 @@ CM="/c/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonEx
 
 | # | 文件 | 行数 | 说明 |
 |---|---|---|---|
-| 1 | `src/gl_api.h` | 95 | OpenGL runtime entry points |
-| 2 | `src/shaders.h` | 66 | GLSL per-pixel lighting and PCF shadows |
-| 3 | `src/renderer.h` | 14 | Renderer interface |
-| 4 | `src/renderer.cpp` | 150 | Shadow pass and forward shading |
-| 5 | `tests/obj_loader_test.cpp` | 31 | OBJ regression tests |
-| 6 | `tools/render_smoke.py` | 36 | GPU rendering regression checks |
-| 7 | `CMakeLists.txt` | 112 | 构建配置（含 32 位防护） |
-| 8 | `CMakePresets.json` | 40 | CMake 预设：只提供 x64，避免选错 |
-| 9 | `build.bat` | 82 | 一键构建（Windows cmd / PowerShell） |
-| 10 | `build.sh` | 78 | 一键构建（git-bash / MSYS2） |
-| 11 | `viewer.vcxproj` | 176 | 经典 VS 工程（自包含，双击 viewer.sln 即可） |
-| 12 | `.gitignore` | 25 | Git 忽略规则 |
-| 13 | `src/types.h` | 27 | 全局模式枚举 |
-| 14 | `src/math3d.h` | 136 | 向量 / 矩阵 / 四元数工具（header-only） |
-| 15 | `src/obj_loader.h` | 62 | OBJ 导入接口（实验十） |
-| 16 | `src/obj_loader.cpp` | 408 | OBJ / MTL 解析：四边形三角化 + 顶点去重 |
-| 17 | `src/mesh.h` | 50 | 网格接口 |
-| 18 | `src/mesh.cpp` | 272 | 网格：归一化、上轴判别、客户端顶点数组绘制 |
-| 19 | `src/texture.h` | 7 | 纹理接口 |
-| 20 | `src/texture.cpp` | 63 | stb_image → OpenGL 纹理 |
-| 21 | `src/camera.h` | 38 | 观察变换相机接口 |
-| 22 | `src/camera.cpp` | 123 | 相机：环绕 / 漫游 / 四元数旋转 / 退化保护（实验七） |
-| 23 | `src/projection.h` | 21 | 投影接口 |
-| 24 | `src/projection.cpp` | 171 | 透视 / 正交 / 斜平行投影 + 保宽高比 |
-| 25 | `src/lighting.h` | 15 | 光照接口 |
-| 26 | `src/lighting.cpp` | 89 | 光照与材质（展示台点光源 / 森林太阳光） |
-| 27 | `src/forest.h` | 28 | 程序化森林接口 |
-| 28 | `src/forest.cpp` | 321 | 森林：地面 + 三种树型，烘焙成一个顶点色网格 |
-| 29 | `src/scene.h` | 63 | 场景与物体接口 |
-| 30 | `src/scene.cpp` | 375 | 两套场景：展示台（实验四/五）与森林 |
-| 31 | `src/anim.h` | 30 | 脚本动画接口 |
-| 32 | `src/anim.cpp` | 289 | 动画（时间的纯函数）：自转/环绕/投影/变换/森林漫步 |
-| 33 | `src/recorder.h` | 19 | 录制接口 |
-| 34 | `src/recorder.cpp` | 76 | 逐帧数据管道进 ffmpeg 编码 mp4 |
-| 35 | `src/hud.h` | 21 | 叠加文字接口 |
-| 36 | `src/hud.cpp` | 89 | 屏幕叠加文字与帮助面板 |
-| 37 | `src/input.h` | 47 | 输入接口 |
-| 38 | `src/input.cpp` | 382 | 键盘 / 鼠标 / 滚轮 / 右键菜单（实验六） |
-| 39 | `src/app.h` | 114 | 程序状态接口 |
-| 40 | `src/app.cpp` | 741 | 渲染主流程、HUD、截图、四视口、录制调度 |
-| 41 | `src/main.cpp` | 403 | 入口：GLUT 初始化、命令行解析、回调注册、自检 |
-| 42 | `tools/bmp2png.py` | 74 | 截图 BMP → PNG（纯标准库） |
-| 43 | `tools/make_shots.sh` | 54 | 一键重新生成 shots/ 全部截图 |
-| 44 | `tools/make_package.py` | 205 | 本脚本：生成这份代码文档 |
+| 1 | `tools/record_demos.py` | 57 | 可复现功能视频与 ffprobe 验证 |
+| 2 | `tools/make_share_package.py` | 123 | 便携可运行包与 VS 源码分发 |
+| 3 | `tools/update_manifest.py` | 56 | 文件哈希更新与校验 |
+| 4 | `tools/setup_dependencies.ps1` | 51 | 依赖检查与 FFmpeg 安装 |
+| 5 | `src/robot.h` | 77 | 机器人层级与动画接口 |
+| 6 | `src/robot.cpp` | 808 | 机器人关节与路径动画 |
+| 7 | `src/animals.h` | 26 | 动物行为接口 |
+| 8 | `src/animals.cpp` | 364 | 鹿与狐狸建模、吃草和追赶 |
+| 9 | `src/bezier.h` | 45 | 贝塞尔路径接口 |
+| 10 | `src/bezier.cpp` | 208 | de Casteljau 与弧长参数化 |
+| 11 | `src/gl_api.h` | 95 | OpenGL runtime entry points |
+| 12 | `src/shaders.h` | 66 | GLSL per-pixel lighting and PCF shadows |
+| 13 | `src/renderer.h` | 14 | Renderer interface |
+| 14 | `src/renderer.cpp` | 150 | Shadow pass and forward shading |
+| 15 | `tests/obj_loader_test.cpp` | 31 | OBJ regression tests |
+| 16 | `tools/render_smoke.py` | 57 | GPU rendering regression checks |
+| 17 | `CMakeLists.txt` | 115 | 构建配置（含 32 位防护） |
+| 18 | `CMakePresets.json` | 40 | CMake 预设：x64 / Win32 |
+| 19 | `build.bat` | 82 | 一键构建（Windows cmd / PowerShell） |
+| 20 | `build.sh` | 78 | 一键构建（git-bash / MSYS2） |
+| 21 | `viewer.vcxproj` | 181 | 经典 VS 工程（自包含，双击 viewer.sln 即可） |
+| 22 | `.gitignore` | 34 | Git 忽略规则 |
+| 23 | `src/types.h` | 27 | 全局模式枚举 |
+| 24 | `src/math3d.h` | 136 | 向量 / 矩阵 / 四元数工具（header-only） |
+| 25 | `src/obj_loader.h` | 62 | OBJ 导入接口（实验十） |
+| 26 | `src/obj_loader.cpp` | 409 | OBJ / MTL 解析：四边形三角化 + 顶点去重 |
+| 27 | `src/mesh.h` | 52 | 网格接口 |
+| 28 | `src/mesh.cpp` | 288 | 网格：归一化、上轴判别、客户端顶点数组绘制 |
+| 29 | `src/texture.h` | 10 | 纹理接口 |
+| 30 | `src/texture.cpp` | 112 | stb_image → OpenGL 纹理 |
+| 31 | `src/camera.h` | 38 | 观察变换相机接口 |
+| 32 | `src/camera.cpp` | 123 | 相机：环绕 / 漫游 / 四元数旋转 / 退化保护（实验七） |
+| 33 | `src/projection.h` | 21 | 投影接口 |
+| 34 | `src/projection.cpp` | 171 | 透视 / 正交 / 斜平行投影 + 保宽高比 |
+| 35 | `src/lighting.h` | 15 | 光照接口 |
+| 36 | `src/lighting.cpp` | 89 | 光照与材质（展示台点光源 / 森林太阳光） |
+| 37 | `src/forest.h` | 39 | 程序化森林接口 |
+| 38 | `src/forest.cpp` | 602 | 森林：地面 + 三种树型，烘焙成一个顶点色网格 |
+| 39 | `src/scene.h` | 67 | 场景与物体接口 |
+| 40 | `src/scene.cpp` | 417 | 两套场景：展示台（实验四/五）与森林 |
+| 41 | `src/anim.h` | 30 | 脚本动画接口 |
+| 42 | `src/anim.cpp` | 289 | 动画（时间的纯函数）：自转/环绕/投影/变换/森林漫步 |
+| 43 | `src/recorder.h` | 19 | 录制接口 |
+| 44 | `src/recorder.cpp` | 76 | 逐帧数据管道进 ffmpeg 编码 mp4 |
+| 45 | `src/hud.h` | 22 | 叠加文字接口 |
+| 46 | `src/hud.cpp` | 96 | 屏幕叠加文字与帮助面板 |
+| 47 | `src/input.h` | 60 | 输入接口 |
+| 48 | `src/input.cpp` | 550 | 键盘 / 鼠标 / 滚轮 / 中键菜单（实验六） |
+| 49 | `src/app.h` | 117 | 程序状态接口 |
+| 50 | `src/app.cpp` | 858 | 渲染主流程、HUD、截图、四视口、录制调度 |
+| 51 | `src/main.cpp` | 757 | 入口：GLUT 初始化、命令行解析、回调注册、自检 |
+| 52 | `tools/bmp2png.py` | 74 | 截图 BMP → PNG（纯标准库） |
+| 53 | `tools/make_shots.sh` | 54 | 一键重新生成 shots/ 全部截图 |
+| 54 | `tools/make_package.py` | 222 | 本脚本：生成这份代码文档 |
 
 ---
 
 ## 源代码
 
-### 1. `src/gl_api.h`
+### 1. `tools/record_demos.py`
+
+可复现功能视频与 ffprobe 验证（57 行）
+
+```python
+"""Record reproducible feature clips and verify their encoded metadata with ffprobe."""
+import argparse
+import json
+from pathlib import Path
+import shutil
+import subprocess
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--exe', type=Path, default=ROOT/'build/Release/viewer.exe')
+    parser.add_argument('--out', type=Path, default=ROOT/'report-assets/review/video')
+    args = parser.parse_args()
+    if not all(shutil.which(tool) for tool in ('ffmpeg', 'ffprobe')):
+        parser.error('ffmpeg and ffprobe must be on PATH; run tools/setup_dependencies.ps1 -InstallFfmpeg and reopen the terminal')
+    out = args.out.resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    cases = {
+        'robot-wave': (4, ['--pose', 'wave']),
+        'robot-path': (10, ['--path', '--path-guide']),
+        'animals': (16, []),
+        'chase': (8, ['--chase']),
+    }
+    report = []
+    for name, (seconds, flags) in cases.items():
+        target = out/(name+'.mp4')
+        command = [str(args.exe.resolve()), '--record', str(target), '--anim', 'none',
+                   '--seconds', str(seconds), '--fps', '24', '--size', '960x600', *flags]
+        result = subprocess.run(command, cwd=ROOT, capture_output=True, timeout=180)
+        log = (result.stdout+result.stderr).decode('utf-8', errors='replace')
+        (out/(name+'.log')).write_text(log, encoding='utf-8')
+        if result.returncode or '[gl] error:' in log or 'video written:' not in log:
+            raise RuntimeError(f'{name}: recording failed: {log}')
+        metadata = json.loads(subprocess.check_output([
+            'ffprobe', '-v', 'error', '-show_entries',
+            'stream=codec_name,width,height,r_frame_rate,nb_frames:format=duration',
+            '-of', 'json', str(target)], text=True))
+        stream = metadata['streams'][0]
+        expected = dict(codec_name='h264', width=960, height=600,
+                        r_frame_rate='24/1', nb_frames=str(seconds*24))
+        if any(stream.get(k) != v for k, v in expected.items()):
+            raise RuntimeError(f'{name}: unexpected metadata: {metadata}')
+        if abs(float(metadata['format']['duration'])-seconds) > 0.05:
+            raise RuntimeError(f'{name}: unexpected duration: {metadata}')
+        # Sample the beginning, midpoint and final second for visual review.
+        for label, timestamp in [('first', 0), ('middle', seconds/2), ('last', seconds-1)]:
+            subprocess.run(['ffmpeg', '-v', 'error', '-ss', str(timestamp), '-i', str(target),
+                            '-frames:v', '1', '-y', str(out/(name+'-'+label+'.png'))], check=True)
+        report.append(dict(case=name, seconds=seconds, stream=stream, command=command))
+        print('PASS', name, stream['nb_frames'], 'frames', flush=True)
+    (out/'results.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+
+
+if __name__ == '__main__':
+    main()
+```
+
+### 2. `tools/make_share_package.py`
+
+便携可运行包与 VS 源码分发（123 行）
+
+```python
+"""Build a portable Windows x64 binary + offline VS source distribution."""
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import shutil
+import subprocess
+import tempfile
+import zipfile
+from datetime import date
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--vs', type=Path, help='VS installation root; detected with vswhere by default')
+    parser.add_argument('--name', default='CG-Experiment-ReadyToRun-VS-'+date.today().strftime('%Y%m%d'))
+    args = parser.parse_args()
+    if Path(args.name).name != args.name or any(c in args.name for c in '/\\:'):
+        parser.error('--name must be a single filename component')
+    if args.vs is None:
+        import os
+        vswhere = Path(os.environ['ProgramFiles(x86)'])/'Microsoft Visual Studio/Installer/vswhere.exe'
+        args.vs = Path(subprocess.check_output([str(vswhere), '-latest', '-products', '*',
+            '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+            '-property', 'installationPath'], text=True).strip())
+    if not (args.vs/'MSBuild/Current/Bin/MSBuild.exe').is_file():
+        parser.error('VS C++ tools were not found; specify --vs explicitly')
+    subprocess.run([str(args.vs/'MSBuild/Current/Bin/MSBuild.exe'),
+                    str(ROOT/'viewer.sln'), '/t:Build', '/p:Configuration=Release',
+                    '/p:Platform=x64', '/verbosity:minimal', '/nologo'], check=True)
+    redists = sorted((args.vs/'VC/Redist/MSVC').glob('[0-9]*/x64/Microsoft.VC143.CRT'),
+                     key=lambda p: tuple(map(int, p.parents[1].name.split('.'))))
+    if not redists:
+        raise RuntimeError('Microsoft redistributable CRT files were not found')
+    output = ROOT/'dist'
+    output.mkdir(exist_ok=True)
+    archive = output/(args.name+'.zip')
+    with tempfile.TemporaryDirectory(prefix='cg-share-') as temp:
+        package = Path(temp)/'CG-Experiment'
+        package.mkdir()
+        for name in ['src', 'Models', 'third_party', 'tests', 'tools', 'docs', 'report-assets']:
+            shutil.copytree(ROOT/name, package/name,
+                            ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+        if (ROOT/'video').is_dir():
+            shutil.copytree(ROOT/'video', package/'video')
+        for name in ['viewer.sln', 'viewer.vcxproj', 'viewer.vcxproj.filters',
+                     'CMakeLists.txt', 'CMakePresets.json', 'build.bat', 'build.sh',
+                     'README.md', 'CG-Experiment-code.md', '.gitignore', '.gitattributes']:
+            shutil.copy2(ROOT/name, package/name)
+        for name in ['viewer.exe', 'freeglut.dll']:
+            shutil.copy2(ROOT/'bin/x64/Release'/name, package/name)
+        for dll in redists[-1].glob('*.dll'):
+            shutil.copy2(dll, package/dll.name)
+        # Preserve images linked by README without shipping old raw captures/logs.
+        for image in (ROOT/'shots').rglob('*.png'):
+            destination = package/image.relative_to(ROOT)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(image, destination)
+        for name, options in [('Start-Forest.bat', '--scene forest'),
+                              ('Start-Bunny-Hop.bat', '--scene forest --anim roam'),
+                              ('Start-Studio.bat', '--scene studio')]:
+            (package/name).write_bytes((
+                '@echo off\r\ncd /d "%~dp0"\r\n'
+                'start "" "%~dp0viewer.exe" '+options+'\r\n').encode('ascii'))
+        (package/'START-HERE.txt').write_text('''CG-Experiment 运行与编译说明
+
+请先完整解压，再运行；不要在 ZIP 压缩包内部直接双击 exe。
+
+一、直接运行（无需安装 Visual Studio / Python / CMake）
+双击 viewer.exe 或 Start-Forest.bat：打开森林场景，机器人从林间小径开始巡游。
+双击 Start-Bunny-Hop.bat：兔子自动蹦跳漫游。
+双击 Start-Studio.bat：打开课程展示台。
+请保留 exe 旁边的 DLL 文件和 Models 文件夹。
+
+空格：播放/暂停兔子动画；手动操作会停止动画。
+右键拖动/WASD/QE：相机；左键拖动：物体变换。
+F2：增强/经典渲染；F3：阴影；H：操作页，点页签或按 1/2/3 切换。Esc 返回场景或退出。
+机器人：Shift+P 暂停/继续巡游，Shift+B 显示路径，Shift+G 追赶；n 换姿势，b 原地走/停。
+Tab 选 Robot，按 t/r/y 后左键拖动做整体平移/旋转/缩放。
+i 导入 64×64 Classic PNG 皮肤或 Y-up OBJ；Shift+I 导入 Slim 皮肤。
+k 在内置机器人、已加载的 PNG 和 OBJ 间切换；样例在 Models/TrailSurveyor/。
+
+运行环境：Windows 10/11 64 位，正常安装的显卡驱动。
+包内已带 freeglut 和微软可再分发的 VC++ 运行库。
+普通运行、蹦跳动画、截图不需要 ffmpeg；仅导出 MP4 需要另装 ffmpeg 并加入 PATH。
+
+二、在 Visual Studio 中编译
+安装 Visual Studio 2022，并勾选“使用 C++ 的桌面开发”、MSVC v143 和 Windows SDK。
+双击本目录 viewer.sln，选择 Release / x64，右键 viewer 设为启动项目，按 F5。
+全部项目依赖已附带，不需要下载第三方库或配置绝对路径。
+也提供 Debug 和 Win32 配置；编译产物在 bin/<平台>/<配置>/viewer.exe。
+根目录 viewer.exe 是此次预编译版，修改源码后请运行 VS 新生成的程序。
+可选 CMake 构建方式见 README.md；课程参考资料在 docs/。
+
+三、文件说明
+src/：完整渲染器源码；Models/：兔子模型和贴图。
+third_party/：freeglut 的头文件、Win32/x64 库及 DLL，以及 stb_image。
+tests/ 和 tools/：自检、截图验证及打包脚本。
+MANIFEST.sha256：包内文件校验值。
+未包含个人 VS 配置、编译缓存或本机 SSH 等配置。
+''', encoding='utf-8-sig')
+        manifest = []
+        for file in sorted(package.rglob('*')):
+            if file.is_file():
+                manifest.append(hashlib.sha256(file.read_bytes()).hexdigest()+
+                                '  '+file.relative_to(package).as_posix())
+        (package/'MANIFEST.sha256').write_text('\n'.join(manifest)+'\n', encoding='utf-8')
+        with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+            for file in sorted(package.rglob('*')):
+                if file.is_file():
+                    z.write(file, file.relative_to(Path(temp)).as_posix())
+    with zipfile.ZipFile(archive) as z:
+        assert z.testzip() is None
+    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+    archive.with_suffix('.zip.sha256').write_text(digest+'  '+archive.name+'\n', encoding='ascii')
+    print(json.dumps({'archive': str(archive), 'bytes': archive.stat().st_size,
+                      'sha256': digest}, indent=2))
+
+
+if __name__ == '__main__':
+    main()
+```
+
+### 3. `tools/update_manifest.py`
+
+文件哈希更新与校验（56 行）
+
+```python
+"""Refresh or verify SHA-256 hashes of the files staged in Git."""
+import argparse
+import hashlib
+from pathlib import Path
+import subprocess
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def staged_hashes():
+    entries = subprocess.check_output(['git', 'ls-files', '--stage', '-z'], cwd=ROOT)
+    files = {}
+    for entry in entries.decode('utf-8').split('\0'):
+        if not entry:
+            continue
+        metadata, name = entry.split('\t', 1)
+        mode, oid, stage = metadata.split()
+        if stage != '0':
+            raise SystemExit(f'Resolve the merge conflict before hashing: {name}')
+        if name != 'MANIFEST.sha256' and mode != '160000':
+            files[name] = oid
+    names = sorted(files)
+    blobs = subprocess.check_output(
+        ['git', 'cat-file', '--batch'],
+        input=''.join(files[name] + '\n' for name in names).encode('ascii'),
+        cwd=ROOT,
+    )
+    cursor = 0
+    for name in names:
+        end = blobs.index(b'\n', cursor)
+        oid, kind, size = blobs[cursor:end].split()
+        if oid.decode('ascii') != files[name] or kind != b'blob':
+            raise SystemExit(f'Cannot read staged file: {name}')
+        start = end + 1
+        cursor = start + int(size) + 1
+        yield f'{hashlib.sha256(blobs[start:cursor - 1]).hexdigest()}  {name}\n'
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--check', action='store_true')
+    args = parser.parse_args()
+    lines = list(staged_hashes())
+    content = ''.join(lines)
+    target = ROOT/'MANIFEST.sha256'
+    if args.check:
+        if not target.is_file() or target.read_text(encoding='utf-8') != content:
+            raise SystemExit('FAIL: MANIFEST.sha256 is stale; run tools/update_manifest.py')
+        print(f'PASS: {len(lines)} staged files verified')
+    else:
+        target.write_text(content, encoding='utf-8')
+        print(f'Updated: {len(lines)} staged files')
+
+
+if __name__ == '__main__':
+    main()
+```
+
+### 4. `tools/setup_dependencies.ps1`
+
+依赖检查与 FFmpeg 安装（51 行）
+
+```powershell
+param([switch]$InstallFfmpeg)
+
+$ErrorActionPreference = 'Stop'
+$repoRoot = Split-Path -Parent $PSScriptRoot
+# An already-open terminal may still have the PATH from before winget installed.
+$env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+    [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + $env:Path
+
+if ($InstallFfmpeg -and !(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+    if (!(Get-Command winget -ErrorAction SilentlyContinue)) {
+        throw 'winget is unavailable. Install Windows App Installer, then retry.'
+    }
+    & winget install --id Gyan.FFmpeg --exact --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity
+    if ($LASTEXITCODE -ne 0) { throw "FFmpeg installation failed: $LASTEXITCODE" }
+    $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+        [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + $env:Path
+}
+
+$missing = @()
+$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+$vsRoot = if (Test-Path -LiteralPath $vswhere) {
+    & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+}
+if ($vsRoot) { Write-Output "[OK] MSVC C++ tools: $vsRoot" }
+else { $missing += 'Visual Studio 2022 C++ desktop tools and Windows SDK' }
+
+foreach ($file in @(
+    'third_party/freeglut/include/GL/freeglut.h',
+    'third_party/freeglut/lib/x64/freeglut.lib',
+    'third_party/freeglut/bin/x64/freeglut.dll',
+    'third_party/stb/stb_image.h',
+    'Models/bunny_10k.obj'
+)) {
+    if (Test-Path -LiteralPath (Join-Path $repoRoot $file)) { Write-Output "[OK] $file" }
+    else { $missing += $file }
+}
+
+foreach ($command in @('cmake', 'ctest', 'python', 'ffmpeg', 'ffprobe')) {
+    $found = Get-Command $command -ErrorAction SilentlyContinue
+    if ($found) { Write-Output "[OK] ${command}: $($found.Source)" }
+    else { Write-Warning "$command is unavailable on PATH (see docs/IMPLEMENTATION_PLAN.md)." }
+}
+if (Get-Command ffmpeg -ErrorAction SilentlyContinue) {
+    $encoders = & ffmpeg -hide_banner -encoders 2>&1
+    if ($LASTEXITCODE -ne 0 -or !($encoders -match '\blibx264\b')) {
+        $missing += 'FFmpeg libx264 encoder'
+    } else { Write-Output '[OK] FFmpeg H.264 encoder (libx264)' }
+} elseif ($InstallFfmpeg) { $missing += 'FFmpeg' }
+
+if ($missing.Count) { throw ('Missing dependencies: ' + ($missing -join ', ')) }
+Write-Output 'Dependency check complete. Use build.bat x64 to verify the compiler and SDK.'
+```
+
+### 5. `src/robot.h`
+
+机器人层级与动画接口（77 行）
+
+```cpp
+#pragma once
+// 机器人「小宇」：长方体层级建模 + 关节动画（2026 实验主角）。
+//
+// 结构与 cgexp 课程 lab1 同源，迁移到本工程的 Scene/Object 体系：
+//   - 7 个基本部件（躯干/头/双臂/双腿）+ 天线和双眼两个细节部件；
+//   - 每个部件是 Scene 里的一个 Object，本模块每帧把「根 · 局部关节链」的
+//     层级矩阵拆成 pos + xform 写回 —— 经典管线与 GLSL 路径都按
+//     T(pos)·xform·S(size) 组合模型矩阵，拆开喂给 Object 后两条路径自动一致，
+//     阴影 pass 也无需特殊处理；
+//   - 名为 "Robot" 的根物体（不绘制）接收用户的整体平移/旋转/缩放（实验五/六），
+//     Tab 选中它之后 t/r/y 或左键拖动即可整体变换机器人；
+//   - 四肢的关节链是标准的 T(关节)·R(关节角)·T(杆件偏移)·S(尺寸) 三明治结构，
+//     几何建成就已是最终尺寸，所以链里省掉 S。
+//
+// 姿势系统：stand / wave / T-pose / walk-freeze 四个定格 + 时间驱动的走路循环，
+// 关节角之间做指数平滑插值，切换不跳变。所有目标都是时间 t 的纯函数，
+// 离线录制（帧号/fps 时间轴）与实时预览行为一致。
+#include <string>
+
+class Scene;
+struct BezierPath;
+
+enum class RobotPose { Stand = 0, Wave, TPose, WalkFreeze, Count };
+
+// 在 Forest 场景里创建机器人（appSetup 调用，Studio 场景不建）。
+void  robotCreate(Scene& scene);
+bool  robotImportCharacter(Scene& scene, const std::string& path, bool slim, std::string& error);
+bool  robotToggleCharacter(Scene& scene);
+const std::string& robotCharacterSource();
+
+// 每帧推进关节并写回各部件。t 用「录制=帧号/fps，预览=真实时钟」的时间轴。
+void  robotUpdate(Scene& scene, float t);
+
+// 姿势与走路开关（键盘 n / b 与菜单共用）。snap=true 时立即到位，不播过渡
+// （--pose 出图用：headless 只渲染一帧，没时间做插值）。
+void  robotSetPose(RobotPose pose, bool snap = false);
+void  robotNextPose();
+RobotPose robotPose();
+const char* robotPoseName(RobotPose pose);
+bool  robotParsePose(const std::string& s, RobotPose& out);   // stand|wave|tpose|walk
+
+void  robotToggleWalk();
+bool  robotWalking();
+
+// ---- W3-1：三次贝塞尔闭曲线漫步（2026 加分项）----
+// 路径是在林间空地里绕行的一圈；行走时按「弧长」参数化，速度恒定。
+// 开/关路径散步；开启期间 robotUpdate 会覆写根物体的位置和朝向。
+void  robotTogglePath();
+void  robotSetPathWalk(bool on);
+bool  robotOnPath();
+
+// 曲线/控制点可视化（B 键）。路径网格在 robotCreate 时生成，默认隐藏。
+void  robotTogglePathGuide();
+void  robotSetPathGuide(bool on);
+bool  robotPathGuide();
+
+// W3-2 追赶演示：由 app 每帧把「鹿身后的位置」喂给机器人。
+// 优先级高于贝塞尔路径；清除后恢复原地行走。
+void  robotSetChasePose(float x, float z, float yawDeg);
+void  robotClearChasePose();
+bool  robotChasing();
+
+// 供出图/自检读取机器人行走的曲线（对象内部静态数据）。
+const BezierPath& robotPath();
+float robotPathSpeed();          // 沿路径的恒定速度（世界单位/秒）
+
+// 测试/出图钩子：锁定机器人的时间轴（--time）。负值解除锁定。
+// 锁定时关节直接取该时刻的目标值（不做平滑），用于渲染行走循环的任意相位定格。
+void  robotSetTimeOverride(float t);
+float robotTimeOverride();       // <0 表示未锁定（供 app 把同一时间轴给动物）
+
+// 按部件名查它在场景里的当前世界坐标（--selftest 断言层级矩阵用）。
+// 找不到返回 false。
+bool  robotPartPosition(const Scene& scene, const char* partName, float out[3]);
+
+// 场景里有没有机器人（--scene studio 时为 false，输入侧据此忽略 n/b 键）。
+bool  robotAlive();
+```
+
+### 6. `src/robot.cpp`
+
+机器人关节与路径动画（808 行）
+
+```cpp
+#include "robot.h"
+#include "scene.h"
+#include "bezier.h"
+#include "math3d.h"
+#include "texture.h"
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <memory>
+#include <vector>
+
+namespace {
+
+constexpr float kPi = 3.14159265358979323846f;
+
+// ---------------------------------------------------------------------------
+// 部件清单。枚举顺序即创建顺序。
+// ---------------------------------------------------------------------------
+enum RobotPartId
+{
+    P_Torso, P_Head, P_EyeL, P_EyeR, P_Antenna,
+    P_ArmL, P_ArmR, P_LegL, P_LegR,
+    P_Count
+};
+using PartMeshes = std::array<std::shared_ptr<Mesh>, P_Count>;
+enum class CharacterLook { BuiltIn, Skin, Model };
+
+// 所有关节角（度）+ 身体起伏（世界单位）的集中描述。
+struct RobotJoints
+{
+    float armLiftL = 0, armLiftR = 0;     // 肩部侧抬，向外为正
+    float armSwingL = 0, armSwingR = 0;   // 肩部前后摆
+    float legSwingL = 0, legSwingR = 0;   // 髋部前后摆
+    float headYaw = 0;                    // 头部偏航
+    float bodyBob = 0;                    // 整体重心起伏
+};
+
+// 骨架尺寸（世界单位，脚底 y=0，机器人总高约 2.35）。
+// 关节位置是「关节链的平移」，部件中心偏移是「杆件沿 -Y 的悬挂偏移」。
+constexpr float kHipX = 0.16f,  kHipY = 1.08f;    // 髋关节
+constexpr float kLegOffY = -0.54f;                // 腿中心挂在髋下（腿长 1.08，脚底到 0）
+constexpr float kShoulderX = 0.36f, kShoulderY = 1.66f;
+constexpr float kArmOffY = -0.31f;                // 臂中心挂在肩下（臂长 0.62）
+constexpr float kNeckY = 1.82f, kHeadOffY = 0.16f;
+constexpr float kTorsoY = 1.42f;
+
+// 机器人面朝 +Z，出生时朝向默认机位方向（appSetup 的森林机位在 +X+Z 象限）。
+constexpr float kRootYawDeg = 32.0f;
+constexpr float kRootSpawn[3] = { 0.0f, 0.0f, 0.4f };
+
+// 贝塞尔漫步路径：绕林间空地一圈（半径约 2 单位），速度恒定。
+constexpr float kPathSpeed = 1.05f;      // 世界单位/秒
+
+struct RobotCtl
+{
+    bool      exists   = false;
+    bool      walking  = false;
+    RobotPose pose     = RobotPose::Stand;
+    int       root     = -1;                       // "Robot" 根物体（接收整体变换）
+    int       part[P_Count] = { -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+    PartMeshes originalMeshes;
+    PartMeshes skinMeshes;
+    std::shared_ptr<Mesh> importedModel;
+    std::string skinLabel;
+    std::string modelLabel;
+    CharacterLook look = CharacterLook::BuiltIn;
+    int importedObject = -1;
+    RobotJoints j;                                 // 当前关节角（向目标平滑逼近）
+    float     lastT = -1.0f;
+    float     tOverride = -1.0f;                   // --time：锁定时间轴出图用
+
+    bool      onPath    = false;                   // 沿贝塞尔曲线漫步
+    float     pathTime  = 0.0f;
+    float     pathTick  = -1.0f;
+    bool      chase     = false;                   // 追赶演示：外部指定的位姿优先
+    float     chaseX = 0.0f, chaseZ = 0.0f, chaseYaw = 0.0f;
+    bool      wasWalking = false;                  // 开路径前的走路开关（关路径时还原）
+    bool      showPath  = false;                   // 显示曲线/锚点/控制柄
+    float     yawDeg    = kRootYawDeg;             // 根朝向（路径行走时随切线转动）
+    int       guide     = -1;                      // "Path Guide" 物体
+};
+RobotCtl g_robot;
+
+// ---------------------------------------------------------------------------
+// 长方体部件：中心在原点、半尺寸 (hx,hy,hz)、整块单一颜色。
+// 与 forest.cpp 的 pushTri 同一套做法，这里自带一份（各 30 行，不值得跨模块抽公共）。
+// ---------------------------------------------------------------------------
+void pushBoxTri(MeshData& m, const Vec3& a, const Vec3& b, const Vec3& c, const float col[3])
+{
+    const Vec3 n = v3norm(v3cross(b - a, c - a));
+    const GLuint base = (GLuint)(m.positions.size() / 3);
+    const Vec3* pts[3] = { &a, &b, &c };
+    for (int i = 0; i < 3; ++i)
+    {
+        m.positions.push_back(pts[i]->x);
+        m.positions.push_back(pts[i]->y);
+        m.positions.push_back(pts[i]->z);
+        m.normals.push_back(n.x);
+        m.normals.push_back(n.y);
+        m.normals.push_back(n.z);
+        m.colors.push_back(col[0]);
+        m.colors.push_back(col[1]);
+        m.colors.push_back(col[2]);
+    }
+    m.indices.push_back(base);
+    m.indices.push_back(base + 1);
+    m.indices.push_back(base + 2);
+}
+
+void addBox(MeshData& m, float hx, float hy, float hz, const float col[3],
+            Vec3 offset = v3(0.0f, 0.0f, 0.0f))
+{
+    // 每个面：中心 = n*half(n轴)，面上两个切向 u/v 满足 u×v = n（外法线），
+    // 四角按 (-u-v)(+u-v)(+u+v)(-u+v) 的 CCW 顺序拆两个三角形。
+    struct Face { Vec3 n, u, v; float hn, hu, hv; };
+    const Face faces[6] = {
+        { v3( 1,0,0), v3(0,0,-1), v3(0,1,0),  hx, hz, hy },
+        { v3(-1,0,0), v3(0,0, 1), v3(0,1,0),  hx, hz, hy },
+        { v3(0, 1,0), v3(1,0, 0), v3(0,0,-1), hy, hx, hz },
+        { v3(0,-1,0), v3(1,0, 0), v3(0,0, 1), hy, hx, hz },
+        { v3(0,0, 1), v3(1,0, 0), v3(0,1,0),  hz, hx, hy },
+        { v3(0,0,-1), v3(-1,0,0), v3(0,1,0),  hz, hx, hy },
+    };
+    for (const Face& f : faces)
+    {
+        const Vec3 c = offset + f.n * f.hn;
+        const Vec3 u = f.u * f.hu;
+        const Vec3 v = f.v * f.hv;
+        const Vec3 p00 = c - u - v, p10 = c + u - v, p11 = c + u + v, p01 = c - u + v;
+        pushBoxTri(m, p00, p10, p11, col);
+        pushBoxTri(m, p00, p11, p01, col);
+    }
+    m.hasNormals = true;
+    m.hasColors  = true;
+}
+
+struct SkinBox
+{
+    RobotPartId part;
+    int x, y, overlayX, overlayY;
+    int width, height, depth;
+    float hx, hy, hz;
+};
+
+std::shared_ptr<Mesh> buildSkinBox(const SkinBox& box, const std::vector<unsigned char>& source)
+{
+    MeshData data;
+    const float white[] = {1.0f, 1.0f, 1.0f};
+    addBox(data, box.hx, box.hy, box.hz, white);
+    data.hasColors = false;
+    data.colors.clear();
+    data.hasUVs = true;
+
+    // Cuboid net in the same face order as addBox. Flip the vertical order
+    // between UVs and bitmap rows, with row zero uploaded at v = 0.
+    const int w = box.width, h = box.height, d = box.depth;
+    struct Face { int x, y, w, h; };
+    const Face faces[] = {
+        {d+w,d,d,h}, {0,d,d,h}, {d,0,w,d}, {d+w,0,w,d},
+        {d,d,w,h}, {2*d+w,d,w,h}
+    };
+    std::vector<unsigned char> pixels = source;
+    for (const Face& face : faces)
+    {
+        const int x = box.x + face.x, y = box.y + face.y;
+        for (int row = 0; row < face.h; ++row)
+            for (int col = 0; col < face.w; ++col)
+            {
+                const int base = ((y + row) * 64 + x + col) * 4;
+                const int outer = ((box.overlayY + face.y + row) * 64 +
+                                   box.overlayX + face.x + col) * 4;
+                const int alpha = source[outer + 3];
+                for (int channel = 0; channel < 3; ++channel)
+                {
+                    const int color = source[base + 3] ? source[base + channel] : 166;
+                    pixels[base + channel] = (color * (255 - alpha) + source[outer + channel] * alpha) / 255;
+                }
+                pixels[base + 3] = 255;
+            }
+        const float left = (x + 0.001f) / 64.0f, right = (x + face.w - 0.001f) / 64.0f;
+        const float top = (y + 0.001f) / 64.0f, bottom = (y + face.h - 0.001f) / 64.0f;
+        data.uvs.insert(data.uvs.end(), {left,bottom, right,bottom, right,top,
+                                         left,bottom, right,top, left,top});
+    }
+    auto mesh = std::make_shared<Mesh>();
+    mesh->adoptSkin(std::move(data), pixels.data());
+    return mesh;
+}
+
+void applyCharacter(Scene& scene)
+{
+    RobotCtl& robot = g_robot;
+    const bool skinActive = robot.look == CharacterLook::Skin;
+    const bool modelActive = robot.look == CharacterLook::Model;
+    for (int i = 0; i < P_Count; ++i)
+    {
+        Object& o = scene.objects[robot.part[i]];
+        o.mesh = skinActive ? robot.skinMeshes[i] : robot.originalMeshes[i];
+        o.visible = o.mesh && !modelActive;
+    }
+    Object& imported = scene.objects[robot.importedObject];
+    imported.mesh = robot.importedModel;
+    imported.visible = modelActive && imported.mesh;
+}
+
+void releaseImportedMeshes(Scene& scene, CharacterLook look)
+{
+    RobotCtl& robot = g_robot;
+    for (auto& mesh : scene.meshes)
+        if (mesh && (look == CharacterLook::Model ? mesh == robot.importedModel :
+                    std::find(robot.skinMeshes.begin(), robot.skinMeshes.end(), mesh) != robot.skinMeshes.end()))
+        {
+            mesh->release();
+            mesh.reset();
+        }
+    scene.meshes.erase(std::remove(scene.meshes.begin(), scene.meshes.end(), nullptr), scene.meshes.end());
+}
+
+// 把完整的部件世界矩阵拆成 Object 的 pos + xform（两条渲染路径共用同一组合规则）。
+void writePart(Object& o, const float m[16])
+{
+    o.pos[0] = m[12];
+    o.pos[1] = m[13];
+    o.pos[2] = m[14];
+    std::memcpy(o.xform, m, sizeof(float) * 16);
+    o.xform[12] = o.xform[13] = o.xform[14] = 0.0f;
+}
+
+// ---------------------------------------------------------------------------
+// 姿势目标与走路循环（全部是 t 的纯函数）
+// ---------------------------------------------------------------------------
+RobotJoints poseTarget(RobotPose p, float t)
+{
+    RobotJoints j;
+    switch (p)
+    {
+    case RobotPose::Wave:
+        j.armLiftR = 150.0f + 16.0f * std::sin(t * 6.5f);   // 高举过头左右挥
+        j.armLiftL = 6.0f;
+        j.headYaw  = 8.0f;                                  // 稍微看向挥手侧
+        break;
+    case RobotPose::TPose:
+        j.armLiftL = j.armLiftR = 90.0f;                    // 双臂水平伸直
+        break;
+    case RobotPose::WalkFreeze:                             // 行走定格：四肢前后交错
+        j.legSwingL = 30.0f;  j.legSwingR = -30.0f;
+        j.armSwingL = -22.0f; j.armSwingR = 22.0f;
+        j.bodyBob   = 0.03f;
+        break;
+    case RobotPose::Stand:
+    default:
+        j.armLiftL = j.armLiftR = 4.0f;                     // 自然下垂略外张
+        j.bodyBob  = 0.012f * std::sin(t * 1.6f);           // 呼吸般的微起伏
+        break;
+    }
+    return j;
+}
+
+RobotJoints walkTarget(float t)
+{
+    // 走路循环：双腿相位相反（评分点「两条腿交换向前」），双臂与同侧腿反相摆动，
+    // 重心每周期起伏两次（双脚各落地一次）。
+    constexpr float kCycleHz = 1.6f;
+    const float w = 2.0f * kPi * kCycleHz * t;
+
+    RobotJoints j;
+    const float s = std::sin(w);
+    j.legSwingL  =  32.0f * s;
+    j.legSwingR  = -32.0f * s;
+    j.armSwingL  = -24.0f * s;
+    j.armSwingR  =  24.0f * s;
+    j.armLiftL   = j.armLiftR = 6.0f;
+    j.headYaw    = 3.0f * std::sin(w * 0.5f);
+    j.bodyBob    = 0.05f * (0.5f - 0.5f * std::cos(2.0f * w));
+    return j;
+}
+
+// 四肢关节链：Mbase · T(关节) · R(关节角) · T(杆件偏移)。
+// 左臂侧抬绕 Z 的符号与右臂相反（左臂在 -X 侧，+Rz 会把手臂甩向身体内侧）。
+void composeLimb(float out[16], const float Mbase[16],
+                 float jx, float jy, float liftDeg, float swingDeg,
+                 float offY, bool mirrorLift)
+{
+    float Tj[16], Rz[16], Rx[16], To[16], tmp[16];
+    mat4FromTranslation(Tj, jx, jy, 0.0f);
+    mat4FromAxisAngle(Rz, mirrorLift ? -liftDeg : liftDeg, 0.0f, 0.0f, 1.0f);
+    mat4FromAxisAngle(Rx, swingDeg, 1.0f, 0.0f, 0.0f);
+    mat4FromTranslation(To, 0.0f, offY, 0.0f);
+
+    mat4Multiply(tmp, Mbase, Tj);
+    float tmp2[16];
+    mat4Multiply(tmp2, tmp, Rz);
+    mat4Multiply(tmp, tmp2, Rx);
+    mat4Multiply(out, tmp, To);
+}
+
+// ---------------------------------------------------------------------------
+// 贝塞尔漫步路径的锚点（y 恒为 0，曲线贴地）。
+// 顺序绕空地一圈；相邻锚点间距不完全相等，正好能体现「按弧长而不是按 u
+// 参数化」的必要性 —— 用 u 均匀走会在长短段之间忽快忽慢。
+// ---------------------------------------------------------------------------
+BezierPath& pathStorage()
+{
+    static BezierPath p;
+    static bool built = false;
+    if (!built)
+    {
+        // 圆心略偏 +Z（0, 0.4）：避开右侧兔子（3.3,-2.6）与左侧鹿圈
+        //（-4.2,0.6,r1.5），同时整圈仍在默认机位画面内。
+        const Vec3 anchors[] = {
+            v3( 1.70f, 0.0f,  0.40f),
+            v3( 1.20f, 0.0f,  1.60f),
+            v3( 0.00f, 0.0f,  2.10f),
+            v3(-1.20f, 0.0f,  1.60f),
+            v3(-1.70f, 0.0f,  0.40f),
+            v3(-1.20f, 0.0f, -0.80f),
+            v3( 0.00f, 0.0f, -1.30f),
+            v3( 1.20f, 0.0f, -0.80f),
+        };
+        p.buildClosed(std::vector<Vec3>(anchors, anchors + sizeof(anchors) / sizeof(anchors[0])));
+        built = true;
+    }
+    return p;
+}
+
+} // namespace
+
+// ---------------------------------------------------------------------------
+// 创建
+// ---------------------------------------------------------------------------
+void robotCreate(Scene& scene)
+{
+    if (g_robot.exists) return;
+    RobotCtl& R = g_robot;
+
+    // (半尺寸, 颜色)。明亮低多边形配色：暖橙躯干 + 奶油头 + 钢蓝四肢。
+    struct PartDef { const char* name; float hx, hy, hz; float col[3]; };
+    const PartDef defs[P_Count] = {
+        { "Robot Torso",  0.28f, 0.36f, 0.17f, { 0.98f, 0.43f, 0.19f } },
+        { "Robot Head",   0.22f, 0.17f, 0.18f, { 0.98f, 0.94f, 0.80f } },
+        { "Robot Eye L",  0.031f, 0.044f, 0.010f, { 0.40f, 0.94f, 0.85f } },
+        { "Robot Eye R",  0.031f, 0.044f, 0.010f, { 0.40f, 0.94f, 0.85f } },
+        { "Robot Antenna", 0.025f, 0.10f, 0.025f, { 0.98f, 0.78f, 0.22f } },
+        { "Robot Arm L",  0.08f, 0.31f, 0.08f, { 0.35f, 0.47f, 0.60f } },
+        { "Robot Arm R",  0.08f, 0.31f, 0.08f, { 0.35f, 0.47f, 0.60f } },
+        { "Robot Leg L",  0.11f, 0.54f, 0.12f, { 0.23f, 0.27f, 0.33f } },
+        { "Robot Leg R",  0.11f, 0.54f, 0.12f, { 0.23f, 0.27f, 0.33f } },
+    };
+
+    for (int i = 0; i < P_Count; ++i)
+    {
+        MeshData d;
+        addBox(d, defs[i].hx, defs[i].hy, defs[i].hz, defs[i].col);
+        const float dark[3] = { 0.08f, 0.14f, 0.17f };
+        const float ivory[3] = { 0.98f, 0.94f, 0.80f };
+        if (i == P_Head)
+            addBox(d, 0.184f, 0.083f, 0.022f, dark, v3(0.0f, 0.028f, 0.182f));
+        if (i == P_Torso)
+        {
+            addBox(d, 0.172f, 0.032f, 0.012f, ivory, v3(0.0f, -0.118f, 0.17f));
+            addBox(d, 0.167f, 0.215f, 0.047f, dark, v3(0.0f, 0.012f, -0.190f));
+        }
+        auto mesh = std::make_shared<Mesh>();
+        mesh->adopt(std::move(d));
+        R.originalMeshes[i] = mesh;
+        scene.meshes.push_back(mesh);
+
+        Object o;
+        o.name      = defs[i].name;
+        o.kind      = PrimKind::Mesh;
+        o.mesh      = mesh;
+        o.selectable = false;                          // Tab 只在 兔子/Robot根 之间切换
+        mat4Identity(o.xform);
+        scene.objects.push_back(o);
+        R.part[i] = (int)scene.objects.size() - 1;
+    }
+
+    // 根物体：不绘制（mesh 为空 drawOne 直接跳过），只承载用户的整体变换。
+    {
+        Object o;
+        o.name  = "Robot";
+        o.kind  = PrimKind::Mesh;                      // mesh 留空 -> 不画
+        o.pos[0] = kRootSpawn[0]; o.pos[1] = kRootSpawn[1]; o.pos[2] = kRootSpawn[2];
+        mat4Identity(o.xform);
+        scene.objects.push_back(o);
+        R.root = (int)scene.objects.size() - 1;
+    }
+
+    {
+        Object o;
+        o.name = "Imported Character";
+        o.kind = PrimKind::Mesh;
+        o.selectable = false;
+        o.visible = false;
+        mat4Identity(o.xform);
+        R.importedObject = (int)scene.objects.size();
+        scene.objects.push_back(std::move(o));
+    }
+
+    // 贝塞尔路径可视化：曲线本体 + 锚点 + 控制柄合成一个网格，默认隐藏。
+    {
+        MeshData d;
+        const float curveCol [3] = { 0.25f, 0.85f, 0.95f };
+        const float anchorCol[3] = { 1.00f, 0.78f, 0.20f };
+        const float handleCol[3] = { 0.62f, 0.72f, 0.88f };
+        buildBezierVisual(d, pathStorage(), curveCol, anchorCol, handleCol);
+
+        auto mesh = std::make_shared<Mesh>();
+        mesh->adopt(std::move(d));
+        scene.meshes.push_back(mesh);
+
+        Object o;
+        o.name       = "Path Guide";
+        o.kind       = PrimKind::Mesh;
+        o.mesh       = mesh;
+        o.selectable = false;
+        o.visible    = false;
+        mat4Identity(o.xform);
+        scene.objects.push_back(o);
+        R.guide = (int)scene.objects.size() - 1;
+    }
+
+    R.j     = poseTarget(RobotPose::Stand, 0.0f);
+    R.lastT = -1.0f;
+    R.exists = true;
+    std::printf("[robot] created: %d box parts, height ~2.35, path length %.2f\n",
+                P_Count, pathStorage().total);
+}
+
+bool robotImportCharacter(Scene& scene, const std::string& path, bool slim, std::string& error)
+{
+    RobotCtl& robot = g_robot;
+    if (!robot.exists) { error = "Open the forest scene to import a character."; return false; }
+    const auto file = std::filesystem::u8path(path);
+    std::string extension = file.extension().u8string();
+    for (char& c : extension) c = (char)std::tolower((unsigned char)c);
+    PartMeshes skin;
+    std::shared_ptr<Mesh> model;
+    if (extension == ".png")
+    {
+        std::vector<unsigned char> pixels;
+        if (!readSkinPixels(path, pixels)) { error = "Expected a readable 64 x 64 skin PNG."; return false; }
+        const int arm = slim ? 3 : 4;
+        const float armHalf = slim ? 0.074f : 0.097f;
+        const SkinBox boxes[] = {
+            {P_Head, 0,0, 32,0, 8,8,8, .24f,.20f,.215f},
+            {P_Torso, 16,16, 16,32, 8,12,4, .275f,.36f,.146f},
+            {P_ArmL, 40,16, 40,32, arm,12,4, armHalf,.31f,.114f},
+            {P_ArmR, 32,48, 48,48, arm,12,4, armHalf,.31f,.114f},
+            {P_LegL, 0,16, 0,32, 4,12,4, .121f,.54f,.133f},
+            {P_LegR, 16,48, 0,48, 4,12,4, .121f,.54f,.133f},
+        };
+        for (const SkinBox& box : boxes)
+        {
+            skin[box.part] = buildSkinBox(box, pixels);
+            if (!skin[box.part]->hasTexture())
+            {
+                for (const auto& mesh : skin) if (mesh) mesh->release();
+                error = "Could not create the skin texture.";
+                return false;
+            }
+        }
+    }
+    else if (extension == ".obj")
+    {
+        model = std::make_shared<Mesh>();
+        if (!model->loadFromOBJ(path, UpAxis::Y, false, &error)) return false;
+        const MeshData& data = model->data();
+        const float height = data.bboxMax[1] - data.bboxMin[1];
+        if (!std::isfinite(height) || height < 1e-5f)
+        {
+            model->release();
+            error = "The OBJ needs a nonzero height on the Y axis.";
+            return false;
+        }
+        model->preserveSmallTexturePixels();
+        scene.objects[robot.importedObject].size = 2.35f / height;
+    }
+    else { error = "Choose a 64 x 64 PNG skin or a Y-up OBJ."; return false; }
+
+    robot.look = model ? CharacterLook::Model : CharacterLook::Skin;
+    releaseImportedMeshes(scene, robot.look);
+    if (model)
+    {
+        robot.modelLabel = "OBJ  " + file.filename().u8string();
+        robot.importedModel = std::move(model);
+        scene.meshes.push_back(robot.importedModel);
+    }
+    else
+    {
+        robot.skinLabel = (slim ? "Slim PNG  " : "PNG  ") + file.filename().u8string();
+        robot.skinMeshes = std::move(skin);
+        for (const auto& mesh : robot.skinMeshes) if (mesh) scene.meshes.push_back(mesh);
+    }
+    applyCharacter(scene);
+    std::printf("[character] imported %s: %s\n", extension.c_str(), path.c_str());
+    return true;
+}
+
+bool robotToggleCharacter(Scene& scene)
+{
+    RobotCtl& robot = g_robot;
+    if (robot.skinLabel.empty() && robot.modelLabel.empty()) return false;
+    if (robot.look == CharacterLook::BuiltIn && !robot.skinLabel.empty())
+        robot.look = CharacterLook::Skin;
+    else if (robot.look != CharacterLook::Model && !robot.modelLabel.empty())
+        robot.look = CharacterLook::Model;
+    else
+        robot.look = CharacterLook::BuiltIn;
+    applyCharacter(scene);
+    return true;
+}
+
+const std::string& robotCharacterSource()
+{
+    static const std::string original = "Built-in robot";
+    if (g_robot.look == CharacterLook::Skin) return g_robot.skinLabel;
+    if (g_robot.look == CharacterLook::Model) return g_robot.modelLabel;
+    return original;
+}
+
+// ---------------------------------------------------------------------------
+// 每帧更新：关节平滑逼近目标 -> 组层级矩阵 -> 写回部件
+// ---------------------------------------------------------------------------
+void robotUpdate(Scene& scene, float t)
+{
+    if (!g_robot.exists) return;
+    RobotCtl& R = g_robot;
+
+    if (R.tOverride >= 0.0f)
+    {
+        // 时间轴锁定（--time 出图）：直接取该时刻目标，跳过平滑
+        t = R.tOverride;
+        R.j = R.walking ? walkTarget(t) : poseTarget(R.pose, t);
+    }
+    else
+    {
+    float dt = (R.lastT < 0.0f) ? 0.0f : (t - R.lastT);
+    R.lastT = t;
+    if (dt < 0.0f) dt = 0.0f;                          // 时间倒退（新录制开始）时保持现状
+    if (dt > 0.05f) dt = 0.05f;
+
+    const RobotJoints target = R.walking ? walkTarget(t) : poseTarget(R.pose, t);
+    const float k = 1.0f - std::exp(-10.0f * dt);      // 指数平滑，切姿势不跳变
+    struct { float& cur; float tgt; } blend[] = {
+        { R.j.armLiftL,  target.armLiftL  }, { R.j.armLiftR,  target.armLiftR  },
+        { R.j.armSwingL, target.armSwingL }, { R.j.armSwingR, target.armSwingR },
+        { R.j.legSwingL, target.legSwingL }, { R.j.legSwingR, target.legSwingR },
+        { R.j.headYaw,   target.headYaw   }, { R.j.bodyBob,   target.bodyBob   },
+    };
+    for (auto& b : blend) b.cur += (b.tgt - b.cur) * k;
+    }
+
+    // ---- 路径可视化开关（同步到物体，headless 单帧出图也能生效）----
+    if (R.guide >= 0)
+        scene.objects[R.guide].visible = R.showPath;
+
+    // ---- W3-1：沿贝塞尔闭曲线漫步 ----
+    // 位置用「弧长」求值（evalAtDistance），所以速度恒定；朝向取切线方向。
+    // 机器人模型面朝 +Z，Ry(yaw) 把 +Z 转到 (sin yaw, 0, cos yaw)，
+    // 因此 yaw = atan2(tangent.x, tangent.z)。
+    if (R.chase)
+    {
+        // 追赶：位置/朝向由 app 从鹿的状态推出（优先于路径）
+        Object& root = scene.objects[R.root];
+        root.pos[0] = R.chaseX;
+        root.pos[1] = 0.0f;
+        root.pos[2] = R.chaseZ;
+        R.yawDeg = R.chaseYaw;
+        R.walking = true;
+    }
+    else if (R.onPath)
+    {
+        if (R.tOverride < 0.0f && R.pathTick >= 0.0f && t >= R.pathTick)
+            R.pathTime += t - R.pathTick;
+        R.pathTick = t;
+        const float s = kPathSpeed * (R.tOverride >= 0.0f ? t : R.pathTime);
+        const Vec3 p   = pathStorage().evalAtDistance(s);
+        const Vec3 tan = pathStorage().tangentAtDistance(s);
+
+        Object& root = scene.objects[R.root];
+        root.pos[0] = p.x;
+        root.pos[1] = 0.0f;
+        root.pos[2] = p.z;
+
+        R.yawDeg = std::atan2(tan.x, tan.z) * 180.0f / kPi;
+        R.walking = true;                          // 沿路径走，腿当然要动
+    }
+
+    // ---- 根：T(出生/用户平移) · 用户累积变换 · Ry(朝向) · T(重心起伏) ----
+    Object& root = scene.objects[R.root];
+    float Tpos[16], A[16], Ry[16], Tbob[16], Mbase[16];
+    mat4FromTranslation(Tpos, root.pos[0], root.pos[1], root.pos[2]);
+    mat4Multiply(A, Tpos, root.xform);
+    mat4FromAxisAngle(Ry, R.yawDeg, 0.0f, 1.0f, 0.0f);
+    mat4Multiply(A, A, Ry);
+    mat4FromTranslation(Tbob, 0.0f, R.j.bodyBob, 0.0f);
+    mat4Multiply(Mbase, A, Tbob);
+
+    if (R.importedModel)
+    {
+        Object& model = scene.objects[R.importedObject];
+        const MeshData& data = R.importedModel->data();
+        float offset[16], modelMatrix[16];
+        mat4FromTranslation(offset, -data.center[0] * model.size,
+                            -data.bboxMin[1] * model.size, -data.center[2] * model.size);
+        mat4Multiply(modelMatrix, A, offset);
+        writePart(model, modelMatrix);
+    }
+
+    // ---- 躯干 ----
+    {
+        float Tt[16], M[16];
+        mat4FromTranslation(Tt, 0.0f, kTorsoY, 0.0f);
+        mat4Multiply(M, Mbase, Tt);
+        writePart(scene.objects[R.part[P_Torso]], M);
+    }
+
+    // ---- 头 + 天线 + 双眼（头链再挂子部件，展示层级可嵌套）----
+    {
+        float Tn[16], Rh[16], H[16], T[16], M[16];
+        mat4FromTranslation(Tn, 0.0f, kNeckY, 0.0f);
+        mat4FromAxisAngle(Rh, R.j.headYaw, 0.0f, 1.0f, 0.0f);
+        mat4Multiply(H, Mbase, Tn);
+        mat4Multiply(H, H, Rh);
+
+        mat4FromTranslation(T, 0.0f, kHeadOffY, 0.0f);
+        mat4Multiply(M, H, T);
+        writePart(scene.objects[R.part[P_Head]], M);
+
+        mat4FromTranslation(T, 0.0f, 0.43f, -0.06f);   // 头顶天线（随头转）
+        mat4Multiply(M, H, T);
+        writePart(scene.objects[R.part[P_Antenna]], M);
+
+        mat4FromTranslation(T, -0.09f, 0.188f, 0.210f);
+        mat4Multiply(M, H, T);
+        writePart(scene.objects[R.part[P_EyeL]], M);
+        mat4FromTranslation(T, 0.09f, 0.188f, 0.210f);
+        mat4Multiply(M, H, T);
+        writePart(scene.objects[R.part[P_EyeR]], M);
+    }
+
+    // ---- 四肢 ----
+    {
+        float M[16];
+        composeLimb(M, Mbase, -kShoulderX, kShoulderY, R.j.armLiftL, R.j.armSwingL, kArmOffY, /*mirrorLift=*/true);
+        writePart(scene.objects[R.part[P_ArmL]], M);
+        composeLimb(M, Mbase,  kShoulderX, kShoulderY, R.j.armLiftR, R.j.armSwingR, kArmOffY, false);
+        writePart(scene.objects[R.part[P_ArmR]], M);
+
+        // 腿没有侧抬角，liftDeg 恒 0，链退化为 T(髋)·Rx(摆)·T(偏移)
+        composeLimb(M, Mbase, -kHipX, kHipY, 0.0f, R.j.legSwingL, kLegOffY, true);
+        writePart(scene.objects[R.part[P_LegL]], M);
+        composeLimb(M, Mbase,  kHipX, kHipY, 0.0f, R.j.legSwingR, kLegOffY, false);
+        writePart(scene.objects[R.part[P_LegR]], M);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 姿势控制
+// ---------------------------------------------------------------------------
+void robotSetPose(RobotPose pose, bool snap)
+{
+    if (pose < RobotPose::Stand || pose >= RobotPose::Count) return;
+    robotSetPathWalk(false);
+    robotClearChasePose();
+    g_robot.pose = pose;
+    g_robot.walking = false;                            // 定格姿势优先于走路循环
+    if (snap) g_robot.j = poseTarget(pose, 0.0f);
+}
+
+void robotNextPose()
+{
+    int p = ((int)g_robot.pose + 1) % (int)RobotPose::Count;
+    robotSetPose((RobotPose)p, false);
+}
+
+RobotPose robotPose()        { return g_robot.pose; }
+bool       robotWalking()    { return g_robot.exists && g_robot.walking; }
+bool       robotAlive()      { return g_robot.exists; }
+
+const char* robotPoseName(RobotPose p)
+{
+    switch (p)
+    {
+    case RobotPose::Wave:      return "wave";
+    case RobotPose::TPose:     return "T-pose";
+    case RobotPose::WalkFreeze:return "walk-freeze";
+    case RobotPose::Stand:
+    default:                   return "stand";
+    }
+}
+
+bool robotParsePose(const std::string& s, RobotPose& out)
+{
+    if      (s == "stand" || s == "idle")        out = RobotPose::Stand;
+    else if (s == "wave")                        out = RobotPose::Wave;
+    else if (s == "tpose" || s == "t-pose")      out = RobotPose::TPose;
+    else if (s == "walk" || s == "walkfreeze"
+          || s == "walk-freeze")                 out = RobotPose::WalkFreeze;
+    else return false;
+    return true;
+}
+
+void robotToggleWalk()
+{
+    if (!g_robot.exists) return;
+    // 手动走路开关接管自动路径/追赶，否则下一帧又会被强制设为 walking。
+    const bool wasWalking = g_robot.walking;
+    robotSetPathWalk(false);
+    robotClearChasePose();
+    g_robot.walking = wasWalking;
+    g_robot.walking = !g_robot.walking;
+    if (g_robot.walking) g_robot.pose = RobotPose::WalkFreeze;  // 停下时停在行走姿态
+}
+
+// ---------------------------------------------------------------------------
+// W3-1 贝塞尔路径漫步
+// ---------------------------------------------------------------------------
+const BezierPath& robotPath() { return pathStorage(); }
+float robotPathSpeed()        { return kPathSpeed; }
+
+bool robotOnPath()      { return g_robot.exists && g_robot.onPath; }
+bool robotPathGuide()   { return g_robot.exists && g_robot.showPath; }
+
+void robotSetPathWalk(bool on)
+{
+    if (!g_robot.exists) return;
+    if (on == g_robot.onPath) return;
+
+    g_robot.onPath = on;
+    g_robot.pathTick = -1.0f;
+    if (on)
+    {
+        // 记住进入路径前的走路状态，退出时还原（避免 P 键偷偷改掉 b 键的状态）
+        g_robot.wasWalking = g_robot.walking;
+        g_robot.walking    = true;
+        g_robot.chase      = false;                // 路径与追赶互斥
+    }
+    else
+    {
+        g_robot.walking = g_robot.wasWalking;
+    }
+    std::printf("[robot] bezier path walk: %s\n", on ? "on" : "off");
+}
+
+void robotTogglePath() { robotSetPathWalk(!g_robot.onPath); }
+
+void robotSetPathGuide(bool on)
+{
+    if (!g_robot.exists) return;
+    g_robot.showPath = on;      // 物体可见性在下一帧 robotUpdate 里同步
+    std::printf("[robot] path guide: %s\n", on ? "on" : "off");
+}
+
+void robotTogglePathGuide() { robotSetPathGuide(!g_robot.showPath); }
+
+// ---------------------------------------------------------------------------
+// W3-2 追赶演示
+// ---------------------------------------------------------------------------
+void robotSetChasePose(float x, float z, float yawDeg)
+{
+    if (!g_robot.exists) return;
+    g_robot.chase     = true;
+    g_robot.onPath    = false;                 // 追赶优先，退出路径模式
+    g_robot.chaseX    = x;
+    g_robot.chaseZ    = z;
+    g_robot.chaseYaw  = yawDeg;
+    g_robot.walking   = true;
+    g_robot.pose      = RobotPose::WalkFreeze;
+}
+
+void robotClearChasePose()
+{
+    if (!g_robot.chase) return;
+    g_robot.chase   = false;
+    g_robot.walking = false;                   // 追完停下
+    std::printf("[robot] chase pose cleared\n");
+}
+
+bool robotChasing() { return g_robot.exists && g_robot.chase; }
+
+void robotSetTimeOverride(float t)
+{
+    g_robot.tOverride = t;
+    g_robot.lastT = -1.0f;
+    g_robot.pathTick = -1.0f;
+}
+
+float robotTimeOverride() { return g_robot.tOverride; }
+
+bool robotPartPosition(const Scene& scene, const char* partName, float out[3])
+{
+    for (const Object& o : scene.objects)
+    {
+        if (o.name == partName)
+        {
+            out[0] = o.pos[0]; out[1] = o.pos[1]; out[2] = o.pos[2];
+            return true;
+        }
+    }
+    return false;
+}
+```
+
+### 7. `src/animals.h`
+
+动物行为接口（26 行）
+
+```cpp
+#pragma once
+// 森林小动物（2026 加分项：增加小动物等三维对象）。
+//
+// 一只鹿和一只狐狸，几何全部程序化拼装（椭球/圆柱/锥，与分形树同一套形状库），
+// 风格与低多边形森林一致。每只动物是场景里的一个 Object，面朝 +X、四脚落地。
+//
+// 行为是时间的纯函数（录制可复现）：各自沿三次贝塞尔闭曲线漫步（W3-2），
+// 「走 11 秒 → 低头吃草 4 秒」循环；吃草时俯身贴地、位置冻结。
+// 机器人靠近时进入「警觉」状态（抬头、不吃草）；追赶演示（G）时鹿持续逃跑。
+// 兔子不归本模块管 —— 它仍是 roam 漫游动画的主角。
+class Scene;
+
+bool  animalsCreate(Scene& scene);            // 只在 Forest 场景调用
+void  animalsUpdate(Scene& scene, float t);
+bool  animalsAlive();
+const char* animalsStatusText();              // HUD/日志：各动物当前状态
+
+// W3-2 追赶演示：鹿进入逃跑状态；机器人应跟在鹿身后（目标点由下面给出）。
+void  animalsToggleChase();
+void  animalsSetChase(bool on);
+bool  animalsChase();
+// 输出「机器人应站的位置」（鹿身后 1.25）与朝向（度）。没有鹿时返回 false。
+bool  animalsChaseTarget(const Scene& scene, float outPos[3], float* yawDeg);
+
+// 按物体名取当前世界坐标（--selftest 用）
+bool  animalPartPosition(const Scene& scene, const char* name, float out[3]);
+```
+
+### 8. `src/animals.cpp`
+
+鹿与狐狸建模、吃草和追赶（364 行）
+
+```cpp
+#include "animals.h"
+#include "scene.h"
+#include "bezier.h"       // W3-2：动物的漫游路线同样是三次贝塞尔闭曲线
+#include "forest.h"       // 形状库：addCylinderSide / addCone / addEllipsoid / appendTransformed
+#include "math3d.h"
+
+#include <cmath>
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <memory>
+#include <vector>
+
+namespace {
+
+constexpr float kPi = 3.14159265358979323846f;
+
+// ---------------------------------------------------------------------------
+// 几何：面朝 +X，四脚踩 y=0。全部用「局部建好的部件 + 4x4 矩阵摆位」拼装。
+// ---------------------------------------------------------------------------
+void place(MeshData& out, MeshData& part, float tx, float ty, float tz,
+           float pitchZDeg = 0.0f, float scale = 1.0f)
+{
+    float m[16];
+    mat4Identity(m);
+    if (pitchZDeg != 0.0f)
+    {
+        float r[16];
+        mat4FromAxisAngle(r, pitchZDeg, 0.0f, 0.0f, 1.0f);
+        mat4Multiply(m, r, m);
+    }
+    if (scale != 1.0f)
+    {
+        float s[16];
+        mat4FromScale(s, scale, scale, scale);
+        mat4Multiply(m, s, m);
+    }
+    m[12] = tx; m[13] = ty; m[14] = tz;
+    appendTransformed(out, part, m);
+}
+
+// 鹿：棕色长腿，头顶小角，颈部前倾
+void buildDeer(MeshData& out)
+{
+    const float body[3] = { 0.68f, 0.50f, 0.34f };
+    const float dark[3] = { 0.48f, 0.35f, 0.23f };
+    const float nose[3] = { 0.16f, 0.12f, 0.10f };
+
+    { MeshData p; addEllipsoid(p, v3(0, 0, 0), 0.34f, 0.24f, 0.19f, body, 10, 6);
+      place(out, p, 0.0f, 0.66f, 0.0f); }
+
+    {   // 颈：竖圆柱绕 Z 前倾 42°，头在颈顶
+        MeshData neck; addCylinderSide(neck, 0.0f, 0.40f, 0.070f, 0.050f, body, 6);
+        place(out, neck, 0.30f, 0.74f, 0.0f, -42.0f);
+    }
+    {   // 头 + 口鼻 + 双耳 + 小角（都在颈部顶端附近）
+        const float hx = 0.30f + 0.40f * std::sin(42.0f * kPi / 180.0f);
+        const float hy = 0.74f + 0.40f * std::cos(42.0f * kPi / 180.0f);
+        { MeshData p; addEllipsoid(p, v3(0, 0, 0), 0.11f, 0.09f, 0.09f, body, 8, 5);
+          place(out, p, hx + 0.04f, hy, 0.0f, -10.0f); }
+        { MeshData p; addEllipsoid(p, v3(0, 0, 0), 0.07f, 0.045f, 0.05f, nose, 6, 4);
+          place(out, p, hx + 0.14f, hy - 0.02f, 0.0f); }
+        for (int s = -1; s <= 1; s += 2)
+        {
+            { MeshData p; addCone(p, 0.0f, 0.12f, 0.035f, dark, 4);
+              place(out, p, hx - 0.03f, hy + 0.07f, 0.065f * s, 18.0f); }
+            { MeshData p; addCylinderSide(p, 0.0f, 0.16f, 0.014f, 0.010f, dark, 4);
+              place(out, p, hx - 0.02f, hy + 0.06f, 0.055f * s, -30.0f); }
+        }
+    }
+    for (int fx = -1; fx <= 1; fx += 2)          // 四条长腿
+        for (int fz = -1; fz <= 1; fz += 2)
+        {
+            MeshData p; addCylinderSide(p, 0.0f, 0.50f, 0.036f, 0.028f, dark, 5);
+            place(out, p, 0.21f * fx, 0.0f, 0.115f * fz);
+        }
+    { MeshData p; addCone(p, 0.0f, 0.16f, 0.045f, body, 5);   // 短尾
+      place(out, p, -0.36f, 0.72f, 0.0f, 120.0f); }
+}
+
+// 狐狸：橙红身体、大耳、蓬松白尖尾
+void buildFox(MeshData& out)
+{
+    const float fur[3]   = { 0.83f, 0.42f, 0.16f };
+    const float white[3] = { 0.94f, 0.92f, 0.88f };
+    const float dark[3]  = { 0.20f, 0.15f, 0.12f };
+
+    { MeshData p; addEllipsoid(p, v3(0, 0, 0), 0.27f, 0.145f, 0.14f, fur, 10, 6);
+      place(out, p, 0.0f, 0.31f, 0.0f); }
+    { MeshData p; addEllipsoid(p, v3(0, 0, 0), 0.10f, 0.075f, 0.08f, fur, 8, 5);
+      place(out, p, 0.30f, 0.40f, 0.0f, -8.0f); }
+    { MeshData p; addCone(p, 0.0f, 0.11f, 0.038f, white, 5);       // 尖吻
+      place(out, p, 0.40f, 0.385f, 0.0f, -95.0f); }
+    for (int s = -1; s <= 1; s += 2)                                // 大耳
+    {
+        MeshData p; addCone(p, 0.0f, 0.13f, 0.045f, dark, 4);
+        place(out, p, 0.27f, 0.47f, 0.055f * s, 16.0f);
+    }
+    for (int fx = -1; fx <= 1; fx += 2)                             // 短腿
+        for (int fz = -1; fz <= 1; fz += 2)
+        {
+            MeshData p; addCylinderSide(p, 0.0f, 0.22f, 0.026f, 0.020f, dark, 4);
+            place(out, p, 0.17f * fx, 0.0f, 0.085f * fz);
+        }
+    { MeshData p; addEllipsoid(p, v3(0, 0, 0), 0.17f, 0.065f, 0.065f, fur, 8, 5);
+      place(out, p, -0.34f, 0.33f, 0.0f, 8.0f); }                   // 蓬松尾
+    { MeshData p; addEllipsoid(p, v3(0, 0, 0), 0.055f, 0.055f, 0.055f, white, 6, 4);
+      place(out, p, -0.49f, 0.36f, 0.0f); }                         // 白尾尖
+}
+
+// ---------------------------------------------------------------------------
+// 行为参数
+//
+// 走路路线从「圆」升级成三次贝塞尔闭曲线（W3-2）：锚点手摆成不规则环，
+// 更像动物自己踩出来的小径；同样用弧长参数化，速度恒定。
+// ---------------------------------------------------------------------------
+const Vec3 kDeerAnchors[] = {
+    v3(-2.45f, 0.0f,  0.80f),
+    v3(-3.05f, 0.0f,  1.95f),
+    v3(-4.45f, 0.0f,  1.90f),
+    v3(-5.05f, 0.0f,  0.75f),
+    v3(-4.45f, 0.0f, -0.55f),
+    v3(-3.05f, 0.0f, -0.65f),
+};
+
+const Vec3 kFoxAnchors[] = {
+    v3(-4.20f, 0.0f, -2.90f),
+    v3(-4.75f, 0.0f, -1.90f),
+    v3(-5.75f, 0.0f, -2.05f),
+    v3(-6.20f, 0.0f, -3.00f),
+    v3(-5.55f, 0.0f, -3.75f),
+    v3(-4.55f, 0.0f, -3.65f),
+};
+
+struct AnimalDef
+{
+    const char* name;
+    const Vec3* anchors;
+    int         anchorCount;
+    float       walkSpeed;      // 弧长速度（世界单位/秒）
+    float       fleeSpeed;      // 被追时的逃跑速度
+    float       phase0;         // 起始弧长偏移
+    float       grazePitchDeg;  // 吃草俯身角
+};
+
+const AnimalDef kDefs[] = {
+    // 路线与 scene.cpp buildForestPath 的避让圆一致（树不挡动物）。
+    // 鹿在机器人左前方，狐狸在更左后方；两圈互不重叠。
+    { "Deer", kDeerAnchors, 6, 0.38f, 1.60f, 0.0f,  9.0f },
+    { "Fox",  kFoxAnchors,  6, 0.50f, 1.80f, 2.0f, 12.0f },
+};
+
+// 路线在 create 时构建一次（锚点数组是常量）。
+BezierPath g_loop[2];
+bool       g_loopsBuilt = false;
+
+// 「走 11 秒 → 吃草 4 秒」：返回从 0 到 t 实际行走的弧长（吃草时冻结）。
+// alwaysWalk=true 用于逃跑：不休息、按逃跑速度一直跑。
+float walkedDistance(float t, float speed, bool alwaysWalk)
+{
+    constexpr float kWalk = 11.0f, kCycle = 15.0f;
+    if (alwaysWalk) return speed * t;
+
+    const float n    = std::floor(t / kCycle);
+    const float rest = t - n * kCycle;                       // 本周期内时间
+    const float walk = n * kWalk + std::min(rest, kWalk);
+    return speed * walk;
+}
+
+struct AnimalsCtl
+{
+    bool  exists = false;
+    int   obj[2] = { -1, -1 };
+    float heading[2][2] = { { 1, 0 }, { 1, 0 } };   // 当前前进方向（单位向量）
+    bool  chase = false;                             // W3-2 追赶演示
+    bool  hasTime = false;
+    float lastTime = 0.0f;
+    float deerDistanceOffset = 0.0f;
+    char  status[64] = "";
+};
+AnimalsCtl g_animals;
+
+} // namespace
+
+// ---------------------------------------------------------------------------
+bool animalsCreate(Scene& scene)
+{
+    if (g_animals.exists) return true;
+
+    if (!g_loopsBuilt)
+    {
+        for (int i = 0; i < 2; ++i)
+        {
+            const AnimalDef& d = kDefs[i];
+            g_loop[i].buildClosed(std::vector<Vec3>(d.anchors, d.anchors + d.anchorCount));
+        }
+        g_loopsBuilt = true;
+    }
+
+    for (int i = 0; i < 2; ++i)
+    {
+        MeshData data;
+        if (i == 0) buildDeer(data);
+        else        buildFox(data);
+
+        auto mesh = std::make_shared<Mesh>();
+        mesh->adopt(std::move(data));
+        scene.meshes.push_back(mesh);
+
+        Object o;
+        o.name       = kDefs[i].name;
+        o.kind       = PrimKind::Mesh;
+        o.mesh       = mesh;
+        o.selectable = false;
+        mat4Identity(o.xform);
+        scene.objects.push_back(o);
+        g_animals.obj[i] = (int)scene.objects.size() - 1;
+    }
+
+    g_animals.exists = true;
+    std::printf("[animals] created: Deer + Fox (procedural low-poly, ~%.1fk tris)\n",
+                (scene.objects[g_animals.obj[0]].mesh->data().triangleCount +
+                 scene.objects[g_animals.obj[1]].mesh->data().triangleCount) / 1000.0f);
+    return true;
+}
+
+void animalsUpdate(Scene& scene, float t)
+{
+    if (!g_animals.exists) return;
+    g_animals.hasTime = true;
+    g_animals.lastTime = t;
+
+    // 机器人位置（「警觉」判定）。场景里没有机器人时视为很远。
+    bool  hasRobot = false;
+    float rx = 0.0f, rz = 0.0f;
+    for (const Object& o : scene.objects)
+        if (o.name == "Robot") { hasRobot = true; rx = o.pos[0]; rz = o.pos[2]; break; }
+
+    const char* state[2] = { "walking", "walking" };
+
+    for (int i = 0; i < 2; ++i)
+    {
+        const AnimalDef& d = kDefs[i];
+        Object& o = scene.objects[g_animals.obj[i]];
+
+        // 狐狸的作息整体错开 4 秒，避免两只动物同步低头吃草
+        const float bt = t + (i == 1 ? 4.0f : 0.0f);
+
+        // 追赶演示：鹿被追时一直跑（不进入吃草窗口）
+        const bool fleeing = g_animals.chase && (i == 0);
+        const float speed  = fleeing ? d.fleeSpeed : d.walkSpeed;
+        const float dist   = d.phase0 + walkedDistance(bt, speed, fleeing) +
+                             (i == 0 ? g_animals.deerDistanceOffset : 0.0f);
+
+        const Vec3 p   = g_loop[i].evalAtDistance(dist);
+        const Vec3 tan = g_loop[i].tangentAtDistance(dist);
+        const float hx = tan.x, hz = tan.z;          // 前进方向（单位向量）
+        const float yawDeg = std::atan2(-hz, hx) * 180.0f / kPi;
+
+        g_animals.heading[i][0] = hx;
+        g_animals.heading[i][1] = hz;
+
+        // 吃草窗口：俯身 + 高度略降；机器人靠得太近则警觉（抬头、不吃草）
+        constexpr float kWalk = 11.0f, kCycle = 15.0f;
+        const bool alert   = hasRobot && !fleeing &&
+                             std::sqrt((p.x - rx) * (p.x - rx) + (p.z - rz) * (p.z - rz)) < 1.35f;
+        const bool grazing = !fleeing && !alert && std::fmod(bt, kCycle) > kWalk;
+
+        float pitchDeg = 0.0f, bob = 0.0f;
+        if (grazing)
+        {
+            // 模型朝 +X，绕 Z 的负角才会低头。
+            pitchDeg = -d.grazePitchDeg * (0.75f + 0.25f * std::sin(bt * 2.3f));
+            state[i] = "grazing";
+        }
+        else
+        {
+            // 步频与走过的弧长挂钩：每 ~1 单位起伏一次
+            bob = 0.016f * (0.5f - 0.5f * std::cos(6.0f * dist));
+            if (fleeing)   state[i] = "fleeing";
+            else if (alert) state[i] = "alert";
+        }
+
+        float mYaw[16], mPitch[16];
+        mat4FromAxisAngle(mYaw,   yawDeg,   0.0f, 1.0f, 0.0f);
+        mat4FromAxisAngle(mPitch, pitchDeg, 0.0f, 0.0f, 1.0f);
+        mat4Multiply(o.xform, mYaw, mPitch);
+
+        // 整体俯身会使一侧脚落到地面以下；按实际网格最低点补偿高度。
+        if (grazing)
+        {
+            float minY = 0.0f;
+            const auto& vertices = o.mesh->data().positions;
+            for (size_t v = 0; v < vertices.size(); v += 3)
+                minY = std::min(minY, mat4MulPoint(mPitch,
+                    v3(vertices[v], vertices[v + 1], vertices[v + 2])).y);
+            bob = -minY;
+        }
+
+        o.pos[0] = p.x;
+        o.pos[1] = bob;
+        o.pos[2] = p.z;
+    }
+
+    std::snprintf(g_animals.status, sizeof(g_animals.status), "deer %s / fox %s",
+                  state[0], state[1]);
+}
+// ---------------------------------------------------------------------------
+// W3-2 追赶演示：鹿切换成逃跑状态，机器人跟在鹿身后 1.25 单位。
+// ---------------------------------------------------------------------------
+bool animalsChase() { return g_animals.exists && g_animals.chase; }
+
+void animalsSetChase(bool on)
+{
+    if (!g_animals.exists || on == g_animals.chase) return;
+    // 只改变后续速度，不把 speed*t 的历史路程整体换算，否则切换会瞬移。
+    if (g_animals.hasTime)
+    {
+        const AnimalDef& deer = kDefs[0];
+        const float t = g_animals.lastTime;
+        g_animals.deerDistanceOffset +=
+            walkedDistance(t, g_animals.chase ? deer.fleeSpeed : deer.walkSpeed, g_animals.chase) -
+            walkedDistance(t, on ? deer.fleeSpeed : deer.walkSpeed, on);
+    }
+    g_animals.chase = on;
+    std::printf("[animals] chase demo: %s\n", on ? "on (deer flees)" : "off");
+}
+
+void animalsToggleChase() { animalsSetChase(!g_animals.chase); }
+
+bool animalsChaseTarget(const Scene& scene, float outPos[3], float* yawDeg)
+{
+    if (!g_animals.exists || g_animals.obj[0] < 0 ||
+        g_animals.obj[0] >= (int)scene.objects.size())
+        return false;
+
+    const Object& deer = scene.objects[g_animals.obj[0]];
+    const float hx = g_animals.heading[0][0], hz = g_animals.heading[0][1];
+
+    // 站在鹿的正后方，朝同一个方向追
+    outPos[0] = deer.pos[0] - hx * 1.25f;
+    outPos[1] = 0.0f;
+    outPos[2] = deer.pos[2] - hz * 1.25f;
+
+    // 注意：动物模型面朝 +X，机器人模型面朝 +Z，两者的 yaw 公式不同。
+    // 动物用 atan2(-hz, hx)；机器人 Ry(θ) 把 +Z 转到 (sinθ, cosθ)，
+    // 所以这里必须是 atan2(hx, hz)。用错会让机器人一边追一边背对鹿。
+    if (yawDeg) *yawDeg = std::atan2(hx, hz) * 180.0f / kPi;
+    return true;
+}
+
+bool animalsAlive()               { return g_animals.exists; }
+const char* animalsStatusText()   { return g_animals.status; }
+
+bool animalPartPosition(const Scene& scene, const char* name, float out[3])
+{
+    for (const Object& o : scene.objects)
+        if (o.name == name)
+        {
+            out[0] = o.pos[0]; out[1] = o.pos[1]; out[2] = o.pos[2];
+            return true;
+        }
+    return false;
+}
+```
+
+### 9. `src/bezier.h`
+
+贝塞尔路径接口（45 行）
+
+```cpp
+#pragma once
+// 三次贝塞尔闭曲线（2026 加分项：贝塞尔曲线路径）。
+//
+// 曲线由若干「锚点」给出：相邻锚点之间用一段三次贝塞尔连接，控制柄按
+// Catmull-Rom 规则从相邻锚点推出 —— 曲线穿过每个锚点且切线连续（C1）。
+// 每段仍用 de Casteljau 递归插值求值，控制点（锚点 + 控制柄）可可视化。
+//
+// 关键点：贝塞尔参数 u 与弧长不成正比（u 均匀走，速度会忽快忽慢）。
+// 这里把整条闭曲线按固定步长采样成折线并累计弧长，位置用「弧长」参数化，
+// 机器人/动物就能按弧长匀速移动。
+#include "math3d.h"
+#include "obj_loader.h"
+
+#include <vector>
+
+struct BezierPath
+{
+    struct Segment { Vec3 p[4]; };
+
+    std::vector<Segment> segments;     // 每段 4 个控制点（首尾锚点 + 两个控制柄）
+    std::vector<Vec3>    anchors;      // 曲线穿过的锚点（可视化用）
+    std::vector<Vec3>    samples;      // 采样折线（不含闭合重复点）
+    std::vector<float>   cum;          // 累计弧长，cum[i] 对应 samples[i]，末尾是总长
+    float                total = 0.0f;
+
+    // 由锚点生成闭合曲线（锚点按顺序首尾相连）。
+    void buildClosed(const std::vector<Vec3>& anchorPoints);
+
+    // 按比例 u∈[0,1] 直接求值（de Casteljau），用于生成采样点/画控制多边形。
+    Vec3 evalProportional(float u) const;
+
+    // 按弧长 s 求值（s 自动对总长取模）—— 匀速移动用这个。
+    Vec3 evalAtDistance(float s) const;
+    Vec3 tangentAtDistance(float s) const;
+
+    // 距给定点最近的弧长参数（把对象放到曲线上时用）。
+    float nearestDistance(const Vec3& p) const;
+};
+
+// 把曲线画成低多边形「胶管 + 控制点标记」的网格，拼进场景后走正常渲染/阴影管线。
+//   curveCol 曲线颜色；anchorCol 锚点颜色；handleCol 控制柄颜色
+void buildBezierVisual(MeshData& out, const BezierPath& path,
+                       const float curveCol[3],
+                       const float anchorCol[3],
+                       const float handleCol[3]);
+```
+
+### 10. `src/bezier.cpp`
+
+de Casteljau 与弧长参数化（208 行）
+
+```cpp
+#include "bezier.h"
+#include "forest.h"        // 形状库：圆柱 / 椭球
+
+#include <algorithm>
+#include <cmath>
+
+namespace {
+
+constexpr float kPi = 3.14159265358979323846f;
+
+// 每段采样数：24 段折线在 4 单位半径的环上已经看不出棱角，
+// 同时弧长误差远小于一步位移（机器人每帧约 0.03 单位）。
+constexpr int kSamplesPerSegment = 24;
+
+Vec3 lerp3(const Vec3& a, const Vec3& b, float t)
+{
+    return v3(a.x + (b.x - a.x) * t,
+              a.y + (b.y - a.y) * t,
+              a.z + (b.z - a.z) * t);
+}
+
+// 三次贝塞尔 de Casteljau：三次线性插值后取最后一点。
+Vec3 deCasteljau(const Vec3 p[4], float u)
+{
+    const Vec3 a = lerp3(p[0], p[1], u);
+    const Vec3 b = lerp3(p[1], p[2], u);
+    const Vec3 c = lerp3(p[2], p[3], u);
+    const Vec3 d = lerp3(a, b, u);
+    const Vec3 e = lerp3(b, c, u);
+    return lerp3(d, e, u);
+}
+
+float dist2D(const Vec3& a, const Vec3& b)
+{
+    const float dx = a.x - b.x, dz = a.z - b.z;
+    return std::sqrt(dx * dx + dz * dz);
+}
+
+// 把一段竖直单位圆柱（y=0..1）摆到 a->b 的连线上。
+void addLink(MeshData& out, const Vec3& a, const Vec3& b,
+             float radius, const float col[3])
+{
+    const Vec3 delta = b - a;
+    const float len = v3len(delta);
+    if (len < 1e-5f) return;
+    const Vec3 dir = delta * (1.0f / len);
+
+    float rot[16], scale[16], rs[16], trans[16], m[16];
+    const float dot = std::max(-1.0f, std::min(1.0f, dir.y));
+    const float angle = std::acos(dot) * 180.0f / kPi;
+    const Vec3 axis = v3cross(v3(0.0f, 1.0f, 0.0f), dir);
+    mat4FromAxisAngle(rot, angle, axis.x, axis.y, axis.z);
+    mat4FromScale(scale, 1.0f, len, 1.0f);
+    mat4Multiply(rs, rot, scale);
+    mat4FromTranslation(trans, a.x, a.y, a.z);
+    mat4Multiply(m, trans, rs);
+
+    MeshData part;
+    addCylinderSide(part, 0.0f, 1.0f, radius, radius, col, 5);
+    appendTransformed(out, part, m);
+}
+
+} // namespace
+
+// ---------------------------------------------------------------------------
+void BezierPath::buildClosed(const std::vector<Vec3>& anchorPoints)
+{
+    segments.clear();
+    anchors = anchorPoints;
+    samples.clear();
+    cum.clear();
+    total = 0.0f;
+
+    const int n = (int)anchors.size();
+    if (n < 2) return;
+
+    // Catmull-Rom -> 三次贝塞尔控制柄：保证曲线穿过锚点、且相邻段切线连续。
+    for (int i = 0; i < n; ++i)
+    {
+        const Vec3& p0 = anchors[(i + n - 1) % n];
+        const Vec3& p1 = anchors[i];
+        const Vec3& p2 = anchors[(i + 1) % n];
+        const Vec3& p3 = anchors[(i + 2) % n];
+
+        Segment s;
+        s.p[0] = p1;
+        s.p[1] = p1 + (p2 - p0) * (1.0f / 6.0f);
+        s.p[2] = p2 - (p3 - p1) * (1.0f / 6.0f);
+        s.p[3] = p2;
+        segments.push_back(s);
+    }
+
+    // 采样成折线并累计弧长（不含闭合点，末点与首点之间由 cum 收尾）。
+    for (const Segment& s : segments)
+        for (int k = 0; k < kSamplesPerSegment; ++k)
+            samples.push_back(deCasteljau(s.p, (float)k / (float)kSamplesPerSegment));
+
+    const int m = (int)samples.size();
+    cum.resize((size_t)m + 1);
+    cum[0] = 0.0f;
+    for (int i = 0; i < m; ++i)
+        cum[i + 1] = cum[i] + dist2D(samples[i], samples[(i + 1) % m]);
+    total = cum[m];
+}
+
+Vec3 BezierPath::evalProportional(float u) const
+{
+    if (segments.empty()) return v3(0, 0, 0);
+    u = std::fmod(u, 1.0f);
+    if (u < 0.0f) u += 1.0f;
+
+    const int n = (int)segments.size();
+    float local = u * (float)n;
+    int idx = (int)local;
+    if (idx >= n) idx = n - 1;
+    return deCasteljau(segments[idx].p, local - (float)idx);
+}
+
+Vec3 BezierPath::evalAtDistance(float s) const
+{
+    if (samples.empty() || total <= 1e-6f) return v3(0, 0, 0);
+
+    s = std::fmod(s, total);
+    if (s < 0.0f) s += total;
+
+    const int m = (int)samples.size();
+    // cum 单调递增，找到 s 落在哪一小段
+    int lo = 0, hi = m;                         // cum[lo] <= s < cum[hi]
+    while (lo + 1 < hi)
+    {
+        const int mid = (lo + hi) / 2;
+        if (cum[mid] <= s) lo = mid;
+        else               hi = mid;
+    }
+    const float segLen = cum[lo + 1] - cum[lo];
+    const float t = (segLen > 1e-6f) ? (s - cum[lo]) / segLen : 0.0f;
+    return lerp3(samples[lo], samples[(lo + 1) % m], t);
+}
+
+Vec3 BezierPath::tangentAtDistance(float s) const
+{
+    if (samples.empty() || total <= 1e-6f) return v3(0, 0, 1);
+
+    s = std::fmod(s, total);
+    if (s < 0.0f) s += total;
+
+    const int m = (int)samples.size();
+    int lo = 0, hi = m;
+    while (lo + 1 < hi)
+    {
+        const int mid = (lo + hi) / 2;
+        if (cum[mid] <= s) lo = mid;
+        else               hi = mid;
+    }
+    return v3norm(samples[(lo + 1) % m] - samples[lo]);
+}
+
+float BezierPath::nearestDistance(const Vec3& p) const
+{
+    if (samples.empty()) return 0.0f;
+    float best = 0.0f, bestD = 1e30f;
+    for (size_t i = 0; i < samples.size(); ++i)
+    {
+        const float d = dist2D(samples[i], p);
+        if (d < bestD) { bestD = d; best = cum[i]; }
+    }
+    return best;
+}
+
+// ---------------------------------------------------------------------------
+void buildBezierVisual(MeshData& out, const BezierPath& path,
+                       const float curveCol[3],
+                       const float anchorCol[3],
+                       const float handleCol[3])
+{
+    if (path.samples.empty()) return;
+
+    const float lift = 0.04f;                  // 略高于地面，避免深度冲突
+    const int   m = (int)path.samples.size();
+
+    // 曲线本体：每 2 个采样点连一段短圆柱（步长减半，三角形仍只有几千）
+    for (int i = 0; i < m; i += 2)
+    {
+        Vec3 a = path.samples[i];
+        Vec3 b = path.samples[(i + 2) % m];
+        a.y += lift;
+        b.y += lift;
+        addLink(out, a, b, 0.035f, curveCol);
+    }
+
+    // 锚点：曲线必经的大标记
+    for (const Vec3& p : path.anchors)
+    {
+        const Vec3 c = v3(p.x, p.y + lift + 0.02f, p.z);
+        addEllipsoid(out, c, 0.11f, 0.11f, 0.11f, anchorCol, 8, 5);
+    }
+
+    // 控制柄：每段两个，展示贝塞尔控制多边形（Catmull-Rom 推出的位置）
+    for (const auto& s : path.segments)
+    {
+        for (int h = 1; h <= 2; ++h)
+        {
+            const Vec3 p = s.p[h];
+            const Vec3 c = v3(p.x, p.y + lift + 0.02f, p.z);
+            addEllipsoid(out, c, 0.05f, 0.05f, 0.05f, handleCol, 6, 4);
+        }
+    }
+}
+```
+
+### 11. `src/gl_api.h`
 
 OpenGL runtime entry points（95 行）
 
@@ -181,7 +2076,7 @@ inline bool load() {
 }
 ```
 
-### 2. `src/shaders.h`
+### 12. `src/shaders.h`
 
 GLSL per-pixel lighting and PCF shadows（66 行）
 
@@ -254,7 +2149,7 @@ void main() {
 }
 ```
 
-### 3. `src/renderer.h`
+### 13. `src/renderer.h`
 
 Renderer interface（14 行）
 
@@ -275,7 +2170,7 @@ void endView();
 }
 ```
 
-### 4. `src/renderer.cpp`
+### 14. `src/renderer.cpp`
 
 Shadow pass and forward shading（150 行）
 
@@ -432,7 +2327,7 @@ void endView() {
 }
 ```
 
-### 5. `tests/obj_loader_test.cpp`
+### 15. `tests/obj_loader_test.cpp`
 
 OBJ regression tests（31 行）
 
@@ -470,17 +2365,21 @@ int main() {
 }
 ```
 
-### 6. `tools/render_smoke.py`
+### 16. `tools/render_smoke.py`
 
-GPU rendering regression checks（36 行）
+GPU rendering regression checks（57 行）
 
 ```python
 """Actual OpenGL integration checks. Run after building; requires a GPU context."""
 from pathlib import Path
-import subprocess, sys, struct, json
+import argparse, subprocess, sys, struct, json
 root = Path(__file__).resolve().parents[1]
-exe = Path(sys.argv[1]).resolve() if len(sys.argv)>1 else root/'build/Release/viewer.exe'
-out = root/'shots/refactor'; out.mkdir(parents=True,exist_ok=True)
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('exe', nargs='?', type=Path, default=root/'build/Release/viewer.exe')
+parser.add_argument('--out', type=Path, default=root/'out/review/render')
+options = parser.parse_args()
+exe = options.exe.resolve()
+out = options.out.resolve(); out.mkdir(parents=True,exist_ok=True)
 cases = {
  'after': ['--no-hud'],
  'classic': ['--classic','--no-hud'],
@@ -494,15 +2393,32 @@ cases = {
  'points': ['--scene','studio','--render','points'],
  'wide': ['--size','1600x300','--no-hud'],
  'textured': ['Models/Rabbit/10037_Rabbit_v1_L3.obj','--scene','studio','--no-hud'],
+ 'robot-wave': ['--pose','wave','--no-hud'],
+ 'robot-walk': ['--robot-walk','--no-hud'],
+ 'forest-quad': ['--quad'],
+ 'forest-front': ['--proj','ortho','--view','front'],
+ 'forest-top': ['--proj','ortho','--view','top'],
+ 'forest-cavalier': ['--proj','cav','--view','front'],
+ 'path-guide': ['--path','--path-guide','--no-hud'],
+ 'chase': ['--chase','--no-hud'],
+ 'grazing': ['--time','12','--no-hud'],
+ 'help': ['--show-help'],
+ 'import-skin': ['--character','Models/TrailSurveyor/TrailSurveyor.png','--pose','wave','--time','0'],
+ 'import-model': ['--character','Models/TrailSurveyor/TrailSurveyor.obj','--path','--time','0.4'],
 }
 report=[]
 for name,args in cases.items():
  shot=out/(name+'.bmp')
- result=subprocess.run([str(exe),'--shot',str(shot),*args],cwd=root,capture_output=True,timeout=60)
+ result=subprocess.run([str(exe),'--shot',str(shot),'--time','3',*args],cwd=root,capture_output=True,timeout=60)
  log=(result.stdout+result.stderr).decode('utf-8',errors='replace')
  (out/(name+'.log')).write_text(log,encoding='utf-8')
  assert result.returncode==0,(name,result.returncode,log)
  assert 'GLSL initialized' in log,(name,log)
+ assert '[gl] error:' not in log,(name,log)
+ if name == 'import-skin':
+  assert '[character] imported .png:' in log,(name,log)
+ if name == 'import-model':
+  assert '[character] imported .obj:' in log,(name,log)
  data=shot.read_bytes(); w,h=struct.unpack_from('<ii',data,18)
  assert len(data)==struct.unpack_from('<I',data,2)[0] and len(set(data[54:]))>32,name
  subprocess.run([sys.executable,str(root/'tools/bmp2png.py'),str(shot)],check=True,capture_output=True)
@@ -513,9 +2429,9 @@ assert (out/'after.bmp').read_bytes()!=(out/'classic.bmp').read_bytes(),'shader 
 (out/'smoke-results.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
 ```
 
-### 7. `CMakeLists.txt`
+### 17. `CMakeLists.txt`
 
-构建配置（含 32 位防护）（112 行）
+构建配置（含 32 位防护）（115 行）
 
 ```cmake
 cmake_minimum_required(VERSION 3.21)
@@ -582,6 +2498,9 @@ add_executable(viewer WIN32
     src/anim.cpp
     src/forest.cpp
     src/recorder.cpp
+    src/robot.cpp
+    src/animals.cpp
+    src/bezier.cpp
 )
 
 set_target_properties(viewer PROPERTIES WIN32_EXECUTABLE TRUE)
@@ -632,9 +2551,9 @@ if(BUILD_TESTING)
 endif()
 ```
 
-### 8. `CMakePresets.json`
+### 18. `CMakePresets.json`
 
-CMake 预设：只提供 x64，避免选错（40 行）
+CMake 预设：x64 / Win32（40 行）
 
 ```json
 {
@@ -679,7 +2598,7 @@ CMake 预设：只提供 x64，避免选错（40 行）
 }
 ```
 
-### 9. `build.bat`
+### 19. `build.bat`
 
 一键构建（Windows cmd / PowerShell）（82 行）
 
@@ -768,7 +2687,7 @@ echo ============================================================
 endlocal
 ```
 
-### 10. `build.sh`
+### 20. `build.sh`
 
 一键构建（git-bash / MSYS2）（78 行）
 
@@ -853,9 +2772,9 @@ echo "   forest:     ./$BUILDDIR/Release/viewer.exe Models/bunny_10k.obj --scene
 echo "============================================================"
 ```
 
-### 11. `viewer.vcxproj`
+### 21. `viewer.vcxproj`
 
-经典 VS 工程（自包含，双击 viewer.sln 即可）（176 行）
+经典 VS 工程（自包含，双击 viewer.sln 即可）（181 行）
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1006,6 +2925,9 @@ echo "============================================================"
     <ClCompile Include="src\anim.cpp" />
     <ClCompile Include="src\recorder.cpp" />
     <ClCompile Include="src\hud.cpp" />
+    <ClCompile Include="src\robot.cpp" />
+    <ClCompile Include="src\animals.cpp" />
+    <ClCompile Include="src\bezier.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\types.h" />
@@ -1026,6 +2948,8 @@ echo "============================================================"
     <ClInclude Include="src\shaders.h" />
     <ClInclude Include="src\gl_api.h" />
     <ClInclude Include="src\app.h" />
+    <ClInclude Include="src\robot.h" />
+    <ClInclude Include="src\animals.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
@@ -1036,20 +2960,29 @@ echo "============================================================"
 </Project>
 ```
 
-### 12. `.gitignore`
+### 22. `.gitignore`
 
-Git 忽略规则（25 行）
+Git 忽略规则（34 行）
 
 ```text
 # 构建产物
-build/          # CMake 构建目录（x64）
-build32/        # CMake 构建目录（Win32）
-bin/            # VS 工程 viewer.sln 的输出（bin/<平台>/<配置>/）
-obj/            # VS 工程的中间文件
-x64/            # 旧版 VS 默认输出，保留忽略以防手滑
+# 注意：.gitignore 不支持行尾注释（注释必须单独占一行），
+# 否则整串（含空格和 #）会被当成匹配模式，等于没写。
+# CMake 构建目录（x64 / Win32）
+build/
+build32/
+# VS 工程 viewer.sln 的输出（bin/<平台>/<配置>/）
+bin/
+# VS 工程的中间文件
+obj/
+# 旧版 VS 默认输出，保留忽略以防手滑
+x64/
 Release/
 Debug/
 out/
+dist/
+__pycache__/
+*.pyc
 .vs/
 
 # 注意：不要忽略 *.sln / *.vcxproj —— viewer.sln / viewer.vcxproj 是本项目
@@ -1068,7 +3001,7 @@ out/
 .vscode/
 ```
 
-### 13. `src/types.h`
+### 23. `src/types.h`
 
 全局模式枚举（27 行）
 
@@ -1102,7 +3035,7 @@ enum class SceneKind
 };
 ```
 
-### 14. `src/math3d.h`
+### 24. `src/math3d.h`
 
 向量 / 矩阵 / 四元数工具（header-only）（136 行）
 
@@ -1245,7 +3178,7 @@ inline void mat4FromScale(float m[16], float sx, float sy, float sz)
 }
 ```
 
-### 15. `src/obj_loader.h`
+### 25. `src/obj_loader.h`
 
 OBJ 导入接口（实验十）（62 行）
 
@@ -1314,9 +3247,9 @@ struct MeshData
 bool loadOBJ(const std::string& path, MeshData& out, std::string* errOut = nullptr);
 ```
 
-### 16. `src/obj_loader.cpp`
+### 26. `src/obj_loader.cpp`
 
-OBJ / MTL 解析：四边形三角化 + 顶点去重（408 行）
+OBJ / MTL 解析：四边形三角化 + 顶点去重（409 行）
 
 ```cpp
 #include "obj_loader.h"
@@ -1326,6 +3259,7 @@ OBJ / MTL 解析：四边形三角化 + 顶点去重（408 行）
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <filesystem>
 #include <sstream>
 #include <unordered_map>
 
@@ -1405,7 +3339,7 @@ bool parseCorner(const std::string& tok, CornerRef& out)
 // ---------------------------------------------------------------------------
 bool parseMTL(const std::string& mtlPath, ObjMaterial& out, std::string& mapOut)
 {
-    std::ifstream ifs(mtlPath);
+    std::ifstream ifs(std::filesystem::u8path(mtlPath));
     if (!ifs.is_open()) return false;
 
     const std::string mtlDir = dirOf(mtlPath);
@@ -1489,7 +3423,7 @@ bool loadOBJ(const std::string& path, MeshData& out, std::string* errOut)
         return false;
     };
 
-    std::ifstream ifs(path);
+    std::ifstream ifs(std::filesystem::u8path(path));
     if (!ifs.is_open()) return fail("cannot open OBJ file: " + path);
 
     const std::string objDir = dirOf(path);
@@ -1729,9 +3663,9 @@ bool loadOBJ(const std::string& path, MeshData& out, std::string* errOut)
 }
 ```
 
-### 17. `src/mesh.h`
+### 27. `src/mesh.h`
 
-网格接口（50 行）
+网格接口（52 行）
 
 ```cpp
 #pragma once
@@ -1761,6 +3695,7 @@ public:
 
     // 程序化构造（森林等）：直接塞顶点数据进去，不经过文件
     void adopt(MeshData&& data);
+    void adoptSkin(MeshData&& data, const unsigned char* pixels);
 
     // 用当前材质设定 + 纹理绘制。useTexture 关掉时退化为纯材质着色。
     void draw(bool useTexture) const;
@@ -1774,6 +3709,7 @@ public:
 
     const MeshData& data() const { return data_; }
     bool  hasTexture() const { return tex_ != 0; }
+    void  preserveSmallTexturePixels() const;
     float radius()     const { return data_.radius; }
     const float* center() const { return data_.center; }
 
@@ -1786,9 +3722,9 @@ private:
 };
 ```
 
-### 18. `src/mesh.cpp`
+### 28. `src/mesh.cpp`
 
-网格：归一化、上轴判别、客户端顶点数组绘制（272 行）
+网格：归一化、上轴判别、客户端顶点数组绘制（288 行）
 
 ```cpp
 #include "mesh.h"
@@ -1906,6 +3842,13 @@ void Mesh::adopt(MeshData&& data)
     data_.valid             = true;
 }
 
+void Mesh::adoptSkin(MeshData&& data, const unsigned char* pixels)
+{
+    adopt(std::move(data));
+    tex_ = uploadSkinPixels(pixels);
+    texW_ = texH_ = 64;
+}
+
 bool Mesh::loadFromOBJ(const std::string& path, UpAxis up, bool normalize, std::string* errOut)
 {
     MeshData loaded;
@@ -1969,6 +3912,15 @@ void Mesh::bindTexture(bool useTexture) const
     {
         glDisable(GL_TEXTURE_2D);
     }
+}
+
+void Mesh::preserveSmallTexturePixels() const
+{
+    if (!tex_ || texW_ > 128 || texH_ > 128) return;
+    glBindTexture(GL_TEXTURE_2D, tex_);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Mesh::upload() const
@@ -2065,23 +4017,26 @@ void Mesh::release()
 }
 ```
 
-### 19. `src/texture.h`
+### 29. `src/texture.h`
 
-纹理接口（7 行）
+纹理接口（10 行）
 
 ```cpp
 #pragma once
 // 纹理加载：stb_image（public domain，单头文件，无需额外 DLL）→ OpenGL 纹理对象。
 #include <GL/freeglut.h>
 #include <string>
+#include <vector>
 
 // 加载图片并上传为 2D 纹理。失败返回 0。宽高通过出参返回（可为 nullptr）。
 GLuint loadTexture2D(const std::string& path, int* wOut = nullptr, int* hOut = nullptr);
+bool readSkinPixels(const std::string& path, std::vector<unsigned char>& pixels);
+GLuint uploadSkinPixels(const unsigned char* pixels);
 ```
 
-### 20. `src/texture.cpp`
+### 30. `src/texture.cpp`
 
-stb_image → OpenGL 纹理（63 行）
+stb_image → OpenGL 纹理（112 行）
 
 ```cpp
 #include "texture.h"
@@ -2098,12 +4053,25 @@ stb_image → OpenGL 纹理（63 行）
 #endif
 
 #include <cstdio>
+#include <filesystem>
+#include <memory>
 
 // GL_CLAMP_TO_EDGE 是 OpenGL 1.2 的令牌，Windows SDK 的 <GL/gl.h> 只到 1.1，
 // 所以这里自己定义，避免依赖 glext.h。
 #ifndef GL_CLAMP_TO_EDGE
   #define GL_CLAMP_TO_EDGE 0x812F
 #endif
+
+namespace {
+std::FILE* openImage(const std::string& path)
+{
+#ifdef _WIN32
+    return _wfopen(std::filesystem::u8path(path).c_str(), L"rb");
+#else
+    return std::fopen(path.c_str(), "rb");
+#endif
+}
+}
 
 GLuint loadTexture2D(const std::string& path, int* wOut, int* hOut)
 {
@@ -2114,10 +4082,12 @@ GLuint loadTexture2D(const std::string& path, int* wOut, int* hOut)
     stbi_set_flip_vertically_on_load(1);   // OBJ 的 vt 原点在左下，stb 首行是图像顶部
 
     int w = 0, h = 0, comp = 0;
-    unsigned char* pixels = stbi_load(path.c_str(), &w, &h, &comp, STBI_rgb_alpha);
+    std::unique_ptr<std::FILE, decltype(&std::fclose)> file(openImage(path), std::fclose);
+    unsigned char* pixels = file ? stbi_load_from_file(file.get(), &w, &h, &comp, STBI_rgb_alpha) : nullptr;
     if (!pixels)
     {
-        std::fprintf(stderr, "[texture] load failed: %s (%s)\n", path.c_str(), stbi_failure_reason());
+        std::fprintf(stderr, "[texture] load failed: %s (%s)\n", path.c_str(),
+                     file ? stbi_failure_reason() : "unable to open image");
         return 0;
     }
 
@@ -2147,9 +4117,43 @@ GLuint loadTexture2D(const std::string& path, int* wOut, int* hOut)
     std::printf("[texture] %s -> %dx%d, %d channels\n", path.c_str(), w, h, comp);
     return tex;
 }
+
+bool readSkinPixels(const std::string& path, std::vector<unsigned char>& pixels)
+{
+    std::unique_ptr<std::FILE, decltype(&std::fclose)> file(openImage(path), std::fclose);
+    if (!file) return false;
+    const unsigned char signature[] = {137, 80, 78, 71, 13, 10, 26, 10};
+    for (unsigned char byte : signature)
+        if (std::fgetc(file.get()) != byte) return false;
+    std::rewind(file.get());
+    int w = 0, h = 0, channels = 0;
+    if (!stbi_info_from_file(file.get(), &w, &h, &channels) || w != 64 || h != 64)
+        return false;
+    std::rewind(file.get());
+    stbi_set_flip_vertically_on_load(0);
+    std::unique_ptr<unsigned char, decltype(&stbi_image_free)> decoded(
+        stbi_load_from_file(file.get(), &w, &h, &channels, STBI_rgb_alpha), stbi_image_free);
+    if (!decoded || w != 64 || h != 64) return false;
+    pixels.assign(decoded.get(), decoded.get() + 64 * 64 * 4);
+    return true;
+}
+
+GLuint uploadSkinPixels(const unsigned char* pixels)
+{
+    GLuint texture = 0;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texture;
+}
 ```
 
-### 21. `src/camera.h`
+### 31. `src/camera.h`
 
 观察变换相机接口（38 行）
 
@@ -2194,7 +4198,7 @@ struct Camera
 };
 ```
 
-### 22. `src/camera.cpp`
+### 32. `src/camera.cpp`
 
 相机：环绕 / 漫游 / 四元数旋转 / 退化保护（实验七）（123 行）
 
@@ -2324,7 +4328,7 @@ void Camera::setPreset(int presetIndex, float sceneRadius)
 }
 ```
 
-### 23. `src/projection.h`
+### 33. `src/projection.h`
 
 投影接口（21 行）
 
@@ -2352,7 +4356,7 @@ bool isParallelProjection(ProjMode mode);
 const char* projModeName(ProjMode mode);
 ```
 
-### 24. `src/projection.cpp`
+### 34. `src/projection.cpp`
 
 透视 / 正交 / 斜平行投影 + 保宽高比（171 行）
 
@@ -2530,7 +4534,7 @@ void applyProjection(ProjMode mode, int winW, int winH, const Camera& cam,
 }
 ```
 
-### 25. `src/lighting.h`
+### 35. `src/lighting.h`
 
 光照接口（15 行）
 
@@ -2552,7 +4556,7 @@ void applyLightPositions();
 inline void enableNormalizeIfLighting() { glEnable(GL_NORMALIZE); }
 ```
 
-### 26. `src/lighting.cpp`
+### 36. `src/lighting.cpp`
 
 光照与材质（展示台点光源 / 森林太阳光）（89 行）
 
@@ -2648,57 +4652,70 @@ void applyLightPositions()
 }
 ```
 
-### 27. `src/forest.h`
+### 37. `src/forest.h`
 
-程序化森林接口（28 行）
+程序化森林接口（39 行）
 
 ```cpp
 #pragma once
-// 程序化森林：地面 + 树，全部烘焙进**一个**带顶点色的 MeshData。
+// 程序化森林 v2：L-system 分形树 + 花草（2026 加分项：树木花草用分形算法实现）。
 //
-// 为什么烘焙成一个而不是每棵树一个物体：
-//   - 整片森林一次 glDrawElements 画完，不用几十个 draw call
-//   - 树是纯背景，不需要被选中 / 单独变换，合并没有任何损失
-//   - 顶点色让树干和树叶在同一个网格里用不同颜色，不必拆成两个材质
+// 全部几何烘焙进**一个**带顶点色的 MeshData（整片森林一次 glDrawElements），
+// 固定种子 xorshift 随机数保证同一种子生成同一片森林，录像可复现。
 //
-// 全部几何用固定种子的 xorshift 伪随机数生成 —— 同一个种子必然得到同一片森林，
-// 录像才能复现（rand() 的实现各编译器不同，不能用）。
+// 树的生成 = L-system：字符串重写（F → 展开式）迭代 depth 代，
+// 再用 3D 海龟（前进/偏航/俯仰/翻滚/入栈出栈）解释成锥形枝干，
+// 末端小枝挂叶团。迭代深度与分支角可运行期调整（菜单/按键）并即时重建森林。
 #include "math3d.h"
 #include "obj_loader.h"
 
+#include <string>
 #include <vector>
 
-// 把整片森林（地面 + 树）写进 out。out 会被清空。
-//   halfSize   林地半边长（世界单位）
-//   treeCount  树的数量
-//   path       兔子会经过的路径采样点（XZ 平面），该路径两侧 clearance 内不种树，
-//              否则兔子会从树干里穿过去
-//   clearance  路径两侧保留的空地半径
-//   seed       随机种子
+// ---- 基本形状（动物等其它程序化网格也复用）----
+void pushTri(MeshData& m, const Vec3& a, const Vec3& b, const Vec3& c, const float col[3]);
+void addCylinderSide(MeshData& m, float y0, float y1, float r0, float r1,
+                     const float col[3], int sides);               // 竖直圆柱（可锥形）
+void addCone(MeshData& m, float y0, float y1, float r, const float col[3], int sides);
+void addEllipsoid(MeshData& m, const Vec3& c, float rx, float ry, float rz,
+                  const float col[3], int slices, int stacks);
+// 把 part 的顶点经 4x4 矩阵（列主序）变换后追加进 out —— 拼装多部件模型用
+void appendTransformed(MeshData& out, const MeshData& part, const float m[16]);
+
+// 把整片森林（地面 + 分形树 + 花草）写进 out。out 会被清空。
+//   path / clearance：漫步路线两侧留空地；seed 固定可复现
 void buildForest(MeshData& out,
                  float halfSize,
                  int   treeCount,
                  const std::vector<Vec3>& path,
                  float clearance,
                  unsigned seed);
+
+// ---- 运行期分形参数（调整后调 sceneRebuildForest 重建）----
+void forestSetDetail(int bump);        // -1/0/+1：迭代深度 减一/基准/加一
+int  forestDetail();
+void forestAdjustAngle(float scale);   // 分支角整体缩放，1.0 为基准
+const char* forestParamsText();        // HUD/日志，如 "depth 3+1, angle x1.15"
 ```
 
-### 28. `src/forest.cpp`
+### 38. `src/forest.cpp`
 
-森林：地面 + 三种树型，烘焙成一个顶点色网格（321 行）
+森林：地面 + 三种树型，烘焙成一个顶点色网格（602 行）
 
 ```cpp
 #include "forest.h"
+#include "robot.h"
+#include "bezier.h"
 
 #include <cmath>
+#include <cstring>
 
 namespace {
 
 constexpr float kPi = 3.14159265358979323846f;
 
 // ---------------------------------------------------------------------------
-// 确定性伪随机：xorshift32。固定种子保证每次运行生成完全一样的森林，录像才可复现。
-// （不能用 rand()：各 C 运行库的实现不同，换个编译器森林就变了。）
+// 确定性伪随机：xorshift32。固定种子保证每次运行生成完全一样的森林。
 // ---------------------------------------------------------------------------
 struct Rng
 {
@@ -2716,12 +4733,12 @@ struct Rng
     float range(float a, float b) { return a + (b - a) * unit(); }
 };
 
+} // namespace
+
 // ---------------------------------------------------------------------------
-// 往 MeshData 里塞一个三角形（平面法线）。绕序必须 CCW，否则会被背面剔除。
+// 基本形状（在 forest.h 里声明，供动物等其它程序化网格复用）
 // ---------------------------------------------------------------------------
-void pushTri(MeshData& m,
-             const Vec3& a, const Vec3& b, const Vec3& c,
-             const float col[3])
+void pushTri(MeshData& m, const Vec3& a, const Vec3& b, const Vec3& c, const float col[3])
 {
     const Vec3 n = v3norm(v3cross(b - a, c - a));
     const GLuint base = (GLuint)(m.positions.size() / 3);
@@ -2747,9 +4764,6 @@ void pushTri(MeshData& m,
     m.hasColors  = true;
 }
 
-// 竖直圆柱侧面（可锥形：r0 在 y0，r1 在 y1）。
-// 绕序：在 θ=0 处取 p0=(r,y0,0)，p1≈(r,y0,r·dθ)，q0=(r,y1,0)，q1≈(r,y1,r·dθ)，
-// 算 (p0,q0,q1) 的叉积得 +X，正是该处的外法线方向。
 void addCylinderSide(MeshData& m, float y0, float y1, float r0, float r1,
                      const float col[3], int sides)
 {
@@ -2768,7 +4782,6 @@ void addCylinderSide(MeshData& m, float y0, float y1, float r0, float r1,
     }
 }
 
-// 圆锥：底面圆 (y0, r) 收到顶点 (y1)。
 void addCone(MeshData& m, float y0, float y1, float r, const float col[3], int sides)
 {
     const Vec3 apex(0.0f, y1, 0.0f);
@@ -2779,14 +4792,11 @@ void addCone(MeshData& m, float y0, float y1, float r, const float col[3], int s
         const Vec3 p0(r * std::cos(t0), y0, r * std::sin(t0));
         const Vec3 p1(r * std::cos(t1), y0, r * std::sin(t1));
 
-        // 侧面：(p0, apex, p1) 叉积得 (h·rdθ, r²dθ, 0)，朝外且略微朝上 —— 正确。
-        // 反过来写成 (p0, p1, apex) 会变成朝内，整个锥体被剔除。
         pushTri(m, p0, apex, p1, col);
         pushTri(m, v3(0.0f, y0, 0.0f), p0, p1, col);      // 底盖朝下
     }
 }
 
-// 椭球（树叶团）。用解析法线做平滑着色，比平面法线更像一团叶子。
 void addEllipsoid(MeshData& m, const Vec3& c, float rx, float ry, float rz,
                   const float col[3], int slices, int stacks)
 {
@@ -2806,7 +4816,6 @@ void addEllipsoid(MeshData& m, const Vec3& c, float rx, float ry, float rz,
             m.positions.push_back(c.y + ry * sy);
             m.positions.push_back(c.z + rz * sz);
 
-            // 椭球在 (rx·sx, ry·sy, rz·sz) 处的法线正比于 (sx/rx, sy/ry, sz/rz)
             const Vec3 n = v3norm(v3(sx / rx, sy / ry, sz / rz));
             m.normals.push_back(n.x);
             m.normals.push_back(n.y);
@@ -2819,7 +4828,6 @@ void addEllipsoid(MeshData& m, const Vec3& c, float rx, float ry, float rz,
     }
 
     for (int i = 0; i < stacks; ++i)
-    {
         for (int j = 0; j < slices; ++j)
         {
             const GLuint a = base + (GLuint)(i * (slices + 1) + j);
@@ -2827,28 +4835,57 @@ void addEllipsoid(MeshData& m, const Vec3& c, float rx, float ry, float rz,
             m.indices.push_back(a);     m.indices.push_back(a + 1); m.indices.push_back(b);
             m.indices.push_back(a + 1); m.indices.push_back(b + 1); m.indices.push_back(b);
         }
-    }
     m.hasNormals = true;
     m.hasColors  = true;
 }
 
+void appendTransformed(MeshData& out, const MeshData& part, const float m[16])
+{
+    const GLuint base = (GLuint)(out.positions.size() / 3);
+    const size_t nv = part.positions.size() / 3;
+    for (size_t i = 0; i < nv; ++i)
+    {
+        const Vec3 p = mat4MulPoint(m, v3(part.positions[i * 3], part.positions[i * 3 + 1],
+                                          part.positions[i * 3 + 2]));
+        out.positions.push_back(p.x);
+        out.positions.push_back(p.y);
+        out.positions.push_back(p.z);
+
+        const Vec3 d = mat4MulDir(m, v3(part.normals[i * 3], part.normals[i * 3 + 1],
+                                        part.normals[i * 3 + 2]));
+        const Vec3 n = v3norm(d);
+        out.normals.push_back(n.x);
+        out.normals.push_back(n.y);
+        out.normals.push_back(n.z);
+
+        out.colors.push_back(part.colors[i * 3]);
+        out.colors.push_back(part.colors[i * 3 + 1]);
+        out.colors.push_back(part.colors[i * 3 + 2]);
+    }
+    for (GLuint idx : part.indices) out.indices.push_back(base + idx);
+    out.hasNormals = true;
+    out.hasColors  = true;
+}
+
+namespace {
+
 // ---------------------------------------------------------------------------
-// 地面：细分网格 + 平滑的草色变化。
-// 必须细分：固定管线的雾是**逐顶点**算的，一整块大平面只有四个角有雾值，
-// 远处会突变成一条硬边。
+// 地面：细分网格 + 平滑的草色变化（细分是为了逐顶点雾不出硬边）
 // ---------------------------------------------------------------------------
 void addGround(MeshData& m, float halfSize, int div)
 {
-    // Shared vertices give adjacent cells identical colours, avoiding visible tile seams.
     const GLuint base = static_cast<GLuint>(m.positions.size()/3);
     const float step=2.0f*halfSize/div;
     for(int i=0;i<=div;++i) for(int j=0;j<=div;++j) {
         float x=-halfSize+step*i, z=-halfSize+step*j;
         float g=0.5f+0.5f*std::sin(x*0.23f)*std::cos(z*0.19f);
         float d=0.5f+0.5f*std::sin(x*0.07f+2.1f)*std::sin(z*0.09f-1.3f);
+        const float clearing = std::exp(-(x*x + z*z) / 40.0f);
         m.positions.insert(m.positions.end(),{x,0.0f,z});
         m.normals.insert(m.normals.end(),{0.0f,1.0f,0.0f});
-        m.colors.insert(m.colors.end(),{0.12f+0.09f*g+0.07f*d,0.25f+0.15f*g+0.03f*d,0.09f+0.06f*g+0.03f*d});
+        m.colors.insert(m.colors.end(),{0.12f+0.09f*g+0.07f*d+0.11f*clearing,
+                                        0.25f+0.15f*g+0.03f*d+0.11f*clearing,
+                                        0.09f+0.06f*g+0.03f*d+0.04f*clearing});
     }
     for(int i=0;i<div;++i) for(int j=0;j<div;++j) {
         GLuint a=base+i*(div+1)+j, b=a+1, c=b+div+1, d=a+div+1;
@@ -2858,53 +4895,223 @@ void addGround(MeshData& m, float halfSize, int div)
 }
 
 // ---------------------------------------------------------------------------
-// 三种树型。都按「高度 1、底面在 y = 0、中心在原点」生成，
-// 摆放时用 appendScaled 统一缩放平移。
+// L-system 分形树
+//
+// 文法（只重写 F，其它符号原样保留）：
+//   F   沿当前方向长一段枝（锥台），末端小枝挂叶
+//   + - 绕「上」参考轴左/右偏航
+//   & ^ 绕「左」参考轴俯/仰
+//   / \ 绕前进方向翻滚（让分支在三维里错开，不共面）
+//   [ ] 海龟状态入栈 / 出栈（分支）
 // ---------------------------------------------------------------------------
-void buildConifer(MeshData& t, Rng& rng)
+
+// 运行期参数：迭代深度增减与分支角缩放（菜单/按键调整，重建森林生效）
+int   g_detailBump  = 0;
+float g_angleScale  = 1.0f;
+
+struct LTreeRule
 {
-    const float trunk[3] = { 0.20f, 0.13f, 0.07f };
-    addCylinderSide(t, 0.0f, 0.30f, 0.030f, 0.020f, trunk, 6);
+    const char* axiom;
+    const char* expansion;      // F 的重写结果
+    int         iterations;     // 基准迭代代数
+    float       angleDeg;       // 分支角
+    float       lenShrink;      // 每级分支长度衰减
+    float       radShrink;      // 每级分支半径衰减
+    float       leafSize;       // 末端叶团尺寸（相对单位树高）
+    bool        leafIsCone;     // 针叶用小锥，阔叶用椭球团
+    float       trunkCol[3];
+    float       leafCol[3];
+};
 
-    const float b = rng.range(0.0f, 0.08f);
-    const float g1[3] = { 0.10f + b, 0.24f + b, 0.09f + b * 0.5f };
-    const float g2[3] = { 0.08f + b, 0.21f + b, 0.08f + b * 0.5f };
+// 三套物种预设。
+// 注意符号顺序必须是「先翻滚 / 、后俯仰 &」：翻滚改变的是俯仰所绕的轴，
+// 先转轴再低头，同一层的分支才会朝不同方位展开（轮生）；写反了所有枝条
+// 会伸向同一方向，整棵树退化成一把梳子（2026-11-14 实测教训）。
+// / 确定性 ±120° 不加抖动：连续多个 / 需要精确累计 360° 才能均分方位，
+// 抖动只放在 +-&^ 的角度幅值上。
+const LTreeRule kConifer = {
+    // 每层：主干续一段 + 三枝轮生（方位角 0°/120°/240°）再低头
+    "F", "F[/&F][//&F][///&F]F", 3, 32.0f, 0.86f, 0.70f, 0.075f, true,
+    { 0.21f, 0.14f, 0.07f }, { 0.10f, 0.26f, 0.10f }
+};
+const LTreeRule kBroadleaf = {
+    // 两枝分叉（方位差 120°）+ 主干续段，下一代继承已转的坐标系 → 冠幅自然错开
+    "F", "F[/+&F][//-&F]F", 3, 38.0f, 0.84f, 0.62f, 0.17f, false,
+    { 0.26f, 0.18f, 0.10f }, { 0.15f, 0.35f, 0.12f }
+};
+const LTreeRule kBush = {
+    "[F][+F][-F]", "F[/+&F][//-&F]F", 2, 44.0f, 0.80f, 0.72f, 0.14f, false,
+    { 0.24f, 0.17f, 0.09f }, { 0.18f, 0.33f, 0.10f }
+};
 
-    addCone(t, 0.22f, 0.62f, 0.190f, g1, 8);
-    addCone(t, 0.48f, 0.84f, 0.140f, g1, 8);
-    addCone(t, 0.71f, 1.00f, 0.088f, g2, 8);
+// 字符串重写：迭代 depth 代
+std::string lExpand(const LTreeRule& rule, int depth)
+{
+    std::string s = rule.axiom;
+    for (int it = 0; it < depth; ++it)
+    {
+        std::string next;
+        next.reserve(s.size() * 8);
+        for (char c : s)
+        {
+            if (c == 'F') next += rule.expansion;
+            else          next += c;
+        }
+        s.swap(next);
+    }
+    return s;
 }
 
-void buildRoundTree(MeshData& t, Rng& rng)
+// 海龟状态：位置 + 正交坐标系（heading 前进方向 / up 俯仰参考 / left 翻滚参考）
+struct Turtle
 {
-    const float trunk[3] = { 0.24f, 0.16f, 0.09f };
-    addCylinderSide(t, 0.0f, 0.46f, 0.034f, 0.026f, trunk, 6);
+    Vec3  pos, heading, up, left;
+    float len;          // 当前段长
+    float radius;       // 当前段半径
+    int   depth;        // 分支层级（决定叶团与尺寸衰减）
+};
 
-    const float v = rng.range(0.0f, 0.45f);
-    const float g1[3] = { 0.13f + v, 0.29f + v, 0.10f + v * 0.4f };
-    const float g2[3] = { 0.10f + v, 0.25f + v, 0.08f + v * 0.4f };
+// 任意朝向的锥台枝干。绕序与 addCylinderSide 同构（外法线，CCW）。
+void addSegment(MeshData& m, const Vec3& p0, const Vec3& p1,
+                float r0, float r1, const float col[3], int sides)
+{
+    const Vec3 axis = p1 - p0;
+    const float h = v3len(axis);
+    if (h < 1e-6f) return;
+    const Vec3 d = axis * (1.0f / h);
 
-    addEllipsoid(t, v3(rng.range(-0.02f, 0.02f), 0.62f, rng.range(-0.02f, 0.02f)),
-                 0.24f, 0.21f, 0.24f, g1, 8, 5);
-    addEllipsoid(t, v3(rng.range(-0.05f, 0.05f), 0.79f, rng.range(-0.05f, 0.05f)),
-                 0.17f, 0.15f, 0.17f, g2, 8, 4);
-    addEllipsoid(t, v3(rng.range(-0.05f, 0.05f), 0.53f, rng.range(-0.05f, 0.05f)),
-                 0.16f, 0.14f, 0.16f, g2, 8, 4);
+    Vec3 u = v3cross(d, v3(0.0f, 1.0f, 0.0f));       // 与竖直不共线时的横向基
+    if (v3len(u) < 1e-5f) u = v3(1.0f, 0.0f, 0.0f);
+    u = v3norm(u);
+    const Vec3 v = v3cross(d, u);
+
+    for (int i = 0; i < sides; ++i)
+    {
+        const float t0 = 2.0f * kPi * (float)i / (float)sides;
+        const float t1 = 2.0f * kPi * (float)(i + 1) / (float)sides;
+
+        const Vec3 r0u = u * (r0 * std::cos(t0)) + v * (r0 * std::sin(t0));
+        const Vec3 r0w = u * (r0 * std::cos(t1)) + v * (r0 * std::sin(t1));
+        const Vec3 r1u = u * (r1 * std::cos(t0)) + v * (r1 * std::sin(t0));
+        const Vec3 r1w = u * (r1 * std::cos(t1)) + v * (r1 * std::sin(t1));
+
+        pushTri(m, p0 + r0u, p1 + r1u, p1 + r1w, col);
+        pushTri(m, p0 + r0u, p1 + r1w, p0 + r0w, col);
+    }
 }
 
-void buildBush(MeshData& t, Rng& rng)
+// 解释字符串生成一棵「单位高度」的树（底面 y=0，最高点 y=1）
+void buildFractalTree(MeshData& out, Rng& rng, const LTreeRule& rule, int depth)
 {
-    const float v = rng.range(0.0f, 0.5f);
-    const float g1[3] = { 0.12f + v, 0.28f + v, 0.09f + v * 0.4f };
-    const float g2[3] = { 0.09f + v, 0.24f + v, 0.07f + v * 0.4f };
+    const std::string s = lExpand(rule, depth);
+    const float angle = rule.angleDeg * g_angleScale;
 
-    addEllipsoid(t, v3(0.0f, 0.45f, 0.0f), 0.42f, 0.45f, 0.42f, g1, 8, 5);
-    addEllipsoid(t, v3(rng.range(-0.10f, 0.10f), 0.62f, rng.range(-0.10f, 0.10f)),
-                 0.30f, 0.30f, 0.30f, g2, 8, 4);
+    std::vector<Turtle> stack;
+    Turtle t;
+    t.pos     = v3(0.0f, 0.0f, 0.0f);
+    t.heading = v3(0.0f, 1.0f, 0.0f);
+    t.up      = v3(0.0f, 0.0f, 1.0f);
+    t.left    = v3(1.0f, 0.0f, 0.0f);
+    t.len     = 0.34f;                       // 首段后由 bbox 归一化，绝对值不敏感
+    t.radius  = 0.05f;
+    t.depth   = 0;
+
+    const int   leafDepth = depth;           // 最外层分支挂叶
+    const int   sides     = 5;
+
+    auto yaw   = [&](float deg) { const float r = deg * kPi / 180.0f;
+                                  quatRotate(r, t.up.x, t.up.y, t.up.z, t.heading.x, t.heading.y, t.heading.z);
+                                  quatRotate(r, t.up.x, t.up.y, t.up.z, t.left.x,   t.left.y,   t.left.z); };
+    auto pitch = [&](float deg) { const float r = deg * kPi / 180.0f;
+                                  quatRotate(r, t.left.x, t.left.y, t.left.z, t.heading.x, t.heading.y, t.heading.z);
+                                  quatRotate(r, t.left.x, t.left.y, t.left.z, t.up.x,      t.up.y,      t.up.z); };
+    auto roll  = [&](float deg) { const float r = deg * kPi / 180.0f;
+                                  quatRotate(r, t.heading.x, t.heading.y, t.heading.z, t.up.x,   t.up.y,   t.up.z);
+                                  quatRotate(r, t.heading.x, t.heading.y, t.heading.z, t.left.x, t.left.y, t.left.z); };
+
+    for (char c : s)
+    {
+        switch (c)
+        {
+        case 'F':
+        {
+            // 每棵树在固定规则上叠加少量确定性抖动，同种树不重样
+            const float jitterL = 1.0f + rng.range(-0.10f, 0.10f);
+            const float jit = 1.0f + rng.range(-0.12f, 0.12f);
+            const Vec3 p1 = t.pos + t.heading * (t.len * jitterL);
+
+            const float leafy = (t.depth >= leafDepth - 1) ? 0.6f : 1.0f;   // 末梢略细
+            addSegment(out, t.pos, p1, t.radius * leafy, t.radius * leafy * 0.7f,
+                       rule.trunkCol, sides);
+
+            if (t.depth >= leafDepth - 1)
+            {
+                // 末端叶团：针叶用小锥（贴枝），阔叶用椭球团（裹枝头）
+                const float lv = rng.range(0.0f, 0.12f);
+                const float lc[3] = { rule.leafCol[0] + lv * 0.5f,
+                                      rule.leafCol[1] + lv,
+                                      rule.leafCol[2] + lv * 0.3f };
+                const Vec3 lcPos = p1 + t.heading * (t.len * 0.4f);
+                if (rule.leafIsCone)
+                {
+                    MeshData blob;
+                    const float s = rule.leafSize * 3.2f * jit;
+                    addCone(blob, 0.0f, s, s * 0.42f, lc, 4);
+                    float m[16];
+                    // 小锥沿枝方向立起来：构造 heading 为主轴的旋转
+                    const Vec3 h = t.heading;
+                    const float a = std::acos(h.y) * 180.0f / kPi;       // 与 +Y 的夹角
+                    const Vec3 ax = v3norm(v3cross(v3(0, 1, 0), h));
+                    if (v3len(ax) > 1e-5f) mat4FromAxisAngle(m, a, ax.x, ax.y, ax.z);
+                    else                  mat4Identity(m);
+                    m[12] = lcPos.x; m[13] = lcPos.y; m[14] = lcPos.z;
+                    appendTransformed(out, blob, m);
+                }
+                else
+                {
+                    const float r0 = rule.leafSize * jit;
+                    addEllipsoid(out, lcPos, r0, r0 * 0.85f, r0, lc, 6, 4);
+                }
+            }
+            t.pos = p1;
+            break;
+        }
+        case '+': yaw(  angle * rng.range(0.85f, 1.15f)); break;
+        case '-': yaw( -angle * rng.range(0.85f, 1.15f)); break;
+        case '&': pitch( angle * rng.range(0.85f, 1.15f)); break;
+        case '^': pitch(-angle * rng.range(0.85f, 1.15f)); break;
+        case '/': roll( 120.0f); break;      // 确定性：多符号累计需精确均分方位
+        case '\\': roll(-120.0f); break;
+        case '[':
+            stack.push_back(t);
+            t.len    *= rule.lenShrink;
+            t.radius *= rule.radShrink;
+            t.depth  += 1;
+            break;
+        case ']':
+            if (!stack.empty()) { t = stack.back(); stack.pop_back(); }
+            break;
+        default: break;
+        }
+    }
 }
 
-// 把一棵「单位高度」的树缩放 height 倍后平移到 (x, z)，索引偏移后追加进 out。
-// 均匀缩放不改变法线方向，所以法线可以直接照搬。
+// 归一化到「高度 1、底面 y=0」，摆树时统一缩放
+void normalizeTree(MeshData& tree)
+{
+    float minY = 1e30f, maxY = -1e30f;
+    for (size_t i = 0; i < tree.positions.size(); i += 3)
+    {
+        minY = std::min(minY, tree.positions[i + 1]);
+        maxY = std::max(maxY, tree.positions[i + 1]);
+    }
+    const float h = maxY - minY;
+    if (h < 1e-6f) return;
+    for (size_t i = 0; i < tree.positions.size(); i += 3)
+        tree.positions[i + 1] = (tree.positions[i + 1] - minY) / h;
+}
+
+// 把一棵「单位高度」的树缩放 height 倍后平移到 (x, z)，随机偏航后追加进 out。
 void appendScaled(MeshData& out, const MeshData& tree,
                   float x, float z, float height, float yawRad)
 {
@@ -2918,7 +5125,6 @@ void appendScaled(MeshData& out, const MeshData& tree,
         const float py = tree.positions[i * 3 + 1] * height;
         const float pz = tree.positions[i * 3 + 2] * height;
 
-        // 绕 Y 转一圈，让同一种树看起来不重样
         out.positions.push_back(px * cs + pz * sn + x);
         out.positions.push_back(py);
         out.positions.push_back(-px * sn + pz * cs + z);
@@ -2953,8 +5159,30 @@ float distSqToPath(const std::vector<Vec3>& path, float x, float z)
     return best;
 }
 
+bool spotBlocked(const std::vector<Vec3>& path, float clearSq, float x, float z)
+{
+    return distSqToPath(path, x, z) < clearSq;
+}
+
 } // namespace
 
+// ---------------------------------------------------------------------------
+// 运行期分形参数
+// ---------------------------------------------------------------------------
+void forestSetDetail(int bump)  { g_detailBump = bump; }
+int  forestDetail()             { return g_detailBump; }
+void forestAdjustAngle(float scale) { g_angleScale = std::max(0.5f, std::min(g_angleScale * scale, 1.8f)); }
+const char* forestParamsText()
+{
+    static char buf[64];
+    std::snprintf(buf, sizeof(buf), "depth%s, angle x%.2f",
+                  g_detailBump == 0 ? "3" : (g_detailBump > 0 ? "3+1" : "3-1"),
+                  g_angleScale);
+    return buf;
+}
+
+// ---------------------------------------------------------------------------
+// 整片森林：地面 + 分形树 + 花草
 // ---------------------------------------------------------------------------
 void buildForest(MeshData& out,
                  float halfSize,
@@ -2968,8 +5196,32 @@ void buildForest(MeshData& out,
 
     addGround(out, halfSize, 48);
 
-    // 拒绝采样：随机撒点，太靠近兔子路线的丢掉，否则兔子会从树干里穿过去。
-    // 用尝试次数上限而不是 while(true)，参数不合理时也不会死循环。
+    // Use the same curve for the visible trail and the robot's patrol.
+    const BezierPath& trail = robotPath();
+    constexpr int trailSteps = 96;
+    constexpr float trailColor[3] = { 0.44f, 0.32f, 0.21f };
+    Vec3 edge[2];
+    for (int step = 0; step <= trailSteps; ++step)
+    {
+        const float distance = trail.total * (step % trailSteps) / trailSteps;
+        Vec3 center = trail.evalAtDistance(distance);
+        center.y = 0.014f;
+        const Vec3 tangent = trail.tangentAtDistance(distance);
+        const float phase = 6.2831853f * step / trailSteps;
+        const float halfWidth = 0.25f + 0.025f * std::cos(phase * 5.0f);
+        const Vec3 offset = v3(-tangent.z, 0.0f, tangent.x) * halfWidth;
+        const Vec3 left = center + offset;
+        const Vec3 right = center - offset;
+        if (step > 0)
+        {
+            pushTri(out, edge[0], left, right, trailColor);
+            pushTri(out, edge[0], right, edge[1], trailColor);
+        }
+        edge[0] = left;
+        edge[1] = right;
+    }
+
+    // 拒绝采样：太靠近漫步路线的点丢弃
     const float clearSq = clearance * clearance;
     const float margin  = 2.5f;
     const int   maxTries = treeCount * 30;
@@ -2981,39 +5233,83 @@ void buildForest(MeshData& out,
     {
         const float x = rng.range(-halfSize + margin, halfSize - margin);
         const float z = rng.range(-halfSize + margin, halfSize - margin);
-        if (distSqToPath(path, x, z) < clearSq) continue;
+        if (spotBlocked(path, clearSq, x, z)) continue;
 
-        tree = MeshData{};                       // 复用同一个临时缓冲
+        tree = MeshData{};
 
         const float pick = rng.unit();
+        const LTreeRule* rule;
         float height;
-        if (pick < 0.42f)
-        {
-            buildConifer(tree, rng);
-            height = rng.range(11.0f, 22.0f);
-        }
-        else if (pick < 0.75f)
-        {
-            buildRoundTree(tree, rng);
-            height = rng.range(8.0f, 16.0f);
-        }
-        else
-        {
-            buildBush(tree, rng);
-            height = rng.range(1.8f, 3.6f);      // 灌木本来就矮
-        }
+        int depth;
+        if (pick < 0.42f)      { rule = &kConifer;   height = rng.range(11.0f, 22.0f); }
+        else if (pick < 0.75f) { rule = &kBroadleaf; height = rng.range(8.0f, 16.0f);  }
+        else                   { rule = &kBush;      height = rng.range(1.8f, 3.6f);   }
+        depth = std::max(1, rule->iterations + g_detailBump);
 
-        // 针叶树保持竖直；阔叶树稍微倾斜一点更自然
-        // （倾斜要绕水平轴，这里简单起见只做随机偏航 + 轻微高度差异）
+        buildFractalTree(tree, rng, *rule, depth);
+        normalizeTree(tree);
         appendScaled(out, tree, x, z, height, rng.range(0.0f, 2.0f * kPi));
         ++placed;
+    }
+
+    // ---- 花草（同样避开路线；草簇 + 花 = 茎 + 花头）----
+    static const float kFlowerCols[][3] = {
+        { 0.95f, 0.62f, 0.72f },   // 粉
+        { 0.95f, 0.93f, 0.82f },   // 白
+        { 0.96f, 0.84f, 0.30f },   // 黄
+    };
+
+    const int grassCount = 220;
+    for (int i = 0; i < grassCount; ++i)
+    {
+        const float x = rng.range(-halfSize + 1.0f, halfSize - 1.0f);
+        const float z = rng.range(-halfSize + 1.0f, halfSize - 1.0f);
+        if (spotBlocked(path, 2.2f * 2.2f, x, z)) continue;
+
+        const int blades = 3 + (int)rng.unit() * 3;         // 3~5 根一簇
+        for (int b = 0; b < blades; ++b)
+        {
+            const float h = rng.range(0.10f, 0.30f);
+            const float g = rng.range(0.0f, 0.10f);
+            const float col[3] = { 0.14f + g * 0.5f, 0.30f + g, 0.10f + g * 0.4f };
+
+            MeshData blade;
+            addCone(blade, 0.0f, h, rng.range(0.012f, 0.022f), col, 3);
+            float m[16];
+            mat4Identity(m);
+            m[12] = x + rng.range(-0.12f, 0.12f);
+            m[13] = 0.0f;
+            m[14] = z + rng.range(-0.12f, 0.12f);
+            appendTransformed(out, blade, m);
+        }
+    }
+
+    const int flowerCount = 70;
+    for (int i = 0; i < flowerCount; ++i)
+    {
+        const float x = rng.range(-halfSize + 1.0f, halfSize - 1.0f);
+        const float z = rng.range(-halfSize + 1.0f, halfSize - 1.0f);
+        if (spotBlocked(path, 2.2f * 2.2f, x, z)) continue;
+
+        const float stemH = rng.range(0.22f, 0.34f);
+        const float stem[3] = { 0.20f, 0.38f, 0.14f };
+
+        MeshData flower;
+        addCylinderSide(flower, 0.0f, stemH, 0.010f, 0.006f, stem, 3);
+        addEllipsoid(flower, v3(0.0f, stemH + 0.03f, 0.0f), 0.035f, 0.026f, 0.035f,
+                     kFlowerCols[i % 3], 6, 4);
+
+        float m[16];
+        mat4Identity(m);
+        m[12] = x; m[13] = 0.0f; m[14] = z;
+        appendTransformed(out, flower, m);
     }
 }
 ```
 
-### 29. `src/scene.h`
+### 39. `src/scene.h`
 
-场景与物体接口（63 行）
+场景与物体接口（67 行）
 
 ```cpp
 #pragma once
@@ -3064,6 +5360,10 @@ public:
 
     void  resetTransforms();                       // 所有物体变换复位为单位阵
 
+    // 森林场景运行期重建（分形参数调整后调用）：复用 "Forest" 物体已持有的 Mesh，
+    // 只重新生成几何数据。返回是否成功。
+    bool  rebuildForest();
+
     float radius() const { return radius_; }       // 场景半径，用于自适应取景
     const std::string& modelStatus() const { return modelStatus_; }
 
@@ -3081,9 +5381,9 @@ private:
 };
 ```
 
-### 30. `src/scene.cpp`
+### 40. `src/scene.cpp`
 
-两套场景：展示台（实验四/五）与森林（375 行）
+两套场景：展示台（实验四/五）与森林（417 行）
 
 ```cpp
 #include "scene.h"
@@ -3094,6 +5394,35 @@ private:
 #include <cstdio>
 
 namespace {
+
+// 森林生成参数（初次建场景与运行期重建共用，保证两次生成完全一致）
+constexpr float    kForestHalf   = 34.0f;
+constexpr int      kForestTrees  = 150;
+constexpr float    kForestClear  = 7.0f;
+constexpr unsigned kForestSeed   = 20260924u;
+
+// 采样兔子的漫游路线（种树避让 + 重建时保持一致）。
+// 小动物的绕圈路线同样纳入避让，否则树会长在动物散步的路径上、挡住视线。
+void buildForestPath(std::vector<Vec3>& path)
+{
+    path.clear();
+    path.reserve(722 + 64);
+    for (int i = 0; i <= 720; ++i)
+        path.push_back(roamPath(0.02f * (float)i));       // 覆盖 0 ~ 14.4 秒
+    path.push_back(v3(0.0f, 0.0f, 0.0f));                 // 林间空地（机器人+默认机位）
+
+    // 鹿与狐狸的绕圈路线（圆心/半径与 animals.cpp 的 kDefs 一致）
+    const float circles[][3] = {
+        { -3.7f,  0.7f, 1.60f },    // Deer（W3：贝塞尔环的外接圆）
+        { -5.2f, -2.8f, 1.15f },    // Fox
+    };
+    for (const auto& c : circles)
+        for (int i = 0; i < 32; ++i)
+        {
+            const float a = 2.0f * 3.14159265f * (float)i / 32.0f;
+            path.push_back(v3(c[0] + c[2] * std::cos(a), 0.0f, c[1] + c[2] * std::sin(a)));
+        }
+}
 
 // ---------------------------------------------------------------------------
 // 实验四的立方体：8 个顶点 + 8 个顶点颜色 + 6 个面。
@@ -3276,25 +5605,11 @@ bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::
     // ---- 森林场景 ----
     if (kind == SceneKind::Forest)
     {
-        // 采样兔子的漫游路线，种树时避开 —— 否则兔子会直接从树干里穿过去。
-        // 路径函数与漫游动画共用同一个 roamPath，两边永远一致。
         std::vector<Vec3> path;
-        path.reserve(722);
-        for (int i = 0; i <= 720; ++i)
-            path.push_back(roamPath(0.02f * (float)i));       // 覆盖 0 ~ 14.4 秒
+        buildForestPath(path);
 
-        // 兔子默认站在原点，但漫游曲线 t=0 的位置离原点还有 5 个单位（约 (4.8, -2.5)），
-        // 所以原点根本不在避让范围内 —— 实测会有一棵树正好杵在兔子和默认相机之间，
-        // 把兔子挡掉一大半。把原点也加进避让点，等于给兔子留一小片林间空地：
-        // 近景干净，树落在中景，正好是最舒服的构图。
-        path.push_back(v3(0.0f, 0.0f, 0.0f));
-
-        // clearance 必须大于追尾相机的跟随距离（anim.cpp 里 kCamDist = 4.6）：
-        // 相机吊在兔子后面 4.6 单位，如果树只让开 3.6，相机会一头扎进树干里，
-        // 因为背面剔除会直接看穿那棵树，树就"闪没"了。
         MeshData forestData;
-        buildForest(forestData, /*halfSize=*/34.0f, /*treeCount=*/150,
-                    path, /*clearance=*/7.0f, /*seed=*/20260924u);
+        buildForest(forestData, kForestHalf, kForestTrees, path, kForestClear, kForestSeed);
 
         auto forestMesh = std::make_shared<Mesh>();
         forestMesh->adopt(std::move(forestData));
@@ -3311,8 +5626,14 @@ bool Scene::build(const std::string& modelPath, UpAxis up, SceneKind kind, std::
             o.kind = PrimKind::Mesh;
             o.mesh = model;
             o.size = 1.0f;
-            // 森林地面在 y = 0，而模型原点在包围球中心，所以要垫到脚底刚好贴地
+            // 森林地面在 y = 0，而模型原点在包围球中心，所以要垫到脚底刚好贴地。
+            // 2026 实验的主角是机器人（robot.cpp，站在林间空地原点），
+            // 兔子挪到空地边缘作陪衬；漫游动画播放时会沿 roamPath 走，不受此影响。
+            // W3：机器人贝塞尔环半径 1.7，兔子从 (2.6,-1.6) 后移到环外，
+            // 否则机器人经过右侧锚点时会从兔子身体里穿过去。
+            o.pos[0] = 3.3f;
             o.pos[1] = -model->data().bboxMin[1];
+            o.pos[2] = -2.6f;
             o.useMeshMaterial = true;
             mat4Identity(o.xform);
             objects.push_back(o);                             // 先加兔子：findFirstMesh 要拿到它
@@ -3444,6 +5765,27 @@ void Scene::resetTransforms()
         if (o.selectable) mat4Identity(o.xform);
 }
 
+bool Scene::rebuildForest()
+{
+    // 找到森林物体（build 时整片森林烘焙成一个 Mesh）
+    std::shared_ptr<Mesh> forestMesh;
+    for (Object& o : objects)
+        if (o.name == "Forest" && o.mesh) { forestMesh = o.mesh; break; }
+    if (!forestMesh) return false;
+
+    std::vector<Vec3> path;
+    buildForestPath(path);
+
+    MeshData data;
+    buildForest(data, kForestHalf, kForestTrees, path, kForestClear, kForestSeed);
+    forestMesh->adopt(std::move(data));      // adopt 会释放旧 GL 缓冲，下帧自动重传
+
+    std::printf("[scene] forest rebuilt: %d vertices, %d triangles (%s)\n",
+                (int)(forestMesh->data().positions.size() / 3),
+                forestMesh->data().triangleCount, forestParamsText());
+    return true;
+}
+
 int Scene::nextSelectable(int idx) const
 {
     const int n = (int)objects.size();
@@ -3463,7 +5805,7 @@ const Object* Scene::selectedObject() const
 }
 ```
 
-### 31. `src/anim.h`
+### 41. `src/anim.h`
 
 脚本动画接口（30 行）
 
@@ -3500,7 +5842,7 @@ const char* animKindName(AnimKind k);
 void applyAnimation(AnimKind kind, float t, float totalSeconds);
 ```
 
-### 32. `src/anim.cpp`
+### 42. `src/anim.cpp`
 
 动画（时间的纯函数）：自转/环绕/投影/变换/森林漫步（289 行）
 
@@ -3796,7 +6138,7 @@ void applyAnimation(AnimKind kind, float t, float totalSeconds)
 }
 ```
 
-### 33. `src/recorder.h`
+### 43. `src/recorder.h`
 
 录制接口（19 行）
 
@@ -3822,7 +6164,7 @@ bool recStop(std::string* err);
 bool recActive();
 ```
 
-### 34. `src/recorder.cpp`
+### 44. `src/recorder.cpp`
 
 逐帧数据管道进 ffmpeg 编码 mp4（76 行）
 
@@ -3905,9 +6247,9 @@ bool recStop(std::string* err)
 }
 ```
 
-### 35. `src/hud.h`
+### 45. `src/hud.h`
 
-叠加文字接口（21 行）
+叠加文字接口（22 行）
 
 ```cpp
 #pragma once
@@ -3921,6 +6263,7 @@ void hudEnd();
 
 void hudColor(float r, float g, float b);
 void hudText(float x, float y, const std::string& s);
+void hudTitle(float x, float y, const std::string& s);
 void hudTextf(float x, float y, const char* fmt, ...);
 
 // 一行文字的实际像素宽度（用 glutBitmapWidth 逐字符累加）。
@@ -3933,9 +6276,9 @@ void hudPanel(float x, float y, float w, float h, float alpha);
 constexpr float kHudLineH = 16.0f;    // 行高（配合 GLUT_BITMAP_9_BY_15）
 ```
 
-### 36. `src/hud.cpp`
+### 46. `src/hud.cpp`
 
-屏幕叠加文字与帮助面板（89 行）
+屏幕叠加文字与帮助面板（96 行）
 
 ```cpp
 #include "hud.h"
@@ -3995,6 +6338,13 @@ void hudText(float x, float y, const std::string& s)
         glutBitmapCharacter(font(), (int)c);
 }
 
+void hudTitle(float x, float y, const std::string& s)
+{
+    glRasterPos2f(x, y);
+    for (unsigned char c : s)
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, (int)c);
+}
+
 void hudTextf(float x, float y, const char* fmt, ...)
 {
     char buf[512];
@@ -4029,9 +6379,9 @@ void hudPanel(float x, float y, float w, float h, float alpha)
 }
 ```
 
-### 37. `src/input.h`
+### 47. `src/input.h`
 
-输入接口（47 行）
+输入接口（60 行）
 
 ```cpp
 #pragma once
@@ -4067,7 +6417,20 @@ enum MenuId
     M_TOGGLE_GRID = 500, M_TOGGLE_AXES, M_TOGGLE_GROUND, M_TOGGLE_HUD,
 
     // 其他
-    M_SCREENSHOT = 600, M_HELP, M_QUIT
+    M_SCREENSHOT = 600, M_HELP, M_QUIT,
+
+    // 机器人（2026 实验主角）
+    M_ROBOT_STAND = 700, M_ROBOT_WAVE, M_ROBOT_TPOSE, M_ROBOT_WALKFREEZE,
+    M_ROBOT_TOGGLE_WALK,
+    M_ROBOT_TOGGLE_PATH,          // W3-1：贝塞尔曲线漫步
+    M_ROBOT_TOGGLE_PATHGUIDE,     // 曲线/控制点可视化
+    M_ANIMALS_CHASE,              // W3-2：追赶演示（鹿逃跑）
+    M_CHARACTER_OPEN, M_CHARACTER_OPEN_SLIM, M_CHARACTER_SWITCH,
+
+    // 森林分形参数（2026 加分项：分形算法）
+    M_FOREST_DETAIL_UP = 720, M_FOREST_DETAIL_DOWN,
+    M_FOREST_ANGLE_DOWN, M_FOREST_ANGLE_UP,
+    M_FOREST_REBUILD
 };
 
 void inputKeyboard(unsigned char key, int x, int y);
@@ -4083,21 +6446,54 @@ void inputMenu(int choice);
 void inputAction(int action);
 ```
 
-### 38. `src/input.cpp`
+### 48. `src/input.cpp`
 
-键盘 / 鼠标 / 滚轮 / 右键菜单（实验六）（382 行）
+键盘 / 鼠标 / 滚轮 / 中键菜单（实验六）（550 行）
 
 ```cpp
 #include "input.h"
+#include "animals.h"
 #include "app.h"
+#include "forest.h"
 #include "math3d.h"
+#include "robot.h"
 
 #include <GL/freeglut.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <filesystem>
+
+#ifdef _WIN32
+#include <commdlg.h>
+#ifdef _MSC_VER
+#pragma comment(lib, "comdlg32.lib")
+#endif
+#endif
 
 namespace {
+
+void chooseCharacter(bool slim)
+{
+    if (!robotAlive()) return;
+#ifdef _WIN32
+    wchar_t file[32768] = {};
+    OPENFILENAMEW dialog = {};
+    dialog.lStructSize = sizeof(dialog);
+    dialog.hwndOwner = GetActiveWindow();
+    dialog.lpstrFilter = L"Character files (*.png;*.obj)\0*.png;*.obj\0";
+    dialog.lpstrFile = file;
+    dialog.nMaxFile = (DWORD)(sizeof(file) / sizeof(file[0]));
+    dialog.lpstrTitle = slim ? L"Import a slim skin PNG or OBJ" : L"Import a classic skin PNG or OBJ";
+    dialog.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+    if (GetOpenFileNameW(&dialog))
+        appImportCharacter(std::filesystem::path(file).u8string(), slim);
+    else if (CommDlgExtendedError() != 0)
+        g_app.statusMsg = "Could not open the file picker.";
+#else
+    g_app.statusMsg = "Use --character to open a PNG or OBJ.";
+#endif
+}
 
 // 拖动时鼠标位移 → 变换量的换算基准
 constexpr float kTransWorldPerWindow = 2.0f;    // 拖过整个窗口约等于移动 2 个场景半径
@@ -4117,6 +6513,25 @@ inline void leavePreset()
 {
     g_app.viewPreset = ViewPreset::Free;
     appStopPreview();
+}
+
+void manualRobotPose(RobotPose pose)
+{
+    animalsSetChase(false);
+    robotSetPose(pose);
+}
+
+void manualRobotWalk()
+{
+    animalsSetChase(false);
+    robotToggleWalk();
+}
+
+void toggleRobotPath()
+{
+    animalsSetChase(false);
+    robotClearChasePose();
+    robotTogglePath();
 }
 
 // ---------------------------------------------------------------------------
@@ -4221,6 +6636,39 @@ void inputAction(int action)
     case M_SCREENSHOT: appSaveScreenshot("screenshot.bmp"); break;
     case M_QUIT:       glutLeaveMainLoop(); return;
 
+    // ---- 机器人（2026 实验主角：局部几何变换 / 关节动画加分项）----
+    case M_ROBOT_STAND:      manualRobotPose(RobotPose::Stand);      break;
+    case M_ROBOT_WAVE:       manualRobotPose(RobotPose::Wave);       break;
+    case M_ROBOT_TPOSE:      manualRobotPose(RobotPose::TPose);      break;
+    case M_ROBOT_WALKFREEZE: manualRobotPose(RobotPose::WalkFreeze); break;
+    case M_ROBOT_TOGGLE_WALK: manualRobotWalk();                  break;
+    case M_ROBOT_TOGGLE_PATH: toggleRobotPath();                  break;
+    case M_ROBOT_TOGGLE_PATHGUIDE: robotTogglePathGuide();        break;
+    case M_CHARACTER_OPEN:      chooseCharacter(false);         break;
+    case M_CHARACTER_OPEN_SLIM: chooseCharacter(true);          break;
+    case M_CHARACTER_SWITCH:
+        if (robotAlive())
+            g_app.statusMsg = robotToggleCharacter(g_app.scene) ? "" : "Press I to import a character first.";
+        break;
+
+    // ---- 追赶演示（鹿逃跑、机器人跟随）----
+    case M_ANIMALS_CHASE:
+        animalsToggleChase();
+        if (animalsChase()) robotSetPathWalk(false);   // 两条运动线互斥
+        else                robotClearChasePose();
+        break;
+
+    // ---- 森林分形参数（L-system 迭代深度 / 分支角，调整后即时重建）----
+    case M_FOREST_DETAIL_UP:   forestSetDetail(std::min(1, forestDetail() + 1));
+                               g_app.scene.rebuildForest(); break;
+    case M_FOREST_DETAIL_DOWN: forestSetDetail(std::max(-1, forestDetail() - 1));
+                               g_app.scene.rebuildForest(); break;
+    case M_FOREST_ANGLE_UP:    forestAdjustAngle(1.12f);
+                               g_app.scene.rebuildForest(); break;
+    case M_FOREST_ANGLE_DOWN:  forestAdjustAngle(1.0f / 1.12f);
+                               g_app.scene.rebuildForest(); break;
+    case M_FOREST_REBUILD:     g_app.scene.rebuildForest(); break;
+
     default: break;
     }
 
@@ -4230,6 +6678,16 @@ void inputAction(int action)
 // ---------------------------------------------------------------------------
 void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
 {
+    if (g_app.showHelp)
+    {
+        if (key == 27 || key == 'h' || key == 'H') inputAction(M_HELP);
+        else if (key >= '1' && key <= '3')
+        {
+            g_app.helpPage = key - '1';
+            glutPostRedisplay();
+        }
+        return;
+    }
     switch (key)
     {
     case 27:  inputAction(M_QUIT); return;                    // ESC
@@ -4272,6 +6730,47 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
     case '5': inputAction(M_VIEW_TOP);    return;
 
     case 'v': inputAction(M_TOGGLE_QUAD); return;
+    case 'i': inputAction(M_CHARACTER_OPEN); return;
+    case 'I': inputAction(M_CHARACTER_OPEN_SLIM); return;
+    case 'k': case 'K': inputAction(M_CHARACTER_SWITCH); return;
+
+    // 机器人：姿势切换与走路循环（数字键已被视图/投影占满，用字母）
+    case 'n':
+        if (robotAlive()) { animalsSetChase(false); robotNextPose(); glutPostRedisplay(); }
+        return;
+    case 'b':
+        if (robotAlive()) inputAction(M_ROBOT_TOGGLE_WALK);
+        return;
+    // 大写字母：W3 贝塞尔路径（P 走/停，B 显示曲线与控制点）
+    case 'P':
+        if (robotAlive()) inputAction(M_ROBOT_TOGGLE_PATH);
+        return;
+    case 'B':
+        if (robotAlive()) { robotTogglePathGuide(); glutPostRedisplay(); }
+        return;
+    case 'G':
+        if (animalsAlive()) inputAction(M_ANIMALS_CHASE);
+        return;
+
+    // 森林分形参数：f 循环迭代深度 (0 → +1 → -1 → 0)，u/j 调分支角（调整即重建）
+    case 'f':
+        if (g_app.sceneKind == SceneKind::Forest)
+        {
+            if (forestDetail() == 0) inputAction(M_FOREST_DETAIL_UP);
+            else
+            {
+                forestSetDetail(forestDetail() > 0 ? -1 : 0);
+                g_app.scene.rebuildForest();
+                glutPostRedisplay();
+            }
+        }
+        return;
+    case 'u':
+        if (g_app.sceneKind == SceneKind::Forest) inputAction(M_FOREST_ANGLE_DOWN);
+        return;
+    case 'j':
+        if (g_app.sceneKind == SceneKind::Forest) inputAction(M_FOREST_ANGLE_UP);
+        return;
 
     // 空格：播放 / 暂停动画预览。森林场景里默认就是兔子漫步。
     case ' ': appTogglePreview(); return;
@@ -4292,7 +6791,7 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
     case 'g': inputAction(M_TOGGLE_GRID);   return;
     case 'x': inputAction(M_TOGGLE_AXES);   return;
     case 'p': inputAction(M_TOGGLE_GROUND); return;
-    case 'h': inputAction(M_HELP);          return;
+    case 'h': case 'H': inputAction(M_HELP); return;
 
     default: return;
     }
@@ -4302,6 +6801,7 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
 
 void inputSpecial(int key, int /*x*/, int /*y*/)
 {
+    if (g_app.showHelp && key != GLUT_KEY_F1) return;
     switch (key)
     {
     case GLUT_KEY_F2: g_app.enhanced = !g_app.enhanced; appPostRedisplay(); return;
@@ -4322,6 +6822,12 @@ void inputSpecial(int key, int /*x*/, int /*y*/)
 // ---------------------------------------------------------------------------
 void inputMouseButton(int button, int state, int x, int y)
 {
+    if (g_app.showHelp)
+    {
+        g_app.dragMode = AppState::DragMode::None;
+        if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) appClickHelp(x, y);
+        return;
+    }
     if (state == GLUT_DOWN)
     {
         g_app.lastX = x;
@@ -4350,6 +6856,7 @@ void inputMouseButton(int button, int state, int x, int y)
 
 void inputMouseMotion(int x, int y)
 {
+    if (g_app.showHelp) return;
     if (g_app.dragMode == AppState::DragMode::None) return;
 
     const float dx = (float)(x - g_app.lastX);
@@ -4398,6 +6905,7 @@ void inputMouseMotion(int x, int y)
 
 void inputMouseWheel(int /*wheel*/, int direction, int /*x*/, int /*y*/)
 {
+    if (g_app.showHelp) return;
     leavePreset();
     // freeglut: direction > 0 表示向前滚（远离用户）
     g_app.camera.dolly(direction > 0 ? 1.10f : (1.0f / 1.10f));
@@ -4407,7 +6915,8 @@ void inputMouseWheel(int /*wheel*/, int direction, int /*x*/, int /*y*/)
 // ---------------------------------------------------------------------------
 void inputMenu(int choice)
 {
-    inputAction(choice);
+    if (!g_app.showHelp || choice == M_HELP || choice == M_QUIT)
+        inputAction(choice);
 }
 
 void inputBuildMenu()
@@ -4457,12 +6966,34 @@ void inputBuildMenu()
     glutAddMenuEntry("Ground  (p)", M_TOGGLE_GROUND);
     glutAddMenuEntry("HUD",         M_TOGGLE_HUD);
 
+    const int mRobot = glutCreateMenu(inputMenu);
+    glutAddMenuEntry("Import classic skin / OBJ (I key)", M_CHARACTER_OPEN);
+    glutAddMenuEntry("Import slim skin (Shift+I)", M_CHARACTER_OPEN_SLIM);
+    glutAddMenuEntry("Switch character (K)", M_CHARACTER_SWITCH);
+    glutAddMenuEntry("Pose: stand       ",  M_ROBOT_STAND);
+    glutAddMenuEntry("Pose: wave        ",  M_ROBOT_WAVE);
+    glutAddMenuEntry("Pose: T-pose      ",  M_ROBOT_TPOSE);
+    glutAddMenuEntry("Pose: walk freeze ",  M_ROBOT_WALKFREEZE);
+    glutAddMenuEntry("Walk animation (b)",  M_ROBOT_TOGGLE_WALK);
+    glutAddMenuEntry("Bezier path walk (P)", M_ROBOT_TOGGLE_PATH);
+    glutAddMenuEntry("Path curve guide (B)", M_ROBOT_TOGGLE_PATHGUIDE);
+    glutAddMenuEntry("Chase deer demo (G)",  M_ANIMALS_CHASE);
+
+    const int mForest = glutCreateMenu(inputMenu);
+    glutAddMenuEntry("L-system depth +   (f)", M_FOREST_DETAIL_UP);
+    glutAddMenuEntry("L-system depth -   (f)", M_FOREST_DETAIL_DOWN);
+    glutAddMenuEntry("Branch angle -     (u)", M_FOREST_ANGLE_DOWN);
+    glutAddMenuEntry("Branch angle +     (j)", M_FOREST_ANGLE_UP);
+    glutAddMenuEntry("Rebuild forest         ", M_FOREST_REBUILD);
+
     glutCreateMenu(inputMenu);
     glutAddSubMenu("Transform",   mTrans);
     glutAddSubMenu("Projection",  mProj);
     glutAddSubMenu("View",        mView);
     glutAddSubMenu("Render",      mRender);
     glutAddSubMenu("Show",        mShow);
+    glutAddSubMenu("Robot",       mRobot);
+    glutAddSubMenu("Forest (fractal)", mForest);
     glutAddMenuEntry("Save screenshot (F12)", M_SCREENSHOT);
     glutAddMenuEntry("Toggle help (h)",       M_HELP);
     glutAddMenuEntry("Quit (ESC)",            M_QUIT);
@@ -4472,9 +7003,9 @@ void inputBuildMenu()
 }
 ```
 
-### 39. `src/app.h`
+### 49. `src/app.h`
 
-程序状态接口（114 行）
+程序状态接口（117 行）
 
 ```cpp
 #pragma once
@@ -4508,6 +7039,7 @@ struct AppState
     bool showGround = true;
     bool showHUD    = true;
     bool showHelp   = false;
+    int  helpPage   = 0;
 
     bool quadView   = false;                       // 四视口：三视图 + 透视同屏
 
@@ -4560,6 +7092,8 @@ void appAccumulateObjectTransform(const float delta[16]);
 // 把当前帧缓冲存成 BMP（F12），也方便写实验报告
 void appSaveScreenshot(const char* path);
 void appUpdateTitle();
+void appClickHelp(int x, int y);
+bool appImportCharacter(const std::string& path, bool slim);
 
 // 请求在「下一帧画完、交换缓冲之前」截图，然后退出主循环。
 // 从后缓冲读，所以窗口可以隐藏（batch 出图时不会再闪窗口）。
@@ -4593,22 +7127,26 @@ int appExitCode();
 bool appRecordingActive();
 ```
 
-### 40. `src/app.cpp`
+### 50. `src/app.cpp`
 
-渲染主流程、HUD、截图、四视口、录制调度（741 行）
+渲染主流程、HUD、截图、四视口、录制调度（858 行）
 
 ```cpp
 #include "app.h"
+#include "animals.h"
 #include "hud.h"
 #include "lighting.h"
 #include "projection.h"
 #include "recorder.h"
 #include "renderer.h"
+#include "robot.h"
 
 #include <GL/freeglut.h>
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <vector>
 
 AppState g_app;
@@ -4654,7 +7192,11 @@ struct PreviewState
 };
 PreviewState g_preview;
 
-void previewTick(int) { glutPostRedisplay(); }
+// 定时器链里「已有一帧在排队」的标志。输入事件也会 glutPostRedisplay，
+// 如果每次 display 都无条件再挂一个定时器，按一次键就会多出一条并行的重绘链，
+// 连按几次后帧率成倍上涨（每个 display 又挂一个新定时器，链数只增不减）。
+bool g_tickScheduled = false;
+void previewTick(int) { g_tickScheduled = false; glutPostRedisplay(); }
 
 void finishRecording()
 {
@@ -4747,10 +7289,10 @@ bool objectVisible(const Object& o)
     }
 }
 
-void drawSceneFiltered()
+void drawSceneFiltered(bool subjectsOnly = false)
 {
     for (const Object& o : g_app.scene.objects)
-        if (objectVisible(o))
+        if (objectVisible(o) && !(subjectsOnly && o.name == "Forest"))
             renderer::draw(o, g_app.textureOn);
 }
 
@@ -4767,9 +7309,21 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     Camera cam = g_app.camera;                 // 副本：视图预设不能污染真实相机
+    // 外围树木与地面合在同一网格，正交相机从林外看会完全被树冠遮挡。
+    // 平行投影专注空地主体，透视视口仍显示完整环境。
+    const bool subjectsOnly = g_app.sceneKind == SceneKind::Forest && isParallelProjection(pm);
+    const float fitRadius = subjectsOnly ? 4.0f : g_app.scene.radius();
     if (vp != ViewPreset::Free)
-        cam.setPreset((int)vp, g_app.scene.radius());
-    applyProjection(pm, w, h, cam, g_app.scene.radius(), g_app.obliqueAngleDeg);
+    {
+        cam.setPreset((int)vp, fitRadius);
+        if (subjectsOnly)
+        {
+            const Vec3 center = v3(-1.0f, 1.0f, -1.0f);
+            cam.eye = cam.eye + center;
+            cam.target = center;
+        }
+    }
+    applyProjection(pm, w, h, cam, fitRadius, g_app.obliqueAngleDeg);
 
     // 2. 观察变换
     glMatrixMode(GL_MODELVIEW);
@@ -4781,9 +7335,10 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
 
     // 4. 其余渲染状态 + 场景
     setupRenderState();
-    renderer::beginView(cam, g_app.sceneKind, g_app.fog, g_app.fogDensity, g_app.fogColor,
+    if (subjectsOnly) glDisable(GL_FOG);
+    renderer::beginView(cam, g_app.sceneKind, g_app.fog && !subjectsOnly, g_app.fogDensity, g_app.fogColor,
                         g_app.enhanced && g_app.lighting && g_app.renderMode == RenderMode::Solid, g_app.smoothShade);
-    drawSceneFiltered();
+    drawSceneFiltered(subjectsOnly);
     renderer::endView();
 
     // 5. 视口标题
@@ -4791,7 +7346,7 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
     {
         hudBegin(w, h);
         hudColor(1.0f, 0.85f, 0.35f);
-        hudText(8.0f, (float)h - (y > 0 ? 74.0f : 20.0f), label);
+        hudText(8.0f, (float)h - (y > 0 ? 64.0f : 20.0f), label);
         hudEnd();
     }
 }
@@ -4799,125 +7354,170 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
 // ---------------------------------------------------------------------------
 // 帮助界面（整屏模态）
 // ---------------------------------------------------------------------------
+struct HelpPanel
+{
+    float width;
+    float height;
+    float left;
+    float bottom;
+    float top;
+    static constexpr float pad = 16.0f;
+
+    float tabWidth() const { return (width - 2.0f * pad) / 3.0f; }
+};
+
+HelpPanel helpPanel()
+{
+    const float width = std::min(690.0f, g_app.winW - 16.0f);
+    const float height = std::min(354.0f, g_app.winH - 16.0f);
+    const float left = (g_app.winW - width) * 0.5f;
+    const float bottom = (g_app.winH - height) * 0.5f;
+    return {width, height, left, bottom, bottom + height};
+}
+
 void drawHelpScreen()
 {
-        static const char* kHelp[] = {
-            "Mouse",
-            "  Left drag ......... transform selected object (per Transform mode)",
-            "  Right drag ........ orbit / rotate camera",
-            "  Shift + Left drag . pan camera",
-            "  Middle click ...... popup menu",
-            "  Wheel ............. dolly (zoom)",
-            "",
-            "Geometry transform (Lab 5/6)",
-            "  t / r / y ......... Translate / Rotate / Scale mode",
-            "  0 ................. reset selected object transform",
-            "",
-            "Object",
-            "  Tab ............... select next object",
-            "",
-            "Projection (Lab 7 + oblique bonus)",
-            "  3 ................. perspective        o ... orthographic",
-            "  7 / 9 ............. cavalier / cabinet oblique parallel",
-            "  - / = ............. oblique angle down / up",
-            "  [ / ] ............. decrease / increase FOV",
-            "",
-            "Views - orthographic three views (Lab 7)",
-            "  2 / 8 ............. front / back",
-            "  4 / 6 ............. left / right",
-            "  5 ................. top",
-            "  v ................. 4-viewport layout (3 views + perspective)",
-            "",
-            "Camera roam (Lab 7 bonus)",
-            "  W A S D ........... forward / left / back / right",
-            "  Q / E ............. down / up",
-            "  Shift+0 ........... reset camera",
-            "",
-            "Animation preview",
-            "  Space ............. play / pause (roam = bunny in the forest)",
-            "                      use --anim to pick: turntable/orbit/",
-            "                      projections/transforms/roam",
-            "",
-            "Render options",
-            "  1 ................. solid / wireframe / points",
-            "  c ................. back-face culling",
-            "  m ................. smooth / flat shading",
-            "  l ................. lighting",
-            "  T ................. texture",
-            "  F2 / F3 ........... GLSL / shadows toggle",
-            "  g / x / p ......... grid / axes / ground",
-            "  F12 ............... save screenshot",
-            "  ESC ............... quit",
-            nullptr
-        };
-
-    int lines = 0;
-    for (; kHelp[lines]; ++lines) {}
-
-    const float W = (float)g_app.winW;
-    const float H = (float)g_app.winH;
+    struct Shortcut { const char* keys; const char* action; };
+    static constexpr Shortcut pages[][6] = {
+        {
+            {"Right drag / wheel", "Look around / zoom"},
+            {"WASD / Q E", "Move / descend or climb"},
+            {"Tab", "Select the next object"},
+            {"t / r / y", "Move / rotate / scale with left drag"},
+            {"I / K", "Import PNG or OBJ / switch character"},
+            {"Middle click", "Open the full action menu"},
+        },
+        {
+            {"Shift+P", "Pause or resume the patrol"},
+            {"Shift+B", "Show or hide the curve and control points"},
+            {"Shift+G", "Start or stop the deer chase"},
+            {"n / b", "Change pose / step in place"},
+            {"f / u / j", "Cycle tree depth / change branch angle"},
+            {"Space", "Toggle the rabbit or studio preview"},
+        },
+        {
+            {"v / 2 4 5 6 8", "Four views / switch view"},
+            {"3 / o / 7 / 9", "Perspective / ortho / cavalier / cabinet"},
+            {"[ ] / - =", "Adjust FOV / oblique angle"},
+            {"1 / F2 / F3", "Draw mode / renderer / shadows"},
+            {"F12", "Save a screenshot"},
+            {"Esc (in scene)", "Exit the viewer"},
+        }
+    };
+    static constexpr const char* tabs[] = {"1  Explore", "2  Patrol", "3  Views"};
+    const float width = (float)g_app.winW;
+    const float height = (float)g_app.winH;
+    const int page = g_app.helpPage;
+    const auto [panelW, panelH, left, bottom, top] = helpPanel();
+    if (panelW < 90.0f || panelH < 70.0f) return;
+    const float pad = HelpPanel::pad;
+    const bool splitColumns = panelW >= 630.0f;
+    const float rowHeight = splitColumns ? 29.0f : panelH < 310.0f ? 28.0f : 35.0f;
 
     hudBegin(g_app.winW, g_app.winH);
+    hudPanel(0, 0, width, height, 0.63f);
+    hudPanel(left, bottom, panelW, panelH, 0.96f);
+    hudColor(0.95f, 0.97f, 0.96f);
+    hudTitle(left + pad, top - 28.0f, "Controls");
+    if (panelW >= 375.0f)
+        hudText(left + panelW - pad - hudTextWidth("H / Esc  Back"), top - 27.0f, "H / Esc  Back");
 
-    // 面板尺寸按实测文字宽度定，不用写死的数字
-    float maxW = 0.0f;
-    for (int i = 0; i < lines; ++i)
+    const float tabW = (panelW - pad * 2.0f) / 3.0f;
+    for (int tab = 0; tab < 3; ++tab)
     {
-        const float w = hudTextWidth(kHelp[i]);
-        if (w > maxW) maxW = w;
-    }
-    const float pad  = 18.0f;
-    const int   rows = lines + 1;                 // +1 是标题行
-
-    float ph = rows * kHudLineH + pad * 2.0f;
-    if (ph > H - 16.0f) ph = H - 16.0f;
-    float pw = maxW + pad * 2.0f;
-    if (pw > W - 16.0f) pw = W - 16.0f;
-
-    const float px = (W - pw) * 0.5f;
-    const float py = (H - ph) * 0.5f;
-    hudPanel(px, py, pw, ph, 0.92f);
-
-    float ty = py + ph - pad - 6.0f;
-    hudColor(1.0f, 0.85f, 0.35f);
-    hudText(px + pad, ty, "3D Model Viewer  -  help   (h or F1 to close)");
-
-    hudColor(0.95f, 0.95f, 0.98f);
-    ty -= kHudLineH * 1.5f;
-    for (int i = 0; i < lines; ++i)
-    {
-        if (ty < py + 6.0f) break;
-        hudText(px + pad, ty, kHelp[i]);
-        ty -= kHudLineH;
+        const float x = left + pad + tab * tabW;
+        if (tab == page) hudPanel(x, top - 66.0f, tabW - 4.0f, 26.0f, 1.0f);
+        hudColor(tab == page ? 1.0f : 0.67f, tab == page ? 0.80f : 0.77f, 0.66f);
+        const std::string label = tabW >= 104.0f ? tabs[tab] : std::to_string(tab + 1);
+        hudText(x + 6.0f, top - 57.0f, label);
     }
 
+    float y = top - 94.0f;
+    for (const auto& item : pages[page])
+    {
+        if (y - (splitColumns ? 0.0f : 15.0f) < bottom + 12.0f) break;
+        const float actionX = left + (splitColumns ? 207.0f : pad);
+        std::string action = item.action;
+        const float available = left + panelW - pad - actionX;
+        while (!action.empty() && hudTextWidth(action) > available) action.pop_back();
+
+        hudColor(0.58f, 0.84f, 0.75f);
+        hudText(left + pad, y, item.keys);
+        hudColor(0.93f, 0.96f, 0.94f);
+        hudText(actionX, y - (splitColumns ? 0.0f : 15.0f), action);
+        y -= rowHeight;
+    }
     hudEnd();
 }
 
 // ---------------------------------------------------------------------------
-// HUD 叠加层
+// In-scene controls and contextual selection
 // ---------------------------------------------------------------------------
 void drawOverlay()
 {
     if (g_app.showHelp) { drawHelpScreen(); return; }
     if (!g_app.showHUD) return;
-    const float W=(float)g_app.winW, H=(float)g_app.winH;
-    hudBegin(g_app.winW,g_app.winH);
-    // Keep the status in its own strip instead of overwriting viewport labels.
-    hudPanel(0,H-54,W,54,0.82f);
-    hudColor(0.91f,0.95f,1.0f);
-    hudTextf(16,H-21,"CG LAB  /  %s  /  %s",g_app.sceneKind==SceneKind::Forest?"FOREST":"STUDIO",
-             g_app.enhanced?renderer::name():"Classic OpenGL");
-    const Object* selected=g_app.scene.selectedObject();
-    int triangles=0;
-    for(const auto& mesh:g_app.scene.meshes) if(mesh) triangles+=mesh->data().triangleCount;
-    hudColor(0.66f,0.76f,0.85f);
-    hudTextf(16,H-41,"%s  |  %s  |  %d triangles  |  %s",
-             selected?selected->name.c_str():"No selection",projModeName(g_app.projMode),triangles,
-             g_app.transMode==TransMode::Translate?"TRANSLATE":g_app.transMode==TransMode::Rotate?"ROTATE":"SCALE");
-    hudPanel(0,0,W,30,0.82f);
-    hudColor(0.72f,0.80f,0.87f);
-    hudText(16,10,"H Help   F2 Renderer   F3 Shadows   Space Animate   Tab Select   F12 Screenshot");
+    const float width = (float)g_app.winW;
+    const float height = (float)g_app.winH;
+    const bool forest = g_app.sceneKind == SceneKind::Forest;
+    const Object* selection = g_app.scene.selectedObject();
+    const bool selectedRobot = selection && selection->name == "Robot";
+    const char* mode = g_app.transMode == TransMode::Translate ? "Move" :
+                       g_app.transMode == TransMode::Rotate ? "Rotate" : "Scale";
+    const char* activity = robotChasing() ? "Tracking deer" :
+                           robotOnPath() ? "On patrol" :
+                           robotWalking() ? "Walking in place" : "Patrol paused";
+    const char* title = forest ? "Forest Patrol" : "Model Studio";
+    const std::string help = "H  Controls";
+    std::string actions = "Tab  Select   Right drag  Look around";
+    if (selectedRobot)
+        actions = "Left drag  " + std::string(mode) + "   t Move   r Rotate   y Scale";
+    else if (forest)
+        actions = std::string("Shift+P  ") + (robotOnPath() ? "Pause" : "Patrol") +
+                  (robotPathGuide() ? "   Shift+B  Hide route" : "   Shift+B  Show route") +
+                  "   Tab  Select   I  Import   K  Switch";
+
+    hudBegin(g_app.winW, g_app.winH);
+    if (height >= 105.0f)
+    {
+        hudPanel(0, height - 46.0f, width, 46.0f, 0.86f);
+        hudColor(0.96f, 0.98f, 0.94f);
+        hudTitle(16.0f, height - 29.0f, title);
+        const std::string status = forest ? activity : projModeName(g_app.projMode);
+        if (width >= 185.0f + hudTextWidth(status))
+        {
+            hudColor(0.60f, 0.84f, 0.75f);
+            hudText(164.0f, height - 28.0f, status);
+        }
+        const std::string source = forest ? robotCharacterSource() : (selection ? selection->name : "");
+        std::string label = g_app.statusMsg.empty() ? source : g_app.statusMsg;
+        for (char& c : label) if ((unsigned char)c >= 128) c = '?';
+        const int labelLimit = std::max(0, (g_app.winW - 340) / 9);
+        if (labelLimit >= 8 && (int)label.size() > labelLimit)
+            label = label.substr(0, labelLimit - 3) + "...";
+        if (labelLimit >= 8 && !label.empty())
+        {
+            hudColor(g_app.statusMsg.empty() ? 0.77f : 1.0f, 0.83f, 0.72f);
+            hudText(width - 16.0f - hudTextWidth(label), height - 28.0f, label);
+        }
+
+        if (width >= 130.0f)
+        {
+            hudPanel(0, 0, width, 31.0f, 0.86f);
+            hudColor(0.98f, 0.80f, 0.53f);
+            const float helpX = width - 16.0f - hudTextWidth(help);
+            hudText(helpX, 11.0f, help);
+            if (hudTextWidth(actions) <= helpX - 32.0f)
+            {
+                hudColor(0.89f, 0.94f, 0.92f);
+                hudText(16.0f, 11.0f, actions);
+            }
+            else if (helpX >= 130.0f)
+            {
+                hudText(16.0f, 11.0f, "Tab  Select");
+            }
+        }
+    }
     hudEnd();
 }
 
@@ -4980,17 +7580,14 @@ void appSetup(const std::string& modelPath)
     g_app.scene.build(modelPath, g_app.modelUp, g_app.sceneKind, &err);
     g_app.modelStatus = g_app.scene.modelStatus();
 
-    g_app.camera.reset(g_app.scene.radius());
-
-    // 森林场景的默认机位要显式给。
-    // camera.reset() 按「场景半径 × 2.8」摆机位，森林半径是 10（留给雾足够的景深）
-    // → 距离 28 单位，而兔子只有 1.5 单位高，才占画面高度的 6%，开进去几乎什么都看不见。
+    // 2026 实验主角：机器人在森林场景登场（Studio 展示台保持原样）
     if (g_app.sceneKind == SceneKind::Forest)
     {
-        g_app.camera.eye    = v3(2.6f, 2.2f, 4.6f);   // 斜前上方，距兔子约 5.7 单位
-        g_app.camera.target = v3(0.0f, 0.7f, 0.0f);   // 看向兔子身体中部
-        g_app.camera.up     = v3(0.0f, 1.0f, 0.0f);
+        robotCreate(g_app.scene);
+        animalsCreate(g_app.scene);      // 小动物：鹿 + 狐狸（兔子归 roam 动画管）
     }
+
+    appResetCamera();
 
     // 清屏色跟进雾色：否则地平线处会看到背景色和雾色对不上的硬边
     if (g_app.fog) glClearColor(g_app.fogColor[0], g_app.fogColor[1], g_app.fogColor[2], 1.0f);
@@ -5088,6 +7685,29 @@ void appDisplay()
             t = std::fmod(t, g_preview.seconds);
 
         applyAnimation(g_preview.anim, t, g_preview.seconds);
+    }
+
+    // 机器人关节动画与小动物行为：与录制/预览共用同一时间轴
+    //（录制=帧号/fps，其余=真实时钟），且在阴影 pass 之前更新。
+    if (robotAlive())
+    {
+        float rt = g_rec.active ? (float)g_rec.frame / (float)g_rec.fps
+                                : (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+
+        // --time 锁定的是「整个场景」的时间轴（机器人 + 动物），否则无头出图时
+        // 动物仍按真实时钟走，同一组 --time 会得到不同的动物位置。
+        if (robotTimeOverride() >= 0.0f) rt = robotTimeOverride();
+
+        // 先更新动物，再让机器人取「鹿身后」的追赶位姿，最后统一摆机器人层级。
+        // （动物只能用上一帧的机器人位置做「警觉」判定，33ms 的延迟看不出来。）
+        animalsUpdate(g_app.scene, rt);
+        if (animalsChase())
+        {
+            float cp[3], yaw = 0.0f;
+            if (animalsChaseTarget(g_app.scene, cp, &yaw))
+                robotSetChasePose(cp[0], cp[2], yaw);
+        }
+        robotUpdate(g_app.scene, rt);
     }
 
     renderer::shadowPass(g_app.scene, g_app.sceneKind, g_app.showGround,
@@ -5193,7 +7813,14 @@ void appDisplay()
     {
         // 预览走 60fps 定时器。不能像录制那样无条件 postRedisplay ——
         // 那会变成忙等，把 CPU 吃满。
-        glutTimerFunc(16, previewTick, 0);
+        if (!g_tickScheduled) { g_tickScheduled = true; glutTimerFunc(16, previewTick, 0); }
+    }
+    else if (g_app.sceneKind == SceneKind::Forest && (robotAlive() || animalsAlive()))
+    {
+        // 森林里有常驻动画源（机器人姿势渐变/行走、动物漫步吃草），
+        // GLUT 默认只在输入事件后重绘 —— 不持续请求帧的话，按 n/b 只能看到
+        // 渐变的第一格（看起来像"没反应"）。30Hz 足够顺滑，也不吃满 CPU。
+        if (!g_tickScheduled) { g_tickScheduled = true; glutTimerFunc(33, previewTick, 0); }
     }
 }
 
@@ -5239,8 +7866,8 @@ void appResetCamera()
     g_app.camera.reset(g_app.scene.radius());
     g_app.camera.fovY = 45.0f;
     if (g_app.sceneKind == SceneKind::Forest) {
-        g_app.camera.eye = v3(2.6f,2.2f,4.6f);
-        g_app.camera.target = v3(0,0.7f,0);
+        g_app.camera.eye = v3(4.1f,3.35f,6.4f);
+        g_app.camera.target = v3(0.10f,0.96f,0.20f);
         g_app.camera.up = v3(0,1,0);
     }
     appUpdateTitle();
@@ -5270,9 +7897,33 @@ void appUpdateTitle()
     // 在中文系统上放中文可能变成乱码。
     char buf[256];
     const Object* sel = g_app.scene.selectedObject();
-    std::snprintf(buf, sizeof(buf), "3D Model Viewer  -  %s  -  %s",
-                  projModeName(g_app.projMode), sel ? sel->name.c_str() : "(none)");
+    const char* title = g_app.sceneKind == SceneKind::Forest ? "Forest Patrol" : "Model Studio";
+    std::snprintf(buf, sizeof(buf), "%s  -  %s  -  %s",
+                  title, projModeName(g_app.projMode), sel ? sel->name.c_str() : "(none)");
     glutSetWindowTitle(buf);
+}
+
+void appClickHelp(int x, int y)
+{
+    const HelpPanel panel = helpPanel();
+    if (panel.width < 90.0f || panel.height < 70.0f) return;
+    const float screenY = (float)(g_app.winH - 1 - y);
+    const float relativeX = x - panel.left - HelpPanel::pad;
+    const float tabW = panel.tabWidth();
+    if (screenY < panel.top - 66.0f || screenY > panel.top - 40.0f ||
+        relativeX < 0.0f || relativeX >= 3.0f * tabW)
+        return;
+    g_app.helpPage = (int)(relativeX / tabW);
+    glutPostRedisplay();
+}
+
+bool appImportCharacter(const std::string& path, bool slim)
+{
+    std::string error;
+    const bool imported = robotImportCharacter(g_app.scene, path, slim, error);
+    g_app.statusMsg = imported ? "" : error;
+    if (!imported) std::fprintf(stderr, "[character] %s: %s\n", path.c_str(), error.c_str());
+    return imported;
 }
 
 void appRequestShot(const char* path)
@@ -5341,9 +7992,9 @@ int appExitCode() { return g_exitCode; }
 bool appRecordingActive() { return g_rec.requested || g_rec.active; }
 ```
 
-### 41. `src/main.cpp`
+### 51. `src/main.cpp`
 
-入口：GLUT 初始化、命令行解析、回调注册、自检（403 行）
+入口：GLUT 初始化、命令行解析、回调注册、自检（757 行）
 
 ```cpp
 // 三维模型查看器 —— 计算机图形学总结实验
@@ -5360,10 +8011,16 @@ bool appRecordingActive() { return g_rec.requested || g_rec.active; }
 //              [--view front|back|left|right|top|bottom|free]
 //              [--render solid|wire|points] [--quad] [--no-hud]
 #include "app.h"
+#include "animals.h"
+#include "bezier.h"
+#include "forest.h"
 #include "input.h"
+#include "robot.h"
 
 #include <GL/freeglut.h>
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -5424,6 +8081,8 @@ std::string findDefaultModel()
 struct Options
 {
     std::string modelPath;
+    std::string characterPath;
+    bool slimSkin = false;
     std::string shotPath;
     std::string proj, view, render;
     int  winW = 1280, winH = 800;
@@ -5434,6 +8093,16 @@ struct Options
 
     std::string upAxis;        // --up y|z|auto，空表示 auto
     std::string sceneName;     // --scene studio|forest
+    std::string robotPose;     // --pose stand|wave|tpose|walk，出图用（直接定格到位）
+    float       robotTime = -1.0f;   // --time 秒：锁定机器人时间轴（行走相位定格）
+    bool        robotWalk = false;   // --robot-walk：开启行走循环（配合 --time 出序列图）
+    bool        robotPath = false;   // --path：沿贝塞尔曲线漫步（配合 --time 定格）
+    bool        pathGuide = false;   // --path-guide：显示曲线与控制点
+    bool        chase     = false;   // --chase：追赶演示（鹿逃跑）
+
+    // 出图用的机位覆盖（自由相机）：--eye 3,4,5  --target 0,0.5,0
+    bool        hasEye = false, hasTarget = false;
+    float       eye[3] = { 0, 0, 0 }, target[3] = { 0, 0, 0 };
 
     // 视频录制
     std::string recordPath;
@@ -5460,6 +8129,32 @@ Options parseArgs(int argc, char** argv)
         else if (a == "--show-help") o.showHelp = true;
         else if (a == "--up")      next(o.upAxis);
         else if (a == "--scene")   next(o.sceneName);
+        else if (a == "--character") next(o.characterPath);
+        else if (a == "--slim-skin") o.slimSkin = true;
+        else if (a == "--pose")    next(o.robotPose);
+        else if (a == "--robot-walk") o.robotWalk = true;
+        else if (a == "--path")       o.robotPath = true;
+        else if (a == "--path-guide") o.pathGuide = true;
+        else if (a == "--chase")      o.chase = true;
+        else if (a == "--eye" || a == "--target")
+        {
+            std::string s; next(s);
+            float v[3];
+            if (std::sscanf(s.c_str(), "%f,%f,%f", &v[0], &v[1], &v[2]) == 3)
+            {
+                float* dst = (a == "--eye") ? o.eye : o.target;
+                dst[0] = v[0]; dst[1] = v[1]; dst[2] = v[2];
+                (a == "--eye" ? o.hasEye : o.hasTarget) = true;
+            }
+            else
+                std::printf("[main] %s expects x,y,z (got '%s')\n", a.c_str(), s.c_str());
+        }
+        else if (a == "--time")
+        {
+            std::string s; next(s);
+            const double v = atof(s.c_str());
+            if (v >= 0.0) o.robotTime = (float)v;
+        }
         else if (a == "--record")  next(o.recordPath);
         else if (a == "--anim")    next(o.animName);
         else if (a == "--fps")
@@ -5511,6 +8206,8 @@ bool nearf(float a, float b, float eps = 1e-2f) { return std::fabs(a - b) < eps;
 
 int runSelfTest()
 {
+    // 无缓冲输出：自检若崩溃，已跑过的断言也能看到（管道下默认全缓冲会丢日志）
+    std::setvbuf(stdout, nullptr, _IONBF, 0);
     std::printf("=== self-test: math / camera logic ===\n");
 
     {
@@ -5583,6 +8280,275 @@ int runSelfTest()
               "Camera::fly translates (preserves distance) rather than dollying");
     }
 
+    // ---- 机器人层级建模的几何不变量（交互变换没法截图，用断言钉死）----
+    // 绕 Y 的根朝向不改变高度，所以这些 y 值与朝向无关，是干净的断言目标。
+    {
+        std::printf("  -- robot hierarchy --\n");
+        Scene s;
+        robotCreate(s);
+
+        // T-pose：手臂水平伸直 -> 臂中心与肩同高（kShoulderY）
+        robotSetPose(RobotPose::TPose, /*snap=*/true);
+        robotSetTimeOverride(0.0f);
+        robotUpdate(s, 0.0f);
+        float p[3];
+        bool ok = robotPartPosition(s, "Robot Arm L", p);
+        check(ok && nearf(p[1], 1.66f, 1e-3f), "T-pose: arm center sits at shoulder height");
+
+        // 站立：手臂自然下垂 -> 臂中心 = 肩高 - 半臂长
+        robotSetPose(RobotPose::Stand, true);
+        robotUpdate(s, 0.0f);
+        ok = robotPartPosition(s, "Robot Arm L", p);
+        check(ok && nearf(p[1], 1.66f - 0.31f, 1e-3f), "stand: arm hangs below shoulder by half arm");
+
+        // 站立：脚底贴地 -> 腿中心 = 髋高 - 半腿长（0.54），即脚底正好在 y=0
+        ok = robotPartPosition(s, "Robot Leg L", p);
+        check(ok && nearf(p[1], 0.54f, 1e-3f) && nearf(p[1] - 0.54f, 0.0f, 1e-3f),
+              "stand: leg center at hip-half-leg => feet on the ground");
+
+        // 行走定格：左腿前摆 30 度 -> 臂长杆绕髋转动，中心下降 0.54*(1-cos30)
+        // （该姿势还带 0.03 的重心下沉 bodyBob，一并计入期望值）
+        robotSetPose(RobotPose::WalkFreeze, true);
+        robotUpdate(s, 0.0f);
+        ok = robotPartPosition(s, "Robot Leg L", p);
+        check(ok && nearf(p[1], 0.03f + 1.08f - 0.54f * std::cos(30.0f * 3.14159265f / 180.0f), 1e-3f),
+              "walk-freeze: forward leg pivots about the hip (center drops by 1-cos)");
+
+        // 机器人沿贝塞尔路径行走：根位置 = eval(speed * t)，且全程留在空地里。
+        // 注意 robotCreate 是全局单例，必须复用上面这个 Scene（再建一个空 Scene
+        // 调 robotUpdate 会拿旧下标越界 —— 第一版自检就是这样段错误的）。
+        std::printf("  -- bezier path walk --\n");
+        robotSetPathWalk(true);
+        robotSetTimeOverride(3.0f);
+        robotUpdate(s, 3.0f);
+
+        const Vec3 want = robotPath().evalAtDistance(robotPathSpeed() * 3.0f);
+        ok = robotPartPosition(s, "Robot", p);
+        check(ok && nearf(p[0], want.x, 1e-3f) && nearf(p[2], want.z, 1e-3f),
+              "path walk: robot root follows the curve at s = speed * t");
+
+        float maxR = 0.0f;
+        for (const Vec3& q : robotPath().samples)
+            maxR = std::max(maxR, std::sqrt(q.x * q.x + q.z * q.z));
+        check(maxR < 7.0f, "robot path stays inside the forest clearing (r < 7)");
+
+        // 追赶位姿优先于路径：把根直接放到指定点
+        robotSetChasePose(0.5f, -0.7f, 120.0f);
+        robotUpdate(s, 3.0f);
+        ok = robotPartPosition(s, "Robot", p);
+        check(ok && nearf(p[0], 0.5f, 1e-3f) && nearf(p[2], -0.7f, 1e-3f),
+              "chase pose overrides the root position (chase > path)");
+        robotClearChasePose();
+
+        robotSetPathWalk(true);
+        robotSetPose(RobotPose::TPose, true);
+        robotUpdate(s, 3.0f);
+        check(!robotOnPath() && !robotWalking() && !robotChasing(),
+              "manual pose takes control from path animation");
+        robotSetChasePose(0.5f, -0.7f, 120.0f);
+        robotToggleWalk();
+        robotUpdate(s, 3.0f);
+        check(!robotChasing() && !robotOnPath() && !robotWalking(),
+              "manual walk-stop takes control from chase animation");
+
+        robotSetTimeOverride(-1.0f);
+        robotSetPathWalk(true);
+        robotUpdate(s, 10.0f);
+        robotUpdate(s, 10.5f);
+        robotPartPosition(s, "Robot", p);
+        robotSetPathWalk(false);
+        robotUpdate(s, 18.0f);
+        robotSetPathWalk(true);
+        robotUpdate(s, 23.0f);
+        float resumed[3] = {};
+        ok = robotPartPosition(s, "Robot", resumed);
+        check(ok && nearf(p[0], resumed[0], 1e-3f) && nearf(p[2], resumed[2], 1e-3f),
+              "patrol: resuming after a pause preserves the route position");
+        robotUpdate(s, 23.25f);
+        ok = robotPartPosition(s, "Robot", resumed);
+        check(ok && std::hypot(resumed[0] - p[0], resumed[2] - p[2]) > 0.1f,
+              "patrol: resuming advances along the route");
+        robotSetPathWalk(false);
+    }
+
+    // ---- W3-1 贝塞尔闭曲线 + 弧长参数化漫步 ----
+    {
+        std::printf("  -- bezier path (W3-1) --\n");
+
+        // 锚点间距刻意不均匀：若按参数 u 匀速走，步长会忽长忽短。
+        std::vector<Vec3> anchors = {
+            v3( 2.0f, 0.0f,  0.0f),
+            v3( 0.5f, 0.0f,  1.2f),
+            v3(-1.9f, 0.0f,  0.5f),
+            v3(-1.0f, 0.0f, -1.8f),
+        };
+        BezierPath path;
+        path.buildClosed(anchors);
+
+        check(path.segments.size() == anchors.size() && path.total > 8.0f,
+              "closed bezier: one cubic segment per anchor, nonzero arc length");
+
+        // 每段起点/终点就是锚点 => 曲线穿过全部锚点
+        bool hits = true;
+        for (size_t i = 0; i < anchors.size(); ++i)
+        {
+            const Vec3 q = path.evalProportional((float)i / (float)anchors.size());
+            if (v3len(q - anchors[i]) > 1e-3f) hits = false;
+        }
+        check(hits, "curve passes through every anchor (Catmull-Rom handles)");
+
+        // 弧长参数化：等弧长距离求值，相邻点间距必须≈常量
+        float maxErr = 0.0f;
+        const float step = 0.15f;
+        for (int i = 0; i < 20; ++i)
+        {
+            const float s = 0.9f * path.total * (float)i / 20.0f;
+            const Vec3 a = path.evalAtDistance(s);
+            const Vec3 b = path.evalAtDistance(s + step);
+            const float d = std::sqrt((a.x - b.x) * (a.x - b.x) + (a.z - b.z) * (a.z - b.z));
+            maxErr = std::max(maxErr, std::fabs(d - step));
+        }
+        check(maxErr < 5e-3f,
+              "arc-length parameterization => constant speed (|step-0.15| < 0.005)");
+
+    }
+
+    // ---- L-system 分形森林：确定性与迭代单调性 ----
+    {
+        std::printf("  -- fractal forest (L-system) --\n");
+        std::vector<Vec3> path{ v3(0.0f, 0.0f, 0.0f) };
+        MeshData a, b, c;
+        buildForest(a, 20, 4, path, 2.0f, 7u);
+        buildForest(b, 20, 4, path, 2.0f, 7u);
+        check(a.indices == b.indices && a.positions == b.positions &&
+              a.normals == b.normals && a.colors == b.colors,
+              "same seed => identical forest geometry (reproducible)");
+
+        forestSetDetail(+1);
+        buildForest(c, 20, 4, path, 2.0f, 7u);
+        forestSetDetail(0);
+        check(c.indices.size() > a.indices.size(),
+              "+1 L-system iteration grows geometry (fractal self-similarity)");
+    }
+
+    // ---- 小动物行为：贴地、在各自贝塞尔路线内、位置随时间推进 ----
+    {
+        std::printf("  -- animals (deer & fox) --\n");
+        Scene s;
+        animalsCreate(s);
+
+        bool feetOnGround = true;
+        for (const Object& animal : s.objects)
+        {
+            if (!animal.mesh) continue;
+            const auto& vertices = animal.mesh->data().positions;
+            float minY = 100.0f;
+            for (size_t v = 1; v < vertices.size(); v += 3)
+                minY = std::min(minY, vertices[v]);
+            feetOnGround = feetOnGround && nearf(minY, 0.0f, 1e-4f);
+        }
+        check(feetOnGround, "animal mesh feet reach y=0 (not just the object origin)");
+
+        animalsUpdate(s, 3.0f);
+        float p[3];
+        bool ok = animalPartPosition(s, "Deer", p);
+        check(ok && std::fabs(p[1]) < 0.1f, "deer stays on the ground (|y| < 0.1)");
+        const float deerX0 = p[0], deerZ0 = p[2];
+        check(std::fabs(deerX0 - (-3.7f)) <= 1.55f + 0.01f &&
+              std::fabs(deerZ0 - 0.7f)    <= 1.55f + 0.01f,
+              "deer stays inside its bezier loop");
+
+        animalsUpdate(s, 40.0f);
+        ok = animalPartPosition(s, "Deer", p);
+        const bool moved = ok && (std::fabs(p[0] - deerX0) > 0.05f || std::fabs(p[2] - deerZ0) > 0.05f);
+        check(moved, "deer advances along its route over time");
+
+        // 吃草窗口内位置冻结（走-停节律）。fmod(57,15)=12 > 11，正在吃草。
+        animalsUpdate(s, 57.0f);
+        float q[3];
+        animalPartPosition(s, "Deer", q);
+        animalsUpdate(s, 58.0f);
+        animalPartPosition(s, "Deer", p);
+        const bool frozen = (std::fmod(57.0f, 15.0f) > 11.0f) &&
+                            std::fabs(p[0] - q[0]) < 1e-3f && std::fabs(p[2] - q[2]) < 1e-3f;
+        check(frozen, "deer freezes while grazing (walk 11s / graze 4s)");
+
+        animalsUpdate(s, 12.0f);
+        for (const Object& animal : s.objects)
+        {
+            if (animal.name != "Deer") continue;
+            check(animal.xform[1] < 0.0f, "grazing deer tilts its +X-facing head down");
+            float minY = 100.0f;
+            const auto& vertices = animal.mesh->data().positions;
+            for (size_t v = 0; v < vertices.size(); v += 3)
+                minY = std::min(minY, animal.pos[1] + mat4MulPoint(animal.xform,
+                    v3(vertices[v], vertices[v + 1], vertices[v + 2])).y);
+            check(nearf(minY, 0.0f, 1e-4f), "grazing mesh stays above the ground");
+        }
+        Object observer;
+        observer.name = "Robot";
+        animalPartPosition(s, "Deer", observer.pos);
+        s.objects.push_back(observer);
+        animalsUpdate(s, 12.0f);
+        check(std::string(animalsStatusText()).find("deer alert") != std::string::npos,
+              "nearby robot interrupts grazing and makes deer alert");
+        s.objects.pop_back();
+
+        // W3-2 追赶：鹿进入逃跑状态（更快、不吃草），机器人目标点在鹿身后 1.25
+        animalsUpdate(s, 3.0f);
+        animalPartPosition(s, "Deer", p);
+        animalsSetChase(true);
+        animalsUpdate(s, 3.0f);
+        float f[3];
+        animalPartPosition(s, "Deer", f);
+        check(nearf(f[0], p[0], 1e-4f) && nearf(f[2], p[2], 1e-4f),
+              "chase toggle preserves the deer's current position");
+        animalsUpdate(s, 3.1f);
+        animalPartPosition(s, "Deer", f);
+        const float fleeMoved = std::sqrt((f[0] - p[0]) * (f[0] - p[0]) +
+                                          (f[2] - p[2]) * (f[2] - p[2]));
+        check(fleeMoved > 0.14f && fleeMoved < 0.17f,
+              "chase: deer travels at flee speed after the toggle");
+
+        float target[3];
+        float yaw = 0.0f;
+        const bool hasTarget = animalsChaseTarget(s, target, &yaw);
+        const float behind = std::sqrt((target[0] - f[0]) * (target[0] - f[0]) +
+                                       (target[2] - f[2]) * (target[2] - f[2]));
+        check(hasTarget && nearf(behind, 1.25f, 0.01f),
+              "chase target sits 1.25 units behind the deer");
+
+        // 朝向回归测试：机器人的前进方向必须与鹿的「实际运动方向」一致。
+        // 鹿面朝 +X、机器人面朝 +Z，两者 yaw 公式不同；曾把动物的
+        // atan2(-hz, hx) 直接套到机器人上，结果机器人倒着追（点积 = -1）。
+        // 这里用前后两帧鹿的位置差求方向，避免拿同一套公式自证。
+        animalsUpdate(s, 6.0f);
+        animalPartPosition(s, "Deer", f);
+        animalsUpdate(s, 6.05f);
+        animalPartPosition(s, "Deer", p);
+        float hx = p[0] - f[0], hz = p[2] - f[2];
+        const float hl = std::sqrt(hx * hx + hz * hz);
+        const bool headingOk = hl > 1e-4f;
+        if (headingOk) { hx /= hl; hz /= hl; }
+        float t2[3], yaw2 = 0.0f;
+        animalsChaseTarget(s, t2, &yaw2);
+        const float kDeg2Rad = 3.14159265358979323846f / 180.0f;
+        const float dot = std::sin(yaw2 * kDeg2Rad) * hx +
+                          std::cos(yaw2 * kDeg2Rad) * hz;
+        check(headingOk && nearf(dot, 1.0f, 0.01f),
+              "chase: robot forward matches the deer's heading (dot = +1)");
+        std::printf("    deer=(%.2f,%.2f) heading=(%.2f,%.2f) robot=(%.2f,%.2f) yaw=%.1f dot=%.3f\n",
+                    f[0], f[2], hx, hz, t2[0], t2[2], yaw2, dot);
+
+        animalsSetChase(false);
+        animalsUpdate(s, 6.05f);
+        float stopped[3];
+        animalPartPosition(s, "Deer", stopped);
+        check(nearf(stopped[0], p[0], 1e-4f) && nearf(stopped[2], p[2], 1e-4f),
+              "ending chase also preserves the deer's current position");
+        animalsUpdate(s, 3.0f);
+    }
+
     std::printf("=== %s (%d failure(s)) ===\n", g_failures ? "FAILED" : "ALL PASS", g_failures);
     return g_failures ? 1 : 0;
 }
@@ -5591,6 +8557,9 @@ int runSelfTest()
 
 int main(int argc, char** argv)
 {
+    // GUI 子系统下批量截图也依赖重定向日志，及时写出，避免 GLUT 退出时丢失缓冲。
+    std::setvbuf(stdout, nullptr, _IONBF, 0);
+    std::setvbuf(stderr, nullptr, _IONBF, 0);
     // 自检不需要窗口，在 glutInit 之前就返回
     for (int i = 1; i < argc; ++i)
         if (std::string(argv[i]) == "--selftest")
@@ -5643,6 +8612,12 @@ int main(int argc, char** argv)
     g_app.shadows = !opt.noShadows;
     appSetup(opt.modelPath);
     glutCloseFunc(appCleanup);
+    if (!opt.characterPath.empty() && !appImportCharacter(opt.characterPath, opt.slimSkin) &&
+        (!opt.shotPath.empty() || !opt.recordPath.empty()))
+    {
+        appCleanup();
+        return 1;
+    }
 
     // ---- 命令行覆盖（必须在 glutCreateWindow 之后，appUpdateTitle 需要当前窗口）----
     if      (opt.proj == "persp")                          appSetProjection(ProjMode::Perspective);
@@ -5660,6 +8635,29 @@ int main(int argc, char** argv)
     if      (opt.render == "solid")  g_app.renderMode = RenderMode::Solid;
     else if (opt.render == "wire")   g_app.renderMode = RenderMode::Wireframe;
     else if (opt.render == "points") g_app.renderMode = RenderMode::Points;
+
+    // 机器人定格姿势：snap=true 立即到位，headless 单帧出图等不到插值收敛
+    if (!opt.robotPose.empty())
+    {
+        RobotPose p;
+        if (robotParsePose(opt.robotPose, p)) robotSetPose(p, /*snap=*/true);
+        else
+            std::printf("[main] unknown --pose '%s' (expected: stand | wave | tpose | walk)\n",
+                        opt.robotPose.c_str());
+    }
+    if (opt.robotWalk) robotToggleWalk();               // 行走循环（供 --time 出序列定格）
+    if (opt.robotPath) robotSetPathWalk(true);          // 贝塞尔路径漫步
+    if (opt.pathGuide) robotSetPathGuide(true);         // 曲线/控制点可视化
+    if (opt.chase) { animalsSetChase(true); robotSetPathWalk(false); }   // 追赶演示
+    if (opt.robotTime >= 0.0f) robotSetTimeOverride(opt.robotTime);
+
+    // 出图机位覆盖（在 appSetup 的默认机位之后生效）
+    if (opt.hasEye || opt.hasTarget)
+    {
+        g_app.viewPreset = ViewPreset::Free;
+        if (opt.hasEye)    g_app.camera.eye    = v3(opt.eye[0], opt.eye[1], opt.eye[2]);
+        if (opt.hasTarget) g_app.camera.target = v3(opt.target[0], opt.target[1], opt.target[2]);
+    }
 
     if (opt.quad)     g_app.quadView = true;
     if (opt.noHud)    g_app.showHUD  = false;
@@ -5711,7 +8709,8 @@ int main(int argc, char** argv)
 
         if (opt.animName.empty())
         {
-            ro.anim = AnimKind::Turntable;      // 默认：模型自转
+            // 森林动画由机器人/动物自身驱动，保留默认或 --eye 指定机位。
+            ro.anim = g_app.sceneKind == SceneKind::Forest ? AnimKind::None : AnimKind::Turntable;
         }
         else if (!parseAnimKind(opt.animName, ro.anim))
         {
@@ -5740,6 +8739,12 @@ int main(int argc, char** argv)
                         "       valid: turntable | orbit | projections | transforms | roam\n",
                         opt.animName.c_str());
     }
+    else if (g_app.sceneKind == SceneKind::Forest && opt.robotPose.empty() &&
+             !opt.robotWalk && !opt.chase && opt.robotTime < 0.0f)
+    {
+        // Live forest entry starts the patrol. Batch captures still use explicit flags.
+        robotSetPathWalk(true);
+    }
 
     std::printf("[main] entering main loop  (h = help, ESC = quit)\n");
     glutMainLoop();
@@ -5751,7 +8756,7 @@ int main(int argc, char** argv)
 }
 ```
 
-### 42. `tools/bmp2png.py`
+### 52. `tools/bmp2png.py`
 
 截图 BMP → PNG（纯标准库）（74 行）
 
@@ -5832,7 +8837,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-### 43. `tools/make_shots.sh`
+### 53. `tools/make_shots.sh`
 
 一键重新生成 shots/ 全部截图（54 行）
 
@@ -5893,9 +8898,9 @@ rm -f shots/*.bmp
 echo "完成。"
 ```
 
-### 44. `tools/make_package.py`
+### 54. `tools/make_package.py`
 
-本脚本：生成这份代码文档（205 行）
+本脚本：生成这份代码文档（222 行）
 
 ```python
 #!/usr/bin/env python3
@@ -5907,10 +8912,21 @@ echo "完成。"
 import io
 import os
 import sys
+import argparse
 
 # 按「自底向上」的阅读顺序排列，而不是字母序：
 # 先公共类型和数学工具，再数据层（解析/网格/纹理），再渲染层，最后主流程。
 FILES = [
+    ('tools/record_demos.py', 'python', '可复现功能视频与 ffprobe 验证'),
+    ('tools/make_share_package.py', 'python', '便携可运行包与 VS 源码分发'),
+    ('tools/update_manifest.py', 'python', '文件哈希更新与校验'),
+    ('tools/setup_dependencies.ps1', 'powershell', '依赖检查与 FFmpeg 安装'),
+    ('src/robot.h', 'cpp', '机器人层级与动画接口'),
+    ('src/robot.cpp', 'cpp', '机器人关节与路径动画'),
+    ('src/animals.h', 'cpp', '动物行为接口'),
+    ('src/animals.cpp', 'cpp', '鹿与狐狸建模、吃草和追赶'),
+    ('src/bezier.h', 'cpp', '贝塞尔路径接口'),
+    ('src/bezier.cpp', 'cpp', 'de Casteljau 与弧长参数化'),
     ("src/gl_api.h", "cpp", "OpenGL runtime entry points"),
     ("src/shaders.h", "cpp", "GLSL per-pixel lighting and PCF shadows"),
     ("src/renderer.h", "cpp", "Renderer interface"),
@@ -5918,7 +8934,7 @@ FILES = [
     ("tests/obj_loader_test.cpp", "cpp", "OBJ regression tests"),
     ("tools/render_smoke.py", "python", "GPU rendering regression checks"),
     ("CMakeLists.txt",        "cmake",  "构建配置（含 32 位防护）"),
-    ("CMakePresets.json",     "json",   "CMake 预设：只提供 x64，避免选错"),
+    ("CMakePresets.json",     "json",   "CMake 预设：x64 / Win32"),
     ("build.bat",             "bat",    "一键构建（Windows cmd / PowerShell）"),
     ("build.sh",              "bash",   "一键构建（git-bash / MSYS2）"),
     ("viewer.vcxproj",        "xml",    "经典 VS 工程（自包含，双击 viewer.sln 即可）"),
@@ -5962,7 +8978,7 @@ FILES = [
     ("src/hud.cpp",           "cpp",    "屏幕叠加文字与帮助面板"),
 
     ("src/input.h",           "cpp",    "输入接口"),
-    ("src/input.cpp",         "cpp",    "键盘 / 鼠标 / 滚轮 / 右键菜单（实验六）"),
+    ("src/input.cpp",         "cpp",    "键盘 / 鼠标 / 滚轮 / 中键菜单（实验六）"),
 
     ("src/app.h",             "cpp",    "程序状态接口"),
     ("src/app.cpp",           "cpp",    "渲染主流程、HUD、截图、四视口、录制调度"),
@@ -6020,7 +9036,11 @@ def build_zip(root, out_path, items=None):
 
 def main():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    out_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, "CG-Experiment-code.md")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('output', nargs='?', default=os.path.join(root, 'CG-Experiment-code.md'))
+    parser.add_argument('--code-only', action='store_true', help='Generate the source appendix without ZIP archives')
+    args = parser.parse_args()
+    out_path = args.output
 
     present = []
     total_lines = 0
@@ -6051,7 +9071,7 @@ def main():
     w.write("## 统计\n\n")
     w.write("| 项 | 值 |\n|---|---|\n")
     w.write("| 源文件 | %d 个 |\n" % len(present))
-    w.write("| 代码总行数 | %d 行（不含本页的 README 部分）| \n" % total_lines)
+    w.write("| 代码总行数 | %d 行（不含本页的 README 部分）|\n" % total_lines)
     w.write("| 模型 | `Models/bunny_10k.obj`（Stanford Bunny，10000 面，Y-up）|\n")
     w.write("| 依赖 | 已 vendor：freeglut（x64）+ stb_image v2.30，**离线可构建** |\n\n")
 
@@ -6089,6 +9109,8 @@ def main():
     size = os.path.getsize(out_path)
     print("已生成: %s" % out_path)
     print("  %d 个文件, %d 行代码, %.1f KB" % (len(present), total_lines, size / 1024.0))
+    if args.code_only:
+        return
 
     for fname, items, note in [
         ("CG-Experiment.zip",    ZIP_ITEMS,    "完整包（VS 工程 + CMake/脚本两条路径）"),
@@ -6110,6 +9132,45 @@ if __name__ == "__main__":
 ## 附：README.md
 
 # 三维模型查看器 —— 计算机图形学总结实验
+
+双击 `viewer.exe` 或 `Start-Forest.bat`，原创方块机器人会沿林间小径巡游。
+`Shift+P` 暂停或继续，`Shift+B` 显示或隐藏曲线与控制点，`H` 打开操作页。
+操作页可用鼠标点页签或按 `1` / `2` / `3` 切换。按 `Tab` 选中机器人后，底部会提示整体变换。
+
+### 导入角色
+
+在森林中按 `i` 选一个 64×64 Classic PNG 皮肤或 Y-up OBJ；Slim 皮肤用 `Shift+I`。
+按 `k` 在内置机器人、最近导入的 PNG 和最近导入的 OBJ 之间循环。右上角显示当前文件名，运行日志记录路径。
+
+- PNG 按 Classic／Slim 的六部件布局采样，透明外层合成到对应面上，继续使用现有挥手、走路和巡游动画。
+- OBJ 从文件加载完整网格，约定 Y 向上、+Z 向前，按高度缩放并对齐地面。OBJ 可随机器人根节点巡游、转向和做整体变换。带骨骼的格式、部件级 OBJ 绑定和旧版 64×32 皮肤未实现。
+- [TrailSurveyor 样例](Models/TrailSurveyor/)采用自绘像素纹理与原创方块造型。答辩时可依次从文件对话框选 PNG 和 OBJ，再按 `k` 比较三种外观。OBJ 的天线和立体背包来自文件里的几何。
+
+![PNG 皮肤与 OBJ 模型的实际出图对比](report-assets/review/render/character-import.png)
+
+```powershell
+.\viewer.exe --character Models/TrailSurveyor/TrailSurveyor.png
+.\viewer.exe --character Models/TrailSurveyor/TrailSurveyor.obj
+```
+
+## 2026-11-14 成果复查
+
+当前进度、已修复问题、未完成事项及扩展优先级见 [复查与扩展清单](docs/REVIEW_AND_EXTENSIONS.md)；
+课程材料缺口见 [依赖与课程计划](docs/IMPLEMENTATION_PLAN.md)。今年任务书尚待补充，项目中的评分映射暂按开发记录保留。
+
+根目录 `viewer.exe` 已同步本次修复版，三份 Start BAT 均可直接运行。
+修复包括动物脚底高度与吃草方向、警觉中断吃草、路径/追赶与手动姿势的接管、
+追赶切换位置连续、森林全景取景和默认录制机位。`n` / `b` 会接管自动运动，`P` 会结束追赶并进入路径。
+
+```powershell
+powershell -NoProfile -File tools/setup_dependencies.ps1 -InstallFfmpeg
+python tools/render_smoke.py
+python tools/record_demos.py
+```
+
+出图检查默认写入 `out/review/render/`，不覆盖历史截图；四段演示及抽帧在 `report-assets/review/video/`。
+森林录制默认保留机位，展示台默认模型自转；`--anim none` 可显式保持机位。
+测试状态与人工操作尚待验收的范围见复查清单。
 
 用 OpenGL + GLUT 实现的三维模型查看器，默认使用 GLSL 逐像素光照和阴影，保留固定管线对照模式。覆盖实验四（立方体绘制）、实验五、六
 （几何变换与用户交互）、实验七（观察变换）、实验十（导入 OBJ 模型），并额外实现了
@@ -6149,8 +9210,8 @@ python tools/render_smoke.py
 ```
 
 `tests/obj_loader_test.cpp` 覆盖缺失/混合法线、负索引、空白与注释、非法索引、空模型和四边形。
-`tools/render_smoke.py` 运行 12 组真实 OpenGL 出图，检查返回码、GL 错误、shader 初始化与图像内容，
-结果及截图在 `shots/refactor/`。窗口实际宽度受屏幕限制，例如本机请求 1600×300 得到 1540×300。
+`tools/render_smoke.py` 运行 22 组真实 OpenGL 出图，检查返回码、GL 错误、shader 初始化与图像内容，
+结果及截图默认在 `out/review/render/`（`--out` 可更改）。窗口实际宽度受屏幕限制，最终以日志为准。
 测试不以 FPS 承诺性能收益；VBO 减少重复上传，而阴影新增一次场景绘制和采样成本。
 
 已知边界：仍为单材质 OBJ 导入器，凹多边形的扇形三角化不保证正确；
@@ -6158,7 +9219,7 @@ python tools/render_smoke.py
 森林地面与树木仍合成同一场景网格，`p` 地面开关主要用于展示台。
 `m` 在增强模式切换光照法线的平滑/面法线；精确演示固定管线颜色 flat/smooth 请先 F2 切回经典模式。
 
-原始源码与构建文件备份位于 `backups/before-renderer-refactor-20261014/`。
+源码历史可通过 Git 提交记录查看，仓库不含单独的 refactor 备份目录。
 下方为课程功能及原有操作说明；其中固定管线实现说明对应经典模式。
 
 ---
@@ -6182,6 +9243,14 @@ python tools/render_smoke.py
 | 窗口变化图形不变形 | 透视 / 正交 / 斜平行 / 四视口各自按 aspect 修正投影 | `shots/11_wide_1600x300.png` |
 | 程序正常退出 | `GLUT_ACTION_GLUTMAINLOOP_RETURNS` + `glutLeaveMainLoop` + `cleanup()` | — |
 | 程序化动画（额外） | 森林场景里兔子蹦跳漫步：抛物线弧 + 落地压缩/腾空拉伸 + 转弯朝向 | `video/forest_roam.mp4` |
+| **机器人绘制（2026 基准分）** | 9 个长方体层级建模的机器人在林间空地：多姿势、多视图可展示各个侧面 | `report-assets/W1/W1-1_stand.png` |
+| **机器人局部几何变换（2026 加分）** | 关节级动画：手臂绕肩旋转（挥手）、**两条腿交换向前**（行走循环，1.6Hz 正弦关节曲线，双臂与同侧腿反相）；`n`/`b`/菜单交互 | `report-assets/W1/W1-1_wave.png`、`report-assets/W1/W1-2_walk_t*.png` |
+| **机器人整体变换（2026 基准分）** | 选中 `Robot` 根物体后 `t`/`r`/`y` + 左键拖动做整体平移 / 旋转 / 缩放，四肢跟随根矩阵 | — |
+| **森林草地树木（2026 基准分）** | 草地 + 150 棵程序化树 + 草簇花草，避让漫步路线 | `report-assets/W2/W2-1_forest_default.png` |
+| **分形算法树木花草（2026 加分）** | **L-system 字符串重写 + 3D 海龟**生成树（针叶/阔叶/灌木三套文法预设）；迭代深度 `f`、分支角 `u`/`j` 运行期可调、即时重建；草簇与花朵同为程序化生成 | `report-assets/W2/W2-1_forest_default.png`；selftest 含确定性与迭代增长断言 |
+| **小动物（2026 加分）** | 程序化低多边形**鹿 + 狐狸**（与树同一套形状库拼装），「走 11s / 吃草 4s」状态机；W3 起改走贝塞尔闭环（见下两行）；兔子另由蹦跳漫游动画负责 | `report-assets/W3/W3-2_loops_2up.png` |
+| **贝塞尔曲线漫步（2026 加分）** | 三次贝塞尔**闭曲线**：锚点自动生成 Catmull-Rom 手柄，de Casteljau 求值；按**弧长参数化**行走，速度恒定（自检 \|步长−0.15\|<0.005）；`P` 开关漫步、`B` 显示曲线/锚点/手柄 | `report-assets/W3/W3-1_path_default.png`、`W3-1_path_guide.png`、`W3-1_path_quarters.png` |
+| **动物漫游 + 追赶戏码（2026 加分）** | 鹿与狐狸各沿一条贝塞尔闭环行走（同样弧长参数化）；机器人靠近鹿 1.35 内鹿抬头警觉；`G` 追赶：鹿提速逃跑（不再吃草），机器人保持 1.25 单位跟在鹿正后方、朝向与鹿前进方向一致 | `report-assets/W3/W3-2_loops_2up.png`、`W3-2_chase_2up.png` |
 
 ---
 
@@ -6364,6 +9433,13 @@ cmd / PowerShell 下同理，用完整路径替换即可：
 | `--selftest` | 跑数学/相机自检，不开窗口 |
 | `--scene forest\|studio` | 场景：`forest`（**默认**，兔子 + 程序化森林）/ `studio`（展示台：实验四立方体 / 茶壶 / 球）|
 | `--up y\|z\|auto` | 指定模型上轴，默认 `auto` 按几何自动判别 |
+| `--pose stand\|wave\|tpose\|walk` | 定格机器人姿势（headless 单帧出图直接到位，不播过渡） |
+| `--robot-walk` | 开启行走循环，配合 `--time` 定格任意相位 |
+| `--path` | 机器人沿贝塞尔闭曲线漫步（配合 `--time` 定格） |
+| `--path-guide` | 显示路径曲线与锚点 / 手柄 |
+| `--chase` | 追赶演示（鹿逃跑，机器人跟随） |
+| `--time <秒>` | 锁定动画时间轴（机器人与动物共用），出图 / 自检可复现 |
+| `--eye x,y,z`、`--target x,y,z` | 覆盖自由相机的机位与看向点（出图取景） |
 | `--record demo.mp4` | 录制演示视频（H.264 mp4），见下 |
 | `--anim <类型>` | 动画：`turntable` / `orbit` / `projections` / `transforms` / `roam`。**配合 `--record` 是录制，不配合就是实时预览** |
 | `--seconds <秒>` | 录制时长，默认 6 |
@@ -6398,8 +9474,8 @@ $V --record video/turntable.mp4 --anim turntable --seconds 6 --fps 30 --size 960
 | `transforms` | 立方体依次做 平移 → 旋转 → 缩放 | 实验五 几何变换 + 交互（加分） |
 | `roam` | 兔子在森林里蹦跳漫步，追尾相机跟随（森林是默认场景，不用加参数） | 程序化动画（额外） |
 
-`video/` 下已有录好的样例：前四种 960x600 / 30fps / 6s，`forest_roam.mp4` 是
-960x600 / 30fps / **10s**。`transforms` 会把其它物体临时隐藏，只留立方体和地面/坐标轴 ——
+本轮四段功能样例在 `report-assets/review/video/`，由 `tools/record_demos.py` 生成并用 ffprobe 验证。
+下方 `video/` 命令为自定义输出示例，需先创建目录。`transforms` 会把其它物体临时隐藏，只留立方体和地面/坐标轴 ——
 兔子半径 1.0、离相机又近，不藏起来立方体根本看不清。
 
 森林漫步的录制命令：
@@ -6416,7 +9492,7 @@ $V Models/bunny_10k.obj --scene forest \
 （比实时快一倍）。动画时间取 `帧序号 / fps`，是个纯函数 —— 换台渲染慢的机器，输出的视频
 依然严格是 6.000 秒 / 30fps，不会忽快忽慢。
 
-> 依赖：`ffmpeg.exe` 要在 PATH 里（本机在 `C:\ffmpeg\bin`）。找不到时程序报
+> 依赖：`ffmpeg.exe` 要在 PATH 里，可运行 `tools/setup_dependencies.ps1 -InstallFfmpeg` 安装。找不到时程序报
 > `failed to start ffmpeg` 并正常退出，不会崩。
 
 ---
@@ -6446,6 +9522,30 @@ $V Models/bunny_10k.obj --scene forest \
 | `Tab` | 切换到下一个物体 |
 
 > 缩放用 `y` 而不是 `s`，因为 `s` 已经被相机漫游的后退占用 —— 指导书里专门提醒过这一点。
+
+### 机器人（2026 实验主角）
+
+| 按键 | 功能 |
+|---|---|
+| `n` | 切换姿势：站立 / 挥手 / T-pose / 行走定格 |
+| `b` | 行走动画开关（双腿交替 + 摆臂 + 重心起伏） |
+| `P` | 贝塞尔路径漫步开关（沿闭曲线匀速走，覆写根位置与朝向） |
+| `B` | 显示 / 隐藏路径曲线、锚点（金色）与手柄（蓝灰） |
+| `G` | 追赶演示开关（鹿逃跑，机器人跟在其正后方） |
+| `Tab` 选中 `Robot` + `t`/`r`/`y` | 对机器人**整体**做平移 / 旋转 / 缩放 |
+
+机器人由 9 个长方体层级建模（躯干 / 头 / 双眼 / 天线 / 双臂 / 双腿），
+四肢采用 `T(关节)·R(关节角)·T(杆件偏移)` 三明治链，旋转支点在肩 / 胯而非杆件中心；
+头链上还挂着天线与双眼，演示层级可以嵌套。关节角的取值与插值见 `src/robot.cpp`，
+`--selftest` 里有一组几何不变量断言（T-pose 臂高等于肩高、站立脚底贴地等）。
+出图钩子：`--pose stand|wave|tpose|walk` 定格姿势，`--robot-walk --time <秒>`
+锁定时间轴渲染行走循环任意相位。
+
+W3 的路径漫步实现在 `src/bezier.cpp`：8 个锚点 → 每段用 Catmull-Rom 公式自动求
+两个控制点（`C1 = P1 + (P2−P0)/6`，`C2 = P2 − (P3−P1)/6`），保证接缝处 C1 连续；
+每段采样 24 个点累计**弧长表**，运行时按 `s = speed · t` 反查采样点插值，
+所以按参数 `u` 均匀取点会「忽快忽慢」的问题不存在。动物的两条环（6 个锚点）
+用同一套 `BezierPath`，只是锚点手摆在空地左右两侧。
 
 ### 投影（实验七 + 斜平行投影）
 
@@ -6669,9 +9769,10 @@ appCleanup();          // 现在真的会执行
 ./build/Release/viewer.exe --selftest
 ```
 
-11 项断言覆盖截图验证不了的逻辑：矩阵乘法、轴角旋转、四元数旋转与矩阵形式的一致性、
+38 项断言覆盖截图验证不了的逻辑：矩阵乘法、轴角旋转、四元数旋转与矩阵形式的一致性、
 绕参考点旋转保持距离、旋转 360° 回到原点、推拉改变距离、顶视图 up 向量非退化、
 六个视图预设共用同一距离、漫游沿视线平移且不改变距离。
+还覆盖机器人层级与模式接管、贝塞尔与弧长参数化、森林完整几何确定性、动物脚底/俯身/警觉、追赶间距/朝向及切换连续性。
 
 ---
 

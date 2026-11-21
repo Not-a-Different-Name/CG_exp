@@ -113,6 +113,13 @@ void Mesh::adopt(MeshData&& data)
     data_.valid             = true;
 }
 
+void Mesh::adoptSkin(MeshData&& data, const unsigned char* pixels)
+{
+    adopt(std::move(data));
+    tex_ = uploadSkinPixels(pixels);
+    texW_ = texH_ = 64;
+}
+
 bool Mesh::loadFromOBJ(const std::string& path, UpAxis up, bool normalize, std::string* errOut)
 {
     MeshData loaded;
@@ -176,6 +183,15 @@ void Mesh::bindTexture(bool useTexture) const
     {
         glDisable(GL_TEXTURE_2D);
     }
+}
+
+void Mesh::preserveSmallTexturePixels() const
+{
+    if (!tex_ || texW_ > 128 || texH_ > 128) return;
+    glBindTexture(GL_TEXTURE_2D, tex_);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Mesh::upload() const

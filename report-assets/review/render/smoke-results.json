@@ -1,0 +1,134 @@
+[
+  {
+    "case": "after",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "classic",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "no-shadows",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "studio",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "quad",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "ortho",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "cavalier",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "cabinet",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "wire",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "points",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "wide",
+    "width": 1600,
+    "height": 300,
+    "exit": 0
+  },
+  {
+    "case": "textured",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "robot-wave",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "robot-walk",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "forest-quad",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "forest-front",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "forest-top",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "forest-cavalier",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "path-guide",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "chase",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "grazing",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  },
+  {
+    "case": "help",
+    "width": 1280,
+    "height": 800,
+    "exit": 0
+  }
+]

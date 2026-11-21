@@ -9,8 +9,38 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <filesystem>
+
+#ifdef _WIN32
+#include <commdlg.h>
+#ifdef _MSC_VER
+#pragma comment(lib, "comdlg32.lib")
+#endif
+#endif
 
 namespace {
+
+void chooseCharacter(bool slim)
+{
+    if (!robotAlive()) return;
+#ifdef _WIN32
+    wchar_t file[32768] = {};
+    OPENFILENAMEW dialog = {};
+    dialog.lStructSize = sizeof(dialog);
+    dialog.hwndOwner = GetActiveWindow();
+    dialog.lpstrFilter = L"Character files (*.png;*.obj)\0*.png;*.obj\0";
+    dialog.lpstrFile = file;
+    dialog.nMaxFile = (DWORD)(sizeof(file) / sizeof(file[0]));
+    dialog.lpstrTitle = slim ? L"Import a slim skin PNG or OBJ" : L"Import a classic skin PNG or OBJ";
+    dialog.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+    if (GetOpenFileNameW(&dialog))
+        appImportCharacter(std::filesystem::path(file).u8string(), slim);
+    else if (CommDlgExtendedError() != 0)
+        g_app.statusMsg = "Could not open the file picker.";
+#else
+    g_app.statusMsg = "Use --character to open a PNG or OBJ.";
+#endif
+}
 
 // 拖动时鼠标位移 → 变换量的换算基准
 constexpr float kTransWorldPerWindow = 2.0f;    // 拖过整个窗口约等于移动 2 个场景半径
@@ -30,6 +60,25 @@ inline void leavePreset()
 {
     g_app.viewPreset = ViewPreset::Free;
     appStopPreview();
+}
+
+void manualRobotPose(RobotPose pose)
+{
+    animalsSetChase(false);
+    robotSetPose(pose);
+}
+
+void manualRobotWalk()
+{
+    animalsSetChase(false);
+    robotToggleWalk();
+}
+
+void toggleRobotPath()
+{
+    animalsSetChase(false);
+    robotClearChasePose();
+    robotTogglePath();
 }
 
 // ---------------------------------------------------------------------------
@@ -135,13 +184,19 @@ void inputAction(int action)
     case M_QUIT:       glutLeaveMainLoop(); return;
 
     // ---- 机器人（2026 实验主角：局部几何变换 / 关节动画加分项）----
-    case M_ROBOT_STAND:      robotSetPose(RobotPose::Stand);      break;
-    case M_ROBOT_WAVE:       robotSetPose(RobotPose::Wave);       break;
-    case M_ROBOT_TPOSE:      robotSetPose(RobotPose::TPose);      break;
-    case M_ROBOT_WALKFREEZE: robotSetPose(RobotPose::WalkFreeze); break;
-    case M_ROBOT_TOGGLE_WALK: robotToggleWalk();                  break;
-    case M_ROBOT_TOGGLE_PATH: robotTogglePath();                  break;
+    case M_ROBOT_STAND:      manualRobotPose(RobotPose::Stand);      break;
+    case M_ROBOT_WAVE:       manualRobotPose(RobotPose::Wave);       break;
+    case M_ROBOT_TPOSE:      manualRobotPose(RobotPose::TPose);      break;
+    case M_ROBOT_WALKFREEZE: manualRobotPose(RobotPose::WalkFreeze); break;
+    case M_ROBOT_TOGGLE_WALK: manualRobotWalk();                  break;
+    case M_ROBOT_TOGGLE_PATH: toggleRobotPath();                  break;
     case M_ROBOT_TOGGLE_PATHGUIDE: robotTogglePathGuide();        break;
+    case M_CHARACTER_OPEN:      chooseCharacter(false);         break;
+    case M_CHARACTER_OPEN_SLIM: chooseCharacter(true);          break;
+    case M_CHARACTER_SWITCH:
+        if (robotAlive())
+            g_app.statusMsg = robotToggleCharacter(g_app.scene) ? "" : "Press I to import a character first.";
+        break;
 
     // ---- 追赶演示（鹿逃跑、机器人跟随）----
     case M_ANIMALS_CHASE:
@@ -170,6 +225,16 @@ void inputAction(int action)
 // ---------------------------------------------------------------------------
 void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
 {
+    if (g_app.showHelp)
+    {
+        if (key == 27 || key == 'h' || key == 'H') inputAction(M_HELP);
+        else if (key >= '1' && key <= '3')
+        {
+            g_app.helpPage = key - '1';
+            glutPostRedisplay();
+        }
+        return;
+    }
     switch (key)
     {
     case 27:  inputAction(M_QUIT); return;                    // ESC
@@ -212,17 +277,20 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
     case '5': inputAction(M_VIEW_TOP);    return;
 
     case 'v': inputAction(M_TOGGLE_QUAD); return;
+    case 'i': inputAction(M_CHARACTER_OPEN); return;
+    case 'I': inputAction(M_CHARACTER_OPEN_SLIM); return;
+    case 'k': case 'K': inputAction(M_CHARACTER_SWITCH); return;
 
     // 机器人：姿势切换与走路循环（数字键已被视图/投影占满，用字母）
     case 'n':
-        if (robotAlive()) { robotNextPose(); glutPostRedisplay(); }
+        if (robotAlive()) { animalsSetChase(false); robotNextPose(); glutPostRedisplay(); }
         return;
     case 'b':
-        if (robotAlive()) { robotToggleWalk(); glutPostRedisplay(); }
+        if (robotAlive()) inputAction(M_ROBOT_TOGGLE_WALK);
         return;
     // 大写字母：W3 贝塞尔路径（P 走/停，B 显示曲线与控制点）
     case 'P':
-        if (robotAlive()) { robotTogglePath(); glutPostRedisplay(); }
+        if (robotAlive()) inputAction(M_ROBOT_TOGGLE_PATH);
         return;
     case 'B':
         if (robotAlive()) { robotTogglePathGuide(); glutPostRedisplay(); }
@@ -270,7 +338,7 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
     case 'g': inputAction(M_TOGGLE_GRID);   return;
     case 'x': inputAction(M_TOGGLE_AXES);   return;
     case 'p': inputAction(M_TOGGLE_GROUND); return;
-    case 'h': inputAction(M_HELP);          return;
+    case 'h': case 'H': inputAction(M_HELP); return;
 
     default: return;
     }
@@ -280,6 +348,7 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
 
 void inputSpecial(int key, int /*x*/, int /*y*/)
 {
+    if (g_app.showHelp && key != GLUT_KEY_F1) return;
     switch (key)
     {
     case GLUT_KEY_F2: g_app.enhanced = !g_app.enhanced; appPostRedisplay(); return;
@@ -300,6 +369,12 @@ void inputSpecial(int key, int /*x*/, int /*y*/)
 // ---------------------------------------------------------------------------
 void inputMouseButton(int button, int state, int x, int y)
 {
+    if (g_app.showHelp)
+    {
+        g_app.dragMode = AppState::DragMode::None;
+        if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) appClickHelp(x, y);
+        return;
+    }
     if (state == GLUT_DOWN)
     {
         g_app.lastX = x;
@@ -328,6 +403,7 @@ void inputMouseButton(int button, int state, int x, int y)
 
 void inputMouseMotion(int x, int y)
 {
+    if (g_app.showHelp) return;
     if (g_app.dragMode == AppState::DragMode::None) return;
 
     const float dx = (float)(x - g_app.lastX);
@@ -376,6 +452,7 @@ void inputMouseMotion(int x, int y)
 
 void inputMouseWheel(int /*wheel*/, int direction, int /*x*/, int /*y*/)
 {
+    if (g_app.showHelp) return;
     leavePreset();
     // freeglut: direction > 0 表示向前滚（远离用户）
     g_app.camera.dolly(direction > 0 ? 1.10f : (1.0f / 1.10f));
@@ -385,7 +462,8 @@ void inputMouseWheel(int /*wheel*/, int direction, int /*x*/, int /*y*/)
 // ---------------------------------------------------------------------------
 void inputMenu(int choice)
 {
-    inputAction(choice);
+    if (!g_app.showHelp || choice == M_HELP || choice == M_QUIT)
+        inputAction(choice);
 }
 
 void inputBuildMenu()
@@ -436,6 +514,9 @@ void inputBuildMenu()
     glutAddMenuEntry("HUD",         M_TOGGLE_HUD);
 
     const int mRobot = glutCreateMenu(inputMenu);
+    glutAddMenuEntry("Import classic skin / OBJ (I key)", M_CHARACTER_OPEN);
+    glutAddMenuEntry("Import slim skin (Shift+I)", M_CHARACTER_OPEN_SLIM);
+    glutAddMenuEntry("Switch character (K)", M_CHARACTER_SWITCH);
     glutAddMenuEntry("Pose: stand       ",  M_ROBOT_STAND);
     glutAddMenuEntry("Pose: wave        ",  M_ROBOT_WAVE);
     glutAddMenuEntry("Pose: T-pose      ",  M_ROBOT_TPOSE);

@@ -1,0 +1,55 @@
+=== self-test: math / camera logic ===
+  [PASS] mat4Multiply with identity is a no-op
+  [PASS] mat4FromAxisAngle: +Y 90deg maps +X to -Z
+  [PASS] quatRotate: +Y 90deg maps +X to -Z (same as matrix form)
+  [PASS] Camera::orbit preserves distance to target
+  [PASS] Camera::orbit 360deg returns to the start position
+  [PASS] Camera::dolly(0.5) halves the distance
+  [PASS] Top preset uses up=(0,0,-1)
+  [PASS] Top preset: right vector is well-defined (not degenerate)
+  [PASS] all six view presets share one camera distance (common 三视图 scale)
+  [PASS] Camera::fly(+fwd) moves the eye along the view direction
+  [PASS] Camera::fly translates (preserves distance) rather than dollying
+  -- robot hierarchy --
+[robot] created: 9 box parts, height ~2.35, path length 10.63
+  [PASS] T-pose: arm center sits at shoulder height
+  [PASS] stand: arm hangs below shoulder by half arm
+  [PASS] stand: leg center at hip-half-leg => feet on the ground
+  [PASS] walk-freeze: forward leg pivots about the hip (center drops by 1-cos)
+  -- bezier path walk --
+[robot] bezier path walk: on
+  [PASS] path walk: robot root follows the curve at s = speed * t
+  [PASS] robot path stays inside the forest clearing (r < 7)
+  [PASS] chase pose overrides the root position (chase > path)
+[robot] chase pose cleared
+[robot] bezier path walk: on
+[robot] bezier path walk: off
+  [PASS] manual pose takes control from path animation
+[robot] chase pose cleared
+  [PASS] manual walk-stop takes control from chase animation
+  -- bezier path (W3-1) --
+  [PASS] closed bezier: one cubic segment per anchor, nonzero arc length
+  [PASS] curve passes through every anchor (Catmull-Rom handles)
+  [PASS] arc-length parameterization => constant speed (|step-0.15| < 0.005)
+  -- fractal forest (L-system) --
+  [PASS] same seed => identical forest geometry (reproducible)
+  [PASS] +1 L-system iteration grows geometry (fractal self-similarity)
+  -- animals (deer & fox) --
+[animals] created: Deer + Fox (procedural low-poly, ~0.7k tris)
+  [PASS] animal mesh feet reach y=0 (not just the object origin)
+  [PASS] deer stays on the ground (|y| < 0.1)
+  [PASS] deer stays inside its bezier loop
+  [PASS] deer advances along its route over time
+  [PASS] deer freezes while grazing (walk 11s / graze 4s)
+  [PASS] grazing deer tilts its +X-facing head down
+  [PASS] grazing mesh stays above the ground
+  [PASS] nearby robot interrupts grazing and makes deer alert
+[animals] chase demo: on (deer flees)
+  [PASS] chase toggle preserves the deer's current position
+  [PASS] chase: deer travels at flee speed after the toggle
+  [PASS] chase target sits 1.25 units behind the deer
+  [PASS] chase: robot forward matches the deer's heading (dot = +1)
+    deer=(-4.15,-0.69) heading=(0.96,-0.29) robot=(-5.29,-0.41) yaw=104.2 dot=0.999
+[animals] chase demo: off
+  [PASS] ending chase also preserves the deer's current position
+=== ALL PASS (0 failure(s)) ===

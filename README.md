@@ -1,5 +1,44 @@
 # 三维模型查看器 —— 计算机图形学总结实验
 
+双击 `viewer.exe` 或 `Start-Forest.bat`，原创方块机器人会沿林间小径巡游。
+`Shift+P` 暂停或继续，`Shift+B` 显示或隐藏曲线与控制点，`H` 打开操作页。
+操作页可用鼠标点页签或按 `1` / `2` / `3` 切换。按 `Tab` 选中机器人后，底部会提示整体变换。
+
+### 导入角色
+
+在森林中按 `i` 选一个 64×64 Classic PNG 皮肤或 Y-up OBJ；Slim 皮肤用 `Shift+I`。
+按 `k` 在内置机器人、最近导入的 PNG 和最近导入的 OBJ 之间循环。右上角显示当前文件名，运行日志记录路径。
+
+- PNG 按 Classic／Slim 的六部件布局采样，透明外层合成到对应面上，继续使用现有挥手、走路和巡游动画。
+- OBJ 从文件加载完整网格，约定 Y 向上、+Z 向前，按高度缩放并对齐地面。OBJ 可随机器人根节点巡游、转向和做整体变换。带骨骼的格式、部件级 OBJ 绑定和旧版 64×32 皮肤未实现。
+- [TrailSurveyor 样例](Models/TrailSurveyor/)采用自绘像素纹理与原创方块造型。答辩时可依次从文件对话框选 PNG 和 OBJ，再按 `k` 比较三种外观。OBJ 的天线和立体背包来自文件里的几何。
+
+![PNG 皮肤与 OBJ 模型的实际出图对比](report-assets/review/render/character-import.png)
+
+```powershell
+.\viewer.exe --character Models/TrailSurveyor/TrailSurveyor.png
+.\viewer.exe --character Models/TrailSurveyor/TrailSurveyor.obj
+```
+
+## 2026-11-14 成果复查
+
+当前进度、已修复问题、未完成事项及扩展优先级见 [复查与扩展清单](docs/REVIEW_AND_EXTENSIONS.md)；
+课程材料缺口见 [依赖与课程计划](docs/IMPLEMENTATION_PLAN.md)。今年任务书尚待补充，项目中的评分映射暂按开发记录保留。
+
+根目录 `viewer.exe` 已同步本次修复版，三份 Start BAT 均可直接运行。
+修复包括动物脚底高度与吃草方向、警觉中断吃草、路径/追赶与手动姿势的接管、
+追赶切换位置连续、森林全景取景和默认录制机位。`n` / `b` 会接管自动运动，`P` 会结束追赶并进入路径。
+
+```powershell
+powershell -NoProfile -File tools/setup_dependencies.ps1 -InstallFfmpeg
+python tools/render_smoke.py
+python tools/record_demos.py
+```
+
+出图检查默认写入 `out/review/render/`，不覆盖历史截图；四段演示及抽帧在 `report-assets/review/video/`。
+森林录制默认保留机位，展示台默认模型自转；`--anim none` 可显式保持机位。
+测试状态与人工操作尚待验收的范围见复查清单。
+
 用 OpenGL + GLUT 实现的三维模型查看器，默认使用 GLSL 逐像素光照和阴影，保留固定管线对照模式。覆盖实验四（立方体绘制）、实验五、六
 （几何变换与用户交互）、实验七（观察变换）、实验十（导入 OBJ 模型），并额外实现了
 斜平行投影、四视口三视图，以及一个程序化生成的森林场景。
@@ -38,8 +77,8 @@ python tools/render_smoke.py
 ```
 
 `tests/obj_loader_test.cpp` 覆盖缺失/混合法线、负索引、空白与注释、非法索引、空模型和四边形。
-`tools/render_smoke.py` 运行 12 组真实 OpenGL 出图，检查返回码、GL 错误、shader 初始化与图像内容，
-结果及截图在 `shots/refactor/`。窗口实际宽度受屏幕限制，例如本机请求 1600×300 得到 1540×300。
+`tools/render_smoke.py` 运行 22 组真实 OpenGL 出图，检查返回码、GL 错误、shader 初始化与图像内容，
+结果及截图默认在 `out/review/render/`（`--out` 可更改）。窗口实际宽度受屏幕限制，最终以日志为准。
 测试不以 FPS 承诺性能收益；VBO 减少重复上传，而阴影新增一次场景绘制和采样成本。
 
 已知边界：仍为单材质 OBJ 导入器，凹多边形的扇形三角化不保证正确；
@@ -47,7 +86,7 @@ python tools/render_smoke.py
 森林地面与树木仍合成同一场景网格，`p` 地面开关主要用于展示台。
 `m` 在增强模式切换光照法线的平滑/面法线；精确演示固定管线颜色 flat/smooth 请先 F2 切回经典模式。
 
-原始源码与构建文件备份位于 `backups/before-renderer-refactor-20261014/`。
+源码历史可通过 Git 提交记录查看，仓库不含单独的 refactor 备份目录。
 下方为课程功能及原有操作说明；其中固定管线实现说明对应经典模式。
 
 ---
@@ -302,8 +341,8 @@ $V --record video/turntable.mp4 --anim turntable --seconds 6 --fps 30 --size 960
 | `transforms` | 立方体依次做 平移 → 旋转 → 缩放 | 实验五 几何变换 + 交互（加分） |
 | `roam` | 兔子在森林里蹦跳漫步，追尾相机跟随（森林是默认场景，不用加参数） | 程序化动画（额外） |
 
-`video/` 下已有录好的样例：前四种 960x600 / 30fps / 6s，`forest_roam.mp4` 是
-960x600 / 30fps / **10s**。`transforms` 会把其它物体临时隐藏，只留立方体和地面/坐标轴 ——
+本轮四段功能样例在 `report-assets/review/video/`，由 `tools/record_demos.py` 生成并用 ffprobe 验证。
+下方 `video/` 命令为自定义输出示例，需先创建目录。`transforms` 会把其它物体临时隐藏，只留立方体和地面/坐标轴 ——
 兔子半径 1.0、离相机又近，不藏起来立方体根本看不清。
 
 森林漫步的录制命令：
@@ -320,7 +359,7 @@ $V Models/bunny_10k.obj --scene forest \
 （比实时快一倍）。动画时间取 `帧序号 / fps`，是个纯函数 —— 换台渲染慢的机器，输出的视频
 依然严格是 6.000 秒 / 30fps，不会忽快忽慢。
 
-> 依赖：`ffmpeg.exe` 要在 PATH 里（本机在 `C:\ffmpeg\bin`）。找不到时程序报
+> 依赖：`ffmpeg.exe` 要在 PATH 里，可运行 `tools/setup_dependencies.ps1 -InstallFfmpeg` 安装。找不到时程序报
 > `failed to start ffmpeg` 并正常退出，不会崩。
 
 ---
@@ -597,9 +636,10 @@ appCleanup();          // 现在真的会执行
 ./build/Release/viewer.exe --selftest
 ```
 
-11 项断言覆盖截图验证不了的逻辑：矩阵乘法、轴角旋转、四元数旋转与矩阵形式的一致性、
+38 项断言覆盖截图验证不了的逻辑：矩阵乘法、轴角旋转、四元数旋转与矩阵形式的一致性、
 绕参考点旋转保持距离、旋转 360° 回到原点、推拉改变距离、顶视图 up 向量非退化、
 六个视图预设共用同一距离、漫游沿视线平移且不改变距离。
+还覆盖机器人层级与模式接管、贝塞尔与弧长参数化、森林完整几何确定性、动物脚底/俯身/警觉、追赶间距/朝向及切换连续性。
 
 ---
 

@@ -1,0 +1,18 @@
+=== 3D Model Viewer ===
+[main] model: Models/bunny_10k.obj
+[mesh] Models/bunny_10k.obj  (up axis = Y (no rotation))
+       vertices 5002 -> unique 30000 | faces 10000 (quads 0) -> triangles 10000
+       bbox x[-0.74,0.74] y[-0.74,0.74] z[-0.58,0.58]  radius 1.00
+[scene] forest: 630053 vertices, 340774 triangles
+[robot] created: 9 box parts, height ~2.35, path length 10.63
+[animals] created: Deer + Fox (procedural low-poly, ~0.7k tris)
+[renderer] GLSL initialized; shadow map 2048 x 2048
+[gl] renderer : NVIDIA GeForce RTX 5080 Laptop GPU/PCIe/SSE2
+[gl] version  : 4.6.0 NVIDIA 577.00
+[app] scene ready, radius 10.000
+[app] OBJ: 5002 verts / 10000 faces -> 30000 unique verts, 10000 triangles
+[animals] chase demo: on (deer flees)
+[rec] recording report-assets\review\video\chase.mp4 | 960x600 @ 24 fps | 192 frames (8.0s) | anim: none
+[rec] video written: report-assets\review\video\chase.mp4 (192 frames @ 24 fps)
+[app] cleanup: releasing textures and meshes...
+[app] cleanup: done

@@ -7,10 +7,21 @@
 import io
 import os
 import sys
+import argparse
 
 # 按「自底向上」的阅读顺序排列，而不是字母序：
 # 先公共类型和数学工具，再数据层（解析/网格/纹理），再渲染层，最后主流程。
 FILES = [
+    ('tools/record_demos.py', 'python', '可复现功能视频与 ffprobe 验证'),
+    ('tools/make_share_package.py', 'python', '便携可运行包与 VS 源码分发'),
+    ('tools/update_manifest.py', 'python', '文件哈希更新与校验'),
+    ('tools/setup_dependencies.ps1', 'powershell', '依赖检查与 FFmpeg 安装'),
+    ('src/robot.h', 'cpp', '机器人层级与动画接口'),
+    ('src/robot.cpp', 'cpp', '机器人关节与路径动画'),
+    ('src/animals.h', 'cpp', '动物行为接口'),
+    ('src/animals.cpp', 'cpp', '鹿与狐狸建模、吃草和追赶'),
+    ('src/bezier.h', 'cpp', '贝塞尔路径接口'),
+    ('src/bezier.cpp', 'cpp', 'de Casteljau 与弧长参数化'),
     ("src/gl_api.h", "cpp", "OpenGL runtime entry points"),
     ("src/shaders.h", "cpp", "GLSL per-pixel lighting and PCF shadows"),
     ("src/renderer.h", "cpp", "Renderer interface"),
@@ -18,7 +29,7 @@ FILES = [
     ("tests/obj_loader_test.cpp", "cpp", "OBJ regression tests"),
     ("tools/render_smoke.py", "python", "GPU rendering regression checks"),
     ("CMakeLists.txt",        "cmake",  "构建配置（含 32 位防护）"),
-    ("CMakePresets.json",     "json",   "CMake 预设：只提供 x64，避免选错"),
+    ("CMakePresets.json",     "json",   "CMake 预设：x64 / Win32"),
     ("build.bat",             "bat",    "一键构建（Windows cmd / PowerShell）"),
     ("build.sh",              "bash",   "一键构建（git-bash / MSYS2）"),
     ("viewer.vcxproj",        "xml",    "经典 VS 工程（自包含，双击 viewer.sln 即可）"),
@@ -62,7 +73,7 @@ FILES = [
     ("src/hud.cpp",           "cpp",    "屏幕叠加文字与帮助面板"),
 
     ("src/input.h",           "cpp",    "输入接口"),
-    ("src/input.cpp",         "cpp",    "键盘 / 鼠标 / 滚轮 / 右键菜单（实验六）"),
+    ("src/input.cpp",         "cpp",    "键盘 / 鼠标 / 滚轮 / 中键菜单（实验六）"),
 
     ("src/app.h",             "cpp",    "程序状态接口"),
     ("src/app.cpp",           "cpp",    "渲染主流程、HUD、截图、四视口、录制调度"),
@@ -120,7 +131,11 @@ def build_zip(root, out_path, items=None):
 
 def main():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    out_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, "CG-Experiment-code.md")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('output', nargs='?', default=os.path.join(root, 'CG-Experiment-code.md'))
+    parser.add_argument('--code-only', action='store_true', help='Generate the source appendix without ZIP archives')
+    args = parser.parse_args()
+    out_path = args.output
 
     present = []
     total_lines = 0
@@ -151,7 +166,7 @@ def main():
     w.write("## 统计\n\n")
     w.write("| 项 | 值 |\n|---|---|\n")
     w.write("| 源文件 | %d 个 |\n" % len(present))
-    w.write("| 代码总行数 | %d 行（不含本页的 README 部分）| \n" % total_lines)
+    w.write("| 代码总行数 | %d 行（不含本页的 README 部分）|\n" % total_lines)
     w.write("| 模型 | `Models/bunny_10k.obj`（Stanford Bunny，10000 面，Y-up）|\n")
     w.write("| 依赖 | 已 vendor：freeglut（x64）+ stb_image v2.30，**离线可构建** |\n\n")
 
@@ -189,6 +204,8 @@ def main():
     size = os.path.getsize(out_path)
     print("已生成: %s" % out_path)
     print("  %d 个文件, %d 行代码, %.1f KB" % (len(present), total_lines, size / 1024.0))
+    if args.code_only:
+        return
 
     for fname, items, note in [
         ("CG-Experiment.zip",    ZIP_ITEMS,    "完整包（VS 工程 + CMake/脚本两条路径）"),

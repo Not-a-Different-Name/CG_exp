@@ -1,0 +1,2 @@
+# Existing Windows documents and sources use CRLF; still check real whitespace errors.
+* whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

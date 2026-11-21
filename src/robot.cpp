@@ -2,10 +2,15 @@
 #include "scene.h"
 #include "bezier.h"
 #include "math3d.h"
+#include "texture.h"
 
+#include <algorithm>
+#include <array>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <memory>
 #include <vector>
 
@@ -22,6 +27,8 @@ enum RobotPartId
     P_ArmL, P_ArmR, P_LegL, P_LegR,
     P_Count
 };
+using PartMeshes = std::array<std::shared_ptr<Mesh>, P_Count>;
+enum class CharacterLook { BuiltIn, Skin, Model };
 
 // 所有关节角（度）+ 身体起伏（世界单位）的集中描述。
 struct RobotJoints
@@ -56,11 +63,20 @@ struct RobotCtl
     RobotPose pose     = RobotPose::Stand;
     int       root     = -1;                       // "Robot" 根物体（接收整体变换）
     int       part[P_Count] = { -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+    PartMeshes originalMeshes;
+    PartMeshes skinMeshes;
+    std::shared_ptr<Mesh> importedModel;
+    std::string skinLabel;
+    std::string modelLabel;
+    CharacterLook look = CharacterLook::BuiltIn;
+    int importedObject = -1;
     RobotJoints j;                                 // 当前关节角（向目标平滑逼近）
     float     lastT = -1.0f;
     float     tOverride = -1.0f;                   // --time：锁定时间轴出图用
 
     bool      onPath    = false;                   // 沿贝塞尔曲线漫步
+    float     pathTime  = 0.0f;
+    float     pathTick  = -1.0f;
     bool      chase     = false;                   // 追赶演示：外部指定的位姿优先
     float     chaseX = 0.0f, chaseZ = 0.0f, chaseYaw = 0.0f;
     bool      wasWalking = false;                  // 开路径前的走路开关（关路径时还原）
@@ -96,7 +112,8 @@ void pushBoxTri(MeshData& m, const Vec3& a, const Vec3& b, const Vec3& c, const 
     m.indices.push_back(base + 2);
 }
 
-void addBox(MeshData& m, float hx, float hy, float hz, const float col[3])
+void addBox(MeshData& m, float hx, float hy, float hz, const float col[3],
+            Vec3 offset = v3(0.0f, 0.0f, 0.0f))
 {
     // 每个面：中心 = n*half(n轴)，面上两个切向 u/v 满足 u×v = n（外法线），
     // 四角按 (-u-v)(+u-v)(+u+v)(-u+v) 的 CCW 顺序拆两个三角形。
@@ -111,7 +128,7 @@ void addBox(MeshData& m, float hx, float hy, float hz, const float col[3])
     };
     for (const Face& f : faces)
     {
-        const Vec3 c = f.n * f.hn;
+        const Vec3 c = offset + f.n * f.hn;
         const Vec3 u = f.u * f.hu;
         const Vec3 v = f.v * f.hv;
         const Vec3 p00 = c - u - v, p10 = c + u - v, p11 = c + u + v, p01 = c - u + v;
@@ -120,6 +137,88 @@ void addBox(MeshData& m, float hx, float hy, float hz, const float col[3])
     }
     m.hasNormals = true;
     m.hasColors  = true;
+}
+
+struct SkinBox
+{
+    RobotPartId part;
+    int x, y, overlayX, overlayY;
+    int width, height, depth;
+    float hx, hy, hz;
+};
+
+std::shared_ptr<Mesh> buildSkinBox(const SkinBox& box, const std::vector<unsigned char>& source)
+{
+    MeshData data;
+    const float white[] = {1.0f, 1.0f, 1.0f};
+    addBox(data, box.hx, box.hy, box.hz, white);
+    data.hasColors = false;
+    data.colors.clear();
+    data.hasUVs = true;
+
+    // Cuboid net in the same face order as addBox. Flip the vertical order
+    // between UVs and bitmap rows, with row zero uploaded at v = 0.
+    const int w = box.width, h = box.height, d = box.depth;
+    struct Face { int x, y, w, h; };
+    const Face faces[] = {
+        {d+w,d,d,h}, {0,d,d,h}, {d,0,w,d}, {d+w,0,w,d},
+        {d,d,w,h}, {2*d+w,d,w,h}
+    };
+    std::vector<unsigned char> pixels = source;
+    for (const Face& face : faces)
+    {
+        const int x = box.x + face.x, y = box.y + face.y;
+        for (int row = 0; row < face.h; ++row)
+            for (int col = 0; col < face.w; ++col)
+            {
+                const int base = ((y + row) * 64 + x + col) * 4;
+                const int outer = ((box.overlayY + face.y + row) * 64 +
+                                   box.overlayX + face.x + col) * 4;
+                const int alpha = source[outer + 3];
+                for (int channel = 0; channel < 3; ++channel)
+                {
+                    const int color = source[base + 3] ? source[base + channel] : 166;
+                    pixels[base + channel] = (color * (255 - alpha) + source[outer + channel] * alpha) / 255;
+                }
+                pixels[base + 3] = 255;
+            }
+        const float left = (x + 0.001f) / 64.0f, right = (x + face.w - 0.001f) / 64.0f;
+        const float top = (y + 0.001f) / 64.0f, bottom = (y + face.h - 0.001f) / 64.0f;
+        data.uvs.insert(data.uvs.end(), {left,bottom, right,bottom, right,top,
+                                         left,bottom, right,top, left,top});
+    }
+    auto mesh = std::make_shared<Mesh>();
+    mesh->adoptSkin(std::move(data), pixels.data());
+    return mesh;
+}
+
+void applyCharacter(Scene& scene)
+{
+    RobotCtl& robot = g_robot;
+    const bool skinActive = robot.look == CharacterLook::Skin;
+    const bool modelActive = robot.look == CharacterLook::Model;
+    for (int i = 0; i < P_Count; ++i)
+    {
+        Object& o = scene.objects[robot.part[i]];
+        o.mesh = skinActive ? robot.skinMeshes[i] : robot.originalMeshes[i];
+        o.visible = o.mesh && !modelActive;
+    }
+    Object& imported = scene.objects[robot.importedObject];
+    imported.mesh = robot.importedModel;
+    imported.visible = modelActive && imported.mesh;
+}
+
+void releaseImportedMeshes(Scene& scene, CharacterLook look)
+{
+    RobotCtl& robot = g_robot;
+    for (auto& mesh : scene.meshes)
+        if (mesh && (look == CharacterLook::Model ? mesh == robot.importedModel :
+                    std::find(robot.skinMeshes.begin(), robot.skinMeshes.end(), mesh) != robot.skinMeshes.end()))
+        {
+            mesh->release();
+            mesh.reset();
+        }
+    scene.meshes.erase(std::remove(scene.meshes.begin(), scene.meshes.end(), nullptr), scene.meshes.end());
 }
 
 // 把完整的部件世界矩阵拆成 Object 的 pos + xform（两条渲染路径共用同一组合规则）。
@@ -242,10 +341,10 @@ void robotCreate(Scene& scene)
     // (半尺寸, 颜色)。明亮低多边形配色：暖橙躯干 + 奶油头 + 钢蓝四肢。
     struct PartDef { const char* name; float hx, hy, hz; float col[3]; };
     const PartDef defs[P_Count] = {
-        { "Robot Torso",  0.28f, 0.36f, 0.17f, { 0.93f, 0.35f, 0.22f } },
-        { "Robot Head",   0.19f, 0.17f, 0.18f, { 0.96f, 0.90f, 0.78f } },
-        { "Robot Eye L",  0.035f, 0.05f, 0.015f, { 0.05f, 0.06f, 0.08f } },
-        { "Robot Eye R",  0.035f, 0.05f, 0.015f, { 0.05f, 0.06f, 0.08f } },
+        { "Robot Torso",  0.28f, 0.36f, 0.17f, { 0.98f, 0.43f, 0.19f } },
+        { "Robot Head",   0.22f, 0.17f, 0.18f, { 0.98f, 0.94f, 0.80f } },
+        { "Robot Eye L",  0.031f, 0.044f, 0.010f, { 0.40f, 0.94f, 0.85f } },
+        { "Robot Eye R",  0.031f, 0.044f, 0.010f, { 0.40f, 0.94f, 0.85f } },
         { "Robot Antenna", 0.025f, 0.10f, 0.025f, { 0.98f, 0.78f, 0.22f } },
         { "Robot Arm L",  0.08f, 0.31f, 0.08f, { 0.35f, 0.47f, 0.60f } },
         { "Robot Arm R",  0.08f, 0.31f, 0.08f, { 0.35f, 0.47f, 0.60f } },
@@ -257,8 +356,18 @@ void robotCreate(Scene& scene)
     {
         MeshData d;
         addBox(d, defs[i].hx, defs[i].hy, defs[i].hz, defs[i].col);
+        const float dark[3] = { 0.08f, 0.14f, 0.17f };
+        const float ivory[3] = { 0.98f, 0.94f, 0.80f };
+        if (i == P_Head)
+            addBox(d, 0.184f, 0.083f, 0.022f, dark, v3(0.0f, 0.028f, 0.182f));
+        if (i == P_Torso)
+        {
+            addBox(d, 0.172f, 0.032f, 0.012f, ivory, v3(0.0f, -0.118f, 0.17f));
+            addBox(d, 0.167f, 0.215f, 0.047f, dark, v3(0.0f, 0.012f, -0.190f));
+        }
         auto mesh = std::make_shared<Mesh>();
         mesh->adopt(std::move(d));
+        R.originalMeshes[i] = mesh;
         scene.meshes.push_back(mesh);
 
         Object o;
@@ -280,6 +389,17 @@ void robotCreate(Scene& scene)
         mat4Identity(o.xform);
         scene.objects.push_back(o);
         R.root = (int)scene.objects.size() - 1;
+    }
+
+    {
+        Object o;
+        o.name = "Imported Character";
+        o.kind = PrimKind::Mesh;
+        o.selectable = false;
+        o.visible = false;
+        mat4Identity(o.xform);
+        R.importedObject = (int)scene.objects.size();
+        scene.objects.push_back(std::move(o));
     }
 
     // 贝塞尔路径可视化：曲线本体 + 锚点 + 控制柄合成一个网格，默认隐藏。
@@ -310,6 +430,98 @@ void robotCreate(Scene& scene)
     R.exists = true;
     std::printf("[robot] created: %d box parts, height ~2.35, path length %.2f\n",
                 P_Count, pathStorage().total);
+}
+
+bool robotImportCharacter(Scene& scene, const std::string& path, bool slim, std::string& error)
+{
+    RobotCtl& robot = g_robot;
+    if (!robot.exists) { error = "Open the forest scene to import a character."; return false; }
+    const auto file = std::filesystem::u8path(path);
+    std::string extension = file.extension().u8string();
+    for (char& c : extension) c = (char)std::tolower((unsigned char)c);
+    PartMeshes skin;
+    std::shared_ptr<Mesh> model;
+    if (extension == ".png")
+    {
+        std::vector<unsigned char> pixels;
+        if (!readSkinPixels(path, pixels)) { error = "Expected a readable 64 x 64 skin PNG."; return false; }
+        const int arm = slim ? 3 : 4;
+        const float armHalf = slim ? 0.074f : 0.097f;
+        const SkinBox boxes[] = {
+            {P_Head, 0,0, 32,0, 8,8,8, .24f,.20f,.215f},
+            {P_Torso, 16,16, 16,32, 8,12,4, .275f,.36f,.146f},
+            {P_ArmL, 40,16, 40,32, arm,12,4, armHalf,.31f,.114f},
+            {P_ArmR, 32,48, 48,48, arm,12,4, armHalf,.31f,.114f},
+            {P_LegL, 0,16, 0,32, 4,12,4, .121f,.54f,.133f},
+            {P_LegR, 16,48, 0,48, 4,12,4, .121f,.54f,.133f},
+        };
+        for (const SkinBox& box : boxes)
+        {
+            skin[box.part] = buildSkinBox(box, pixels);
+            if (!skin[box.part]->hasTexture())
+            {
+                for (const auto& mesh : skin) if (mesh) mesh->release();
+                error = "Could not create the skin texture.";
+                return false;
+            }
+        }
+    }
+    else if (extension == ".obj")
+    {
+        model = std::make_shared<Mesh>();
+        if (!model->loadFromOBJ(path, UpAxis::Y, false, &error)) return false;
+        const MeshData& data = model->data();
+        const float height = data.bboxMax[1] - data.bboxMin[1];
+        if (!std::isfinite(height) || height < 1e-5f)
+        {
+            model->release();
+            error = "The OBJ needs a nonzero height on the Y axis.";
+            return false;
+        }
+        model->preserveSmallTexturePixels();
+        scene.objects[robot.importedObject].size = 2.35f / height;
+    }
+    else { error = "Choose a 64 x 64 PNG skin or a Y-up OBJ."; return false; }
+
+    robot.look = model ? CharacterLook::Model : CharacterLook::Skin;
+    releaseImportedMeshes(scene, robot.look);
+    if (model)
+    {
+        robot.modelLabel = "OBJ  " + file.filename().u8string();
+        robot.importedModel = std::move(model);
+        scene.meshes.push_back(robot.importedModel);
+    }
+    else
+    {
+        robot.skinLabel = (slim ? "Slim PNG  " : "PNG  ") + file.filename().u8string();
+        robot.skinMeshes = std::move(skin);
+        for (const auto& mesh : robot.skinMeshes) if (mesh) scene.meshes.push_back(mesh);
+    }
+    applyCharacter(scene);
+    std::printf("[character] imported %s: %s\n", extension.c_str(), path.c_str());
+    return true;
+}
+
+bool robotToggleCharacter(Scene& scene)
+{
+    RobotCtl& robot = g_robot;
+    if (robot.skinLabel.empty() && robot.modelLabel.empty()) return false;
+    if (robot.look == CharacterLook::BuiltIn && !robot.skinLabel.empty())
+        robot.look = CharacterLook::Skin;
+    else if (robot.look != CharacterLook::Model && !robot.modelLabel.empty())
+        robot.look = CharacterLook::Model;
+    else
+        robot.look = CharacterLook::BuiltIn;
+    applyCharacter(scene);
+    return true;
+}
+
+const std::string& robotCharacterSource()
+{
+    static const std::string original = "Built-in robot";
+    if (g_robot.look == CharacterLook::Skin) return g_robot.skinLabel;
+    if (g_robot.look == CharacterLook::Model) return g_robot.modelLabel;
+    return original;
 }
 
 // ---------------------------------------------------------------------------
@@ -364,7 +576,10 @@ void robotUpdate(Scene& scene, float t)
     }
     else if (R.onPath)
     {
-        const float s = kPathSpeed * t;
+        if (R.tOverride < 0.0f && R.pathTick >= 0.0f && t >= R.pathTick)
+            R.pathTime += t - R.pathTick;
+        R.pathTick = t;
+        const float s = kPathSpeed * (R.tOverride >= 0.0f ? t : R.pathTime);
         const Vec3 p   = pathStorage().evalAtDistance(s);
         const Vec3 tan = pathStorage().tangentAtDistance(s);
 
@@ -386,6 +601,17 @@ void robotUpdate(Scene& scene, float t)
     mat4Multiply(A, A, Ry);
     mat4FromTranslation(Tbob, 0.0f, R.j.bodyBob, 0.0f);
     mat4Multiply(Mbase, A, Tbob);
+
+    if (R.importedModel)
+    {
+        Object& model = scene.objects[R.importedObject];
+        const MeshData& data = R.importedModel->data();
+        float offset[16], modelMatrix[16];
+        mat4FromTranslation(offset, -data.center[0] * model.size,
+                            -data.bboxMin[1] * model.size, -data.center[2] * model.size);
+        mat4Multiply(modelMatrix, A, offset);
+        writePart(model, modelMatrix);
+    }
 
     // ---- 躯干 ----
     {
@@ -411,10 +637,10 @@ void robotUpdate(Scene& scene, float t)
         mat4Multiply(M, H, T);
         writePart(scene.objects[R.part[P_Antenna]], M);
 
-        mat4FromTranslation(T, -0.09f, 0.20f, 0.19f);  // 脸在 +Z，双眼微凸出脸面
+        mat4FromTranslation(T, -0.09f, 0.188f, 0.210f);
         mat4Multiply(M, H, T);
         writePart(scene.objects[R.part[P_EyeL]], M);
-        mat4FromTranslation(T, 0.09f, 0.20f, 0.19f);
+        mat4FromTranslation(T, 0.09f, 0.188f, 0.210f);
         mat4Multiply(M, H, T);
         writePart(scene.objects[R.part[P_EyeR]], M);
     }
@@ -441,6 +667,8 @@ void robotUpdate(Scene& scene, float t)
 void robotSetPose(RobotPose pose, bool snap)
 {
     if (pose < RobotPose::Stand || pose >= RobotPose::Count) return;
+    robotSetPathWalk(false);
+    robotClearChasePose();
     g_robot.pose = pose;
     g_robot.walking = false;                            // 定格姿势优先于走路循环
     if (snap) g_robot.j = poseTarget(pose, 0.0f);
@@ -482,6 +710,11 @@ bool robotParsePose(const std::string& s, RobotPose& out)
 void robotToggleWalk()
 {
     if (!g_robot.exists) return;
+    // 手动走路开关接管自动路径/追赶，否则下一帧又会被强制设为 walking。
+    const bool wasWalking = g_robot.walking;
+    robotSetPathWalk(false);
+    robotClearChasePose();
+    g_robot.walking = wasWalking;
     g_robot.walking = !g_robot.walking;
     if (g_robot.walking) g_robot.pose = RobotPose::WalkFreeze;  // 停下时停在行走姿态
 }
@@ -501,12 +734,12 @@ void robotSetPathWalk(bool on)
     if (on == g_robot.onPath) return;
 
     g_robot.onPath = on;
+    g_robot.pathTick = -1.0f;
     if (on)
     {
         // 记住进入路径前的走路状态，退出时还原（避免 P 键偷偷改掉 b 键的状态）
         g_robot.wasWalking = g_robot.walking;
         g_robot.walking    = true;
-        g_robot.pose       = RobotPose::WalkFreeze;
         g_robot.chase      = false;                // 路径与追赶互斥
     }
     else
@@ -556,6 +789,7 @@ void robotSetTimeOverride(float t)
 {
     g_robot.tOverride = t;
     g_robot.lastT = -1.0f;
+    g_robot.pathTick = -1.0f;
 }
 
 float robotTimeOverride() { return g_robot.tOverride; }

@@ -29,6 +29,7 @@ struct AppState
     bool showGround = true;
     bool showHUD    = true;
     bool showHelp   = false;
+    int  helpPage   = 0;
 
     bool quadView   = false;                       // 四视口：三视图 + 透视同屏
 
@@ -81,6 +82,8 @@ void appAccumulateObjectTransform(const float delta[16]);
 // 把当前帧缓冲存成 BMP（F12），也方便写实验报告
 void appSaveScreenshot(const char* path);
 void appUpdateTitle();
+void appClickHelp(int x, int y);
+bool appImportCharacter(const std::string& path, bool slim);
 
 // 请求在「下一帧画完、交换缓冲之前」截图，然后退出主循环。
 // 从后缓冲读，所以窗口可以隐藏（batch 出图时不会再闪窗口）。
