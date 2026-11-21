@@ -29,7 +29,7 @@ k 在内置机器人、已加载的 PNG 和 OBJ 间切换；样例在 Models/Tra
 可选 CMake 构建方式见 README.md；课程参考资料在 docs/。
 
 三、文件说明
-src/：完整渲染器源码；Models/：兔子模型和贴图。
+src/：完整渲染器源码；Models/：兔子模型、角色导入样例（TrailSurveyor/）与贴图。
 third_party/：freeglut 的头文件、Win32/x64 库及 DLL，以及 stb_image。
 tests/ 和 tools/：自检、截图验证及打包脚本。
 MANIFEST.sha256：包内文件校验值。
