@@ -251,6 +251,25 @@ int runSelfTest()
         check(nearf(c.distance(), d0 * 0.5f), "Camera::dolly(0.5) halves the distance");
     }
     {
+        // 点击拾取：屏幕中心射线应命中原点处的立方体，偏角射线应落空。
+        Scene s;
+        Object o;
+        o.name = "PickTarget";
+        o.kind = PrimKind::Cube;
+        o.size = 0.5f;
+        mat4Identity(o.xform);
+        s.objects.push_back(o);
+
+        Camera c;
+        c.eye = v3(0.0f, 0.0f, 5.0f);
+        c.target = v3(0.0f, 0.0f, 0.0f);
+        c.up = v3(0.0f, 1.0f, 0.0f);
+        const int hit  = appPickObjectIndex(s, c, 1.0f, 0.0f, 0.0f);
+        const int miss = appPickObjectIndex(s, c, 1.0f, 0.9f, 0.9f);
+        check(hit == 0 && miss == -1,
+              "picking: center ray hits the object, off-center ray misses");
+    }
+    {
         Camera c; c.reset(1.5f);
         c.setPreset((int)ViewPreset::Top, 1.5f);
         // 顶视图的 up 必须偏离视线方向，否则 gluLookAt 的基退化（叉积为零、画面空白）

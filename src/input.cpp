@@ -422,6 +422,8 @@ void inputMouseButton(int button, int state, int x, int y)
 
         if (button == GLUT_LEFT_BUTTON)
         {
+            // 点击先拾取：选中光标下的物体；随后拖动仍然作用在它身上。
+            if (!shiftDown()) appPickAt(x, y);
             // Shift+左键 = 平移相机（中键留给菜单，右键留给旋转相机）
             g_app.dragMode = shiftDown() ? AppState::DragMode::Pan
                                          : AppState::DragMode::Object;

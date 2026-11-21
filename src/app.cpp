@@ -142,6 +142,24 @@ void setupRenderState()
     }
 }
 
+// 拾取用的包围球半径：本地网格半径 × 物体缩放 × xform 的缩放分量。
+float xformScale(const float m[16])
+{
+    const float sx = std::sqrt(m[0] * m[0] + m[1] * m[1] + m[2] * m[2]);
+    const float sy = std::sqrt(m[4] * m[4] + m[5] * m[5] + m[6] * m[6]);
+    const float sz = std::sqrt(m[8] * m[8] + m[9] * m[9] + m[10] * m[10]);
+    return std::max(std::max(sx, sy), std::max(sz, 1e-4f));
+}
+
+float objectPickRadius(const Object& o)
+{
+    float r = o.size;
+    if (o.kind == PrimKind::Mesh && o.mesh)      r = o.mesh->radius() * o.size;
+    else if (o.kind == PrimKind::Cube)           r = o.size * 1.732f;
+    else if (o.kind == PrimKind::Teapot)         r = o.size * 1.5f;
+    return r * xformScale(o.xform);
+}
+
 // 物体可见性开关（网格/坐标轴/地面各有独立开关）
 bool objectVisible(const Object& o)
 {
@@ -311,7 +329,7 @@ void drawHelpScreen()
         {
             {"Right drag / wheel", "Look around / zoom"},
             {"WASD / Q E", "Move / descend or climb"},
-            {"Tab", "Select the next object"},
+            {"Tab / click", "Select the next object"},
             {"t / r / y", "Move / rotate / scale with left drag"},
             {"I / K / M", "Import / cycle / swap model"},
             {"Middle click", "Open the full action menu"},
@@ -868,6 +886,82 @@ void appSetStatus(const std::string& msg, int ms)
     g_app.statusUntilMs = (msg.empty() || ms <= 0)
                               ? 0
                               : glutGet(GLUT_ELAPSED_TIME) + ms;
+}
+
+// 射线-包围球拾取。根节点 "Robot" 不绘制，用可见部件的范围近似。
+int appPickObjectIndex(const Scene& scene, const Camera& camera, float aspect,
+                       float ndcX, float ndcY)
+{
+    const Vec3 fwd   = camera.forward();
+    const Vec3 right = v3norm(v3cross(fwd, camera.up));
+    const Vec3 up    = v3cross(right, fwd);
+    const float tanHalf = std::tan(camera.fovY * 0.5f * 3.14159265f / 180.0f);
+    const Vec3 dir = v3norm(fwd + right * (ndcX * aspect * tanHalf) + up * (ndcY * tanHalf));
+
+    int   best  = -1;
+    float bestT = 1e30f;
+    for (int i = 0; i < (int)scene.objects.size(); ++i)
+    {
+        const Object& o = scene.objects[i];
+        if (!o.selectable || !o.visible) continue;
+        if (o.kind == PrimKind::Grid || o.kind == PrimKind::Axes ||
+            o.kind == PrimKind::Ground) continue;
+
+        float cx = o.pos[0], cy = o.pos[1], cz = o.pos[2];
+        float r  = objectPickRadius(o);
+        if (o.name == "Robot")
+        {
+            float minX = 0, maxX = 0, minY = 0, maxY = 0, minZ = 0, maxZ = 0;
+            bool found = false;
+            for (const Object& p : scene.objects)
+            {
+                if (!p.visible || !(p.name.rfind("Robot ", 0) == 0 || p.name == "Imported Character"))
+                    continue;
+                const float pr = objectPickRadius(p);
+                const float x0 = p.pos[0] - pr, x1 = p.pos[0] + pr;
+                const float y0 = p.pos[1] - pr, y1 = p.pos[1] + pr;
+                const float z0 = p.pos[2] - pr, z1 = p.pos[2] + pr;
+                if (!found) { minX = x0; maxX = x1; minY = y0; maxY = y1; minZ = z0; maxZ = z1; found = true; }
+                else
+                {
+                    minX = std::min(minX, x0); maxX = std::max(maxX, x1);
+                    minY = std::min(minY, y0); maxY = std::max(maxY, y1);
+                    minZ = std::min(minZ, z0); maxZ = std::max(maxZ, z1);
+                }
+            }
+            if (!found) continue;
+            cx = (minX + maxX) * 0.5f;
+            cy = (minY + maxY) * 0.5f;
+            cz = (minZ + maxZ) * 0.5f;
+            const float dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
+            r = 0.5f * std::sqrt(dx * dx + dy * dy + dz * dz);
+        }
+
+        const Vec3 oc = v3(cx - camera.eye.x, cy - camera.eye.y, cz - camera.eye.z);
+        const float tca = v3dot(oc, dir);
+        if (tca < 0.0f) continue;
+        const float d2 = v3dot(oc, oc) - tca * tca;
+        if (d2 > r * r) continue;
+        const float t = tca - std::sqrt(std::max(0.0f, r * r - d2));
+        if (t >= 0.0f && t < bestT) { bestT = t; best = i; }
+    }
+    return best;
+}
+
+bool appPickAt(int mouseX, int mouseY)
+{
+    if (g_app.projMode != ProjMode::Perspective || g_app.quadView) return false;
+    const float w = (float)std::max(1, g_app.winW);
+    const float h = (float)std::max(1, g_app.winH);
+    const float ndcX = 2.0f * (float)mouseX / w - 1.0f;
+    const float ndcY = 1.0f - 2.0f * (float)mouseY / h;
+    const int idx = appPickObjectIndex(g_app.scene, g_app.camera, w / h, ndcX, ndcY);
+    if (idx >= 0 && idx != g_app.scene.selected)
+    {
+        g_app.scene.selected = idx;
+        appSetStatus("Selected: " + g_app.scene.objects[idx].name);
+    }
+    return idx >= 0;
 }
 
 bool appImportCharacter(const std::string& path, bool slim)

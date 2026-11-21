@@ -74,6 +74,14 @@ void appPostRedisplay();
 // 顶部状态条的操作提示：ms 毫秒后自动消失（0 = 常驻）。
 void appSetStatus(const std::string& msg, int ms = 3000);
 
+// 左键点击拾取：把屏幕坐标拾取到的可选物体设为当前选中（空处保持原选择）。
+bool appPickAt(int mouseX, int mouseY);
+
+// 纯函数版本的拾取（射线-包围球），供自检使用；返回对象下标或 -1。
+// ndcX/ndcY ∈ [-1,1] 是屏幕归一化坐标（+x 右、+y 上）。
+int appPickObjectIndex(const Scene& scene, const Camera& camera, float aspect,
+                       float ndcX, float ndcY);
+
 // 切换投影 / 视图 / 复位
 void appSetProjection(ProjMode m);
 void appSetViewPreset(ViewPreset v);

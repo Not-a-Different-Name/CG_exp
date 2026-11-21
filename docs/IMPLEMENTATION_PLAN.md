@@ -30,7 +30,7 @@
 
 ## 本轮验证
 
-- Release x64 增量构建完成，零警告（`out/build-check-w35.log`）。CTest 2/2、`--selftest` 41/41、OpenGL 出图 22/22 均通过。根目录 `viewer.exe` 与 `build/Release/viewer.exe` 均来自同一提交；构建时间不同导致哈希不同，交付前重跑构建并同步根目录 EXE，再以 `tools/update_manifest.py --check` 校验。
+- Release x64 增量构建完成，零警告（`out/build-check-w35.log`）。CTest 2/2、`--selftest` 42/42、OpenGL 出图 22/22 均通过。根目录 `viewer.exe` 与 `build/Release/viewer.exe` 均来自同一提交；构建时间不同导致哈希不同，交付前重跑构建并同步根目录 EXE，再以 `tools/update_manifest.py --check` 校验。
 - 按常规森林和四视口的实际出图检查了机器人构图。以 FFprobe 重新核验 [4 段既有功能演示](../report-assets/review/video/)，均为 H.264、960×600、24 fps。
 - 真实键鼠、动态窗口调整、手动退出与异机运行待验收。本轮桌面操作在启动查看器前被 Esc 中止。
 - [11 月 14 日复查记录](REVIEW_AND_EXTENSIONS.md)保留此前代码修复、录制和复查包的细节。
