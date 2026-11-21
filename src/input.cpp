@@ -29,6 +29,7 @@ void chooseCharacter(bool slim)
     dialog.lStructSize = sizeof(dialog);
     dialog.hwndOwner = GetActiveWindow();
     dialog.lpstrFilter = L"Character files (*.png;*.obj)\0*.png;*.obj\0";
+    dialog.lpstrInitialDir = L"Models";                 // 默认从项目模型目录开始找
     dialog.lpstrFile = file;
     dialog.nMaxFile = (DWORD)(sizeof(file) / sizeof(file[0]));
     dialog.lpstrTitle = slim ? L"Import a slim skin PNG or OBJ" : L"Import a classic skin PNG or OBJ";
@@ -36,9 +37,9 @@ void chooseCharacter(bool slim)
     if (GetOpenFileNameW(&dialog))
         appImportCharacter(std::filesystem::path(file).u8string(), slim);
     else if (CommDlgExtendedError() != 0)
-        g_app.statusMsg = "Could not open the file picker.";
+        appSetStatus("Could not open the file picker.", 4000);
 #else
-    g_app.statusMsg = "Use --character to open a PNG or OBJ.";
+    appSetStatus("Use --character to open a PNG or OBJ.", 5000);
 #endif
 }
 
@@ -66,6 +67,7 @@ void manualRobotPose(RobotPose pose)
 {
     animalsSetChase(false);
     robotSetPose(pose);
+    appSetStatus(std::string("Pose: ") + robotPoseName(robotPose()));
 }
 
 void manualRobotWalk()
@@ -188,25 +190,52 @@ void inputAction(int action)
     case M_ROBOT_WAVE:       manualRobotPose(RobotPose::Wave);       break;
     case M_ROBOT_TPOSE:      manualRobotPose(RobotPose::TPose);      break;
     case M_ROBOT_WALKFREEZE: manualRobotPose(RobotPose::WalkFreeze); break;
-    case M_ROBOT_TOGGLE_WALK: manualRobotWalk();                  break;
-    case M_ROBOT_TOGGLE_PATH: toggleRobotPath();                  break;
-    case M_ROBOT_TOGGLE_PATHGUIDE: robotTogglePathGuide();        break;
+    case M_ROBOT_TOGGLE_WALK:
+        manualRobotWalk();
+        appSetStatus(robotWalking() ? "Walking in place" : "Walk paused");
+        break;
+    case M_ROBOT_TOGGLE_PATH:
+        toggleRobotPath();
+        appSetStatus(robotOnPath() ? "Patrol on" : "Patrol paused");
+        break;
+    case M_ROBOT_TOGGLE_PATHGUIDE:
+        robotTogglePathGuide();
+        appSetStatus(robotPathGuide() ? "Route shown" : "Route hidden");
+        break;
     case M_CHARACTER_OPEN:      chooseCharacter(false);         break;
     case M_CHARACTER_OPEN_SLIM: chooseCharacter(true);          break;
     case M_CHARACTER_SWITCH:
         if (robotAlive())
-            g_app.statusMsg = robotToggleCharacter(g_app.scene) ? "" : "Press I to import a character first.";
+        {
+            if (robotToggleCharacter(g_app.scene))
+                appSetStatus(std::string("Character: ") + robotCharacterSource());
+            else
+                appSetStatus("Press I to import a character first.");
+        }
         break;
     case M_CHARACTER_TOGGLE_MODEL:
         if (robotAlive())
-            g_app.statusMsg = robotToggleModel(g_app.scene) ? "" : "Press I to import a character first.";
+        {
+            if (robotToggleModel(g_app.scene))
+                appSetStatus(std::string("Character: ") + robotCharacterSource());
+            else
+                appSetStatus("Press I to import a character first.");
+        }
         break;
 
     // ---- 追赶演示（鹿逃跑、机器人跟随）----
     case M_ANIMALS_CHASE:
         animalsToggleChase();
-        if (animalsChase()) robotSetPathWalk(false);   // 两条运动线互斥
-        else                robotClearChasePose();
+        if (animalsChase())
+        {
+            robotSetPathWalk(false);                   // 两条运动线互斥
+            appSetStatus("Chase on - the deer flees");
+        }
+        else
+        {
+            robotClearChasePose();
+            appSetStatus("Chase off");
+        }
         break;
 
     // ---- 森林分形参数（L-system 迭代深度 / 分支角，调整后即时重建）----
@@ -288,7 +317,13 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
 
     // 机器人：姿势切换与走路循环（数字键已被视图/投影占满，用字母）
     case 'n':
-        if (robotAlive()) { animalsSetChase(false); robotNextPose(); glutPostRedisplay(); }
+        if (robotAlive())
+        {
+            animalsSetChase(false);
+            robotNextPose();
+            appSetStatus(std::string("Pose: ") + robotPoseName(robotPose()));
+            glutPostRedisplay();
+        }
         return;
     case 'b':
         if (robotAlive()) inputAction(M_ROBOT_TOGGLE_WALK);

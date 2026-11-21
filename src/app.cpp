@@ -162,6 +162,68 @@ void drawSceneFiltered(bool subjectsOnly = false)
             renderer::draw(o, g_app.textureOn);
 }
 
+// 选中提示：在地面画一圈金色标记。Tab 或菜单选中的对象一眼可见，
+// 不用从 HUD 文字里猜当前选的是谁。根节点 "Robot" 用可见部件的范围做标记。
+void drawSelectionMarker(bool subjectsOnly)
+{
+    const Object* o = g_app.scene.selectedObject();
+    if (!o) return;
+
+    float cx = o->pos[0], cz = o->pos[2], r = o->size;
+    if (o->name == "Robot")
+    {
+        float minX = 0, maxX = 0, minZ = 0, maxZ = 0;
+        bool found = false;
+        for (const Object& p : g_app.scene.objects)
+        {
+            if (!p.visible || !(p.name.rfind("Robot ", 0) == 0 || p.name == "Imported Character"))
+                continue;
+            float pr = p.size;
+            if (p.kind == PrimKind::Mesh && p.mesh) pr = p.mesh->radius() * p.size;
+            const float x0 = p.pos[0] - pr, x1 = p.pos[0] + pr;
+            const float z0 = p.pos[2] - pr, z1 = p.pos[2] + pr;
+            if (!found) { minX = x0; maxX = x1; minZ = z0; maxZ = z1; found = true; }
+            else
+            {
+                minX = std::min(minX, x0); maxX = std::max(maxX, x1);
+                minZ = std::min(minZ, z0); maxZ = std::max(maxZ, z1);
+            }
+        }
+        if (!found) return;
+        cx = (minX + maxX) * 0.5f;
+        cz = (minZ + maxZ) * 0.5f;
+        r  = 0.5f * std::max(maxX - minX, maxZ - minZ) + 0.12f;
+    }
+    else
+    {
+        if (!o->visible) return;
+        if (o->kind == PrimKind::Mesh && o->mesh) r = o->mesh->radius() * o->size;
+        else if (o->kind == PrimKind::Cube)       r = o->size * 1.732f;
+    }
+
+    float groundY = 0.02f;
+    for (const Object& g : g_app.scene.objects)
+        if (g.name == "Ground") { groundY = g.pos[1] + 0.01f; break; }
+
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_FOG);
+    glDepthFunc(GL_LEQUAL);
+    glColor3f(1.0f, 0.78f, 0.22f);
+    glLineWidth(2.0f);
+    glBegin(GL_LINE_LOOP);
+    for (int i = 0; i < 48; ++i)
+    {
+        const float a = 2.0f * 3.14159265f * (float)i / 48.0f;
+        glVertex3f(cx + r * std::cos(a), groundY, cz + r * std::sin(a));
+    }
+    glEnd();
+    glLineWidth(1.0f);
+    if (g_app.fog && !subjectsOnly) glEnable(GL_FOG);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_LIGHTING);
+}
+
 // ---------------------------------------------------------------------------
 // 画一个视口。label 非空时在左上角画标题。
 // ---------------------------------------------------------------------------
@@ -206,6 +268,7 @@ void drawViewport(int x, int y, int w, int h, ProjMode pm, ViewPreset vp, const 
                         g_app.enhanced && g_app.lighting && g_app.renderMode == RenderMode::Solid, g_app.smoothShade);
     drawSceneFiltered(subjectsOnly);
     renderer::endView();
+    drawSelectionMarker(subjectsOnly);
 
     // 5. 视口标题
     if (label && g_app.showHUD)
@@ -321,6 +384,13 @@ void drawHelpScreen()
 // ---------------------------------------------------------------------------
 void drawOverlay()
 {
+    // 操作提示到点自动消失（状态条随后恢复显示当前角色来源）。
+    if (!g_app.statusMsg.empty() && g_app.statusUntilMs > 0 &&
+        glutGet(GLUT_ELAPSED_TIME) >= g_app.statusUntilMs)
+    {
+        g_app.statusMsg.clear();
+        g_app.statusUntilMs = 0;
+    }
     if (g_app.showHelp) { drawHelpScreen(); return; }
     if (!g_app.showHUD) return;
     const float width = (float)g_app.winW;
@@ -451,6 +521,15 @@ void appSetup(const std::string& modelPath)
     {
         robotCreate(g_app.scene);
         animalsCreate(g_app.scene);      // 小动物：鹿 + 狐狸（兔子归 roam 动画管）
+
+        // 主角默认选中：启动后 t/r/y 与左键拖动直接作用在机器人上，
+        // 底部提示和地面选中圈也立刻指向它（Tab 仍可切到兔子等物体）。
+        for (int i = 0; i < (int)g_app.scene.objects.size(); ++i)
+            if (g_app.scene.objects[i].name == "Robot")
+            {
+                g_app.scene.selected = i;
+                break;
+            }
     }
 
     appResetCamera();
@@ -783,12 +862,25 @@ void appClickHelp(int x, int y)
     glutPostRedisplay();
 }
 
+void appSetStatus(const std::string& msg, int ms)
+{
+    g_app.statusMsg = msg;
+    g_app.statusUntilMs = (msg.empty() || ms <= 0)
+                              ? 0
+                              : glutGet(GLUT_ELAPSED_TIME) + ms;
+}
+
 bool appImportCharacter(const std::string& path, bool slim)
 {
     std::string error;
     const bool imported = robotImportCharacter(g_app.scene, path, slim, error);
-    g_app.statusMsg = imported ? "" : error;
-    if (!imported) std::fprintf(stderr, "[character] %s: %s\n", path.c_str(), error.c_str());
+    if (imported)
+        appSetStatus("Character: " + robotCharacterSource(), 4000);
+    else
+    {
+        appSetStatus(error, 6000);
+        std::fprintf(stderr, "[character] %s: %s\n", path.c_str(), error.c_str());
+    }
     return imported;
 }
 

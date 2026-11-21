@@ -25,7 +25,7 @@ public:
 
     // 程序化构造（森林等）：直接塞顶点数据进去，不经过文件
     void adopt(MeshData&& data);
-    void adoptSkin(MeshData&& data, const unsigned char* pixels);
+    void adoptSkin(MeshData&& data, const unsigned char* pixels, int width, int height);
 
     // 用当前材质设定 + 纹理绘制。useTexture 关掉时退化为纯材质着色。
     void draw(bool useTexture) const;

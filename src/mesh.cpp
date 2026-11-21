@@ -113,11 +113,12 @@ void Mesh::adopt(MeshData&& data)
     data_.valid             = true;
 }
 
-void Mesh::adoptSkin(MeshData&& data, const unsigned char* pixels)
+void Mesh::adoptSkin(MeshData&& data, const unsigned char* pixels, int width, int height)
 {
     adopt(std::move(data));
-    tex_ = uploadSkinPixels(pixels);
-    texW_ = texH_ = 64;
+    tex_ = uploadSkinPixels(pixels, width, height);
+    texW_ = width;
+    texH_ = height;
 }
 
 bool Mesh::loadFromOBJ(const std::string& path, UpAxis up, bool normalize, std::string* errOut)

@@ -139,6 +139,50 @@ void addBox(MeshData& m, float hx, float hy, float hz, const float col[3],
     m.hasColors  = true;
 }
 
+// 把任意受支持的皮肤规格归一化成 64x64 RGBA（行 0 = 图像顶部）：
+//   64x64 现代皮肤：原样使用；
+//   64x32 旧版皮肤：左臂/左腿在旧格式里不存在，由右臂/右腿水平镜像补到
+//     64x64 的左肢区域 (32,48)/(16,48)，overlay 区保持透明；
+//   HD 皮肤（128x128 等）：每个 64 网格块取中心像素，最近邻降采样。
+void normalizeSkin(const std::vector<unsigned char>& src, int w, int h,
+                   std::vector<unsigned char>& out)
+{
+    std::vector<unsigned char> pixels((size_t)64 * 64 * 4, 0);
+    if (w == 64 && h == 64)
+    {
+        pixels = src;
+    }
+    else if (w == 64 && h == 32)
+    {
+        std::copy(src.begin(), src.end(), pixels.begin());
+        auto mirror = [&](int sx, int sy, int rw, int rh, int dx, int dy)
+        {
+            for (int row = 0; row < rh; ++row)
+                for (int col = 0; col < rw; ++col)
+                {
+                    const int s = ((sy + row) * 64 + sx + col) * 4;
+                    const int d = ((dy + row) * 64 + dx + (rw - 1 - col)) * 4;
+                    for (int c = 0; c < 4; ++c) pixels[d + c] = src[s + c];
+                }
+        };
+        mirror(40, 16, 12, 16, 32, 48);   // 右臂 net -> 左臂
+        mirror( 0, 16, 12, 16, 16, 48);   // 右腿 net -> 左腿
+    }
+    else // HD
+    {
+        const int s = w / 64;
+        for (int y = 0; y < 64; ++y)
+            for (int x = 0; x < 64; ++x)
+            {
+                const int sx = x * s + s / 2, sy = y * s + s / 2;
+                const size_t si = ((size_t)sy * w + sx) * 4;
+                const size_t di = ((size_t)y * 64 + x) * 4;
+                for (int c = 0; c < 4; ++c) pixels[di + c] = src[si + c];
+            }
+    }
+    out.swap(pixels);
+}
+
 struct SkinBox
 {
     RobotPartId part;
@@ -188,7 +232,7 @@ std::shared_ptr<Mesh> buildSkinBox(const SkinBox& box, const std::vector<unsigne
                                          left,bottom, right,top, left,top});
     }
     auto mesh = std::make_shared<Mesh>();
-    mesh->adoptSkin(std::move(data), pixels.data());
+    mesh->adoptSkin(std::move(data), pixels.data(), 64, 64);
     return mesh;
 }
 
@@ -441,12 +485,27 @@ bool robotImportCharacter(Scene& scene, const std::string& path, bool slim, std:
     for (char& c : extension) c = (char)std::tolower((unsigned char)c);
     PartMeshes skin;
     std::shared_ptr<Mesh> model;
+    bool slimUsed = slim;
+    int  skinWUsed = 64, skinHUsed = 64;
     if (extension == ".png")
     {
         std::vector<unsigned char> pixels;
-        if (!readSkinPixels(path, pixels)) { error = "Expected a readable 64 x 64 skin PNG."; return false; }
-        const int arm = slim ? 3 : 4;
-        const float armHalf = slim ? 0.074f : 0.097f;
+        int skinW = 0, skinH = 0;
+        if (!readSkinPixels(path, pixels, &skinW, &skinH))
+        {
+            error = "Expected a 64x64, 64x32 legacy or HD skin PNG.";
+            return false;
+        }
+        // 旧版 64x32 只有 Classic 手臂；归一化后再按 64x64 布局取块。
+        const bool legacy = (skinW == 64 && skinH == 32);
+        const bool slimLayout = slim && !legacy;
+        slimUsed = slimLayout;
+        skinWUsed = skinW;
+        skinHUsed = skinH;
+        std::vector<unsigned char> skinPixels;
+        normalizeSkin(pixels, skinW, skinH, skinPixels);
+        const int arm = slimLayout ? 3 : 4;
+        const float armHalf = slimLayout ? 0.074f : 0.097f;
         const SkinBox boxes[] = {
             {P_Head, 0,0, 32,0, 8,8,8, .24f,.20f,.215f},
             {P_Torso, 16,16, 16,32, 8,12,4, .275f,.36f,.146f},
@@ -457,7 +516,7 @@ bool robotImportCharacter(Scene& scene, const std::string& path, bool slim, std:
         };
         for (const SkinBox& box : boxes)
         {
-            skin[box.part] = buildSkinBox(box, pixels);
+            skin[box.part] = buildSkinBox(box, skinPixels);
             if (!skin[box.part]->hasTexture())
             {
                 for (const auto& mesh : skin) if (mesh) mesh->release();
@@ -465,8 +524,9 @@ bool robotImportCharacter(Scene& scene, const std::string& path, bool slim, std:
                 return false;
             }
         }
-        std::printf("[character] PNG: 64x64 %s skin, 6 parts, NEAREST filtering\n",
-                    slim ? "Slim (3px arms)" : "Classic (4px arms)");
+        std::printf("[character] PNG: %dx%d%s -> 64x64 %s skin, 6 parts, NEAREST filtering\n",
+                    skinW, skinH, legacy ? " (legacy)" : (skinW > 64 ? " (HD)" : ""),
+                    slimLayout ? "Slim (3px arms)" : "Classic (4px arms)");
     }
     else if (extension == ".obj")
     {
@@ -501,7 +561,9 @@ bool robotImportCharacter(Scene& scene, const std::string& path, bool slim, std:
     }
     else
     {
-        robot.skinLabel = (slim ? "Slim PNG  " : "PNG  ") + file.filename().u8string();
+        robot.skinLabel = std::string(slimUsed ? "Slim " : "") +
+                          std::to_string(skinWUsed) + "x" + std::to_string(skinHUsed) + " " +
+                          file.filename().u8string();
         robot.skinMeshes = std::move(skin);
         for (const auto& mesh : robot.skinMeshes) if (mesh) scene.meshes.push_back(mesh);
     }

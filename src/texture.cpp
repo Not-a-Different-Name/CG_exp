@@ -77,8 +77,11 @@ GLuint loadTexture2D(const std::string& path, int* wOut, int* hOut)
     return tex;
 }
 
-bool readSkinPixels(const std::string& path, std::vector<unsigned char>& pixels)
+bool readSkinPixels(const std::string& path, std::vector<unsigned char>& pixels,
+                    int* wOut, int* hOut)
 {
+    if (wOut) *wOut = 0;
+    if (hOut) *hOut = 0;
     std::unique_ptr<std::FILE, decltype(&std::fclose)> file(openImage(path), std::fclose);
     if (!file) return false;
     const unsigned char signature[] = {137, 80, 78, 71, 13, 10, 26, 10};
@@ -86,23 +89,33 @@ bool readSkinPixels(const std::string& path, std::vector<unsigned char>& pixels)
         if (std::fgetc(file.get()) != byte) return false;
     std::rewind(file.get());
     int w = 0, h = 0, channels = 0;
-    if (!stbi_info_from_file(file.get(), &w, &h, &channels) || w != 64 || h != 64)
-        return false;
+    if (!stbi_info_from_file(file.get(), &w, &h, &channels)) return false;
+
+    // 64x64 = 现代皮肤；64x32 = 旧版（左臂/左腿由右臂/右腿镜像）；
+    // 其他 64 的整数倍正方形 = HD 皮肤（128x128、256x256）。
+    const bool modern = (w == 64 && h == 64);
+    const bool legacy = (w == 64 && h == 32);
+    const bool hd     = (w == h && w > 64 && w % 64 == 0);
+    if (!modern && !legacy && !hd) return false;
+
     std::rewind(file.get());
     stbi_set_flip_vertically_on_load(0);
     std::unique_ptr<unsigned char, decltype(&stbi_image_free)> decoded(
         stbi_load_from_file(file.get(), &w, &h, &channels, STBI_rgb_alpha), stbi_image_free);
-    if (!decoded || w != 64 || h != 64) return false;
-    pixels.assign(decoded.get(), decoded.get() + 64 * 64 * 4);
+    if (!decoded || !((w == 64 && (h == 64 || h == 32)) || (w == h && w > 64 && w % 64 == 0)))
+        return false;
+    pixels.assign(decoded.get(), decoded.get() + (size_t)w * h * 4);
+    if (wOut) *wOut = w;
+    if (hOut) *hOut = h;
     return true;
 }
 
-GLuint uploadSkinPixels(const unsigned char* pixels)
+GLuint uploadSkinPixels(const unsigned char* pixels, int width, int height)
 {
     GLuint texture = 0;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

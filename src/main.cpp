@@ -668,6 +668,10 @@ int main(int argc, char** argv)
     if (opt.noHud)    g_app.showHUD  = false;
     if (opt.showHelp) g_app.showHelp = true;
 
+    // 首次进入时的操作提示：只给实时窗口，批量出图/录制不显示。
+    if (opt.shotPath.empty() && opt.recordPath.empty() && !opt.noHud && !opt.showHelp)
+        appSetStatus("H Controls   I Import character   M Switch", 5000);
+
     glutDisplayFunc(appDisplay);
     glutReshapeFunc(appReshape);
     glutKeyboardFunc(inputKeyboard);

@@ -54,6 +54,7 @@ struct AppState
     std::string modelPath;
     UpAxis      modelUp = UpAxis::Auto;   // 模型的上轴，Auto 按几何判断
     std::string statusMsg;
+    int         statusUntilMs = 0;      // 0 = 常驻；否则到点自动清掉（操作提示）
     std::string modelStatus;
 
     // 帧率统计
@@ -69,6 +70,9 @@ void appReshape(int w, int h);
 void appDisplay();
 void appCleanup();
 void appPostRedisplay();
+
+// 顶部状态条的操作提示：ms 毫秒后自动消失（0 = 常驻）。
+void appSetStatus(const std::string& msg, int ms = 3000);
 
 // 切换投影 / 视图 / 复位
 void appSetProjection(ProjMode m);
