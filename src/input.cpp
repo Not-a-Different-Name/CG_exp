@@ -197,6 +197,10 @@ void inputAction(int action)
         if (robotAlive())
             g_app.statusMsg = robotToggleCharacter(g_app.scene) ? "" : "Press I to import a character first.";
         break;
+    case M_CHARACTER_TOGGLE_MODEL:
+        if (robotAlive())
+            g_app.statusMsg = robotToggleModel(g_app.scene) ? "" : "Press I to import a character first.";
+        break;
 
     // ---- 追赶演示（鹿逃跑、机器人跟随）----
     case M_ANIMALS_CHASE:
@@ -280,6 +284,7 @@ void inputKeyboard(unsigned char key, int /*x*/, int /*y*/)
     case 'i': inputAction(M_CHARACTER_OPEN); return;
     case 'I': inputAction(M_CHARACTER_OPEN_SLIM); return;
     case 'k': case 'K': inputAction(M_CHARACTER_SWITCH); return;
+    case 'M': inputAction(M_CHARACTER_TOGGLE_MODEL); return;   // W3-3：拼装 ↔ 导入模型
 
     // 机器人：姿势切换与走路循环（数字键已被视图/投影占满，用字母）
     case 'n':
@@ -517,6 +522,7 @@ void inputBuildMenu()
     glutAddMenuEntry("Import classic skin / OBJ (I key)", M_CHARACTER_OPEN);
     glutAddMenuEntry("Import slim skin (Shift+I)", M_CHARACTER_OPEN_SLIM);
     glutAddMenuEntry("Switch character (K)", M_CHARACTER_SWITCH);
+    glutAddMenuEntry("Assembled / imported model (M)", M_CHARACTER_TOGGLE_MODEL);
     glutAddMenuEntry("Pose: stand       ",  M_ROBOT_STAND);
     glutAddMenuEntry("Pose: wave        ",  M_ROBOT_WAVE);
     glutAddMenuEntry("Pose: T-pose      ",  M_ROBOT_TPOSE);

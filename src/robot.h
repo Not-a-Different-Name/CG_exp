@@ -25,7 +25,17 @@ enum class RobotPose { Stand = 0, Wave, TPose, WalkFreeze, Count };
 // 在 Forest 场景里创建机器人（appSetup 调用，Studio 场景不建）。
 void  robotCreate(Scene& scene);
 bool  robotImportCharacter(Scene& scene, const std::string& path, bool slim, std::string& error);
+
+// K 键：在内置 → PNG → OBJ 之间循环。
 bool  robotToggleCharacter(Scene& scene);
+
+// M 键（W3-3 实验规范）：拼装机器人 ↔ 外部导入角色。
+// 优先切到 OBJ；没有 OBJ 时退回 PNG 皮肤；什么都没导入返回 false。
+bool  robotToggleModel(Scene& scene);
+
+// 是否已导入可切换的外部角色（OBJ 或 PNG）。
+bool  robotHasImportedCharacter();
+
 const std::string& robotCharacterSource();
 
 // 每帧推进关节并写回各部件。t 用「录制=帧号/fps，预览=真实时钟」的时间轴。

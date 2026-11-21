@@ -14,7 +14,7 @@ F2：增强/经典渲染；F3：阴影；H：操作页，点页签或按 1/2/3 �
 机器人：Shift+P 暂停/继续巡游，Shift+B 显示路径，Shift+G 追赶；n 换姿势，b 原地走/停。
 Tab 选 Robot，按 t/r/y 后左键拖动做整体平移/旋转/缩放。
 i 导入 64×64 Classic PNG 皮肤或 Y-up OBJ；Shift+I 导入 Slim 皮肤。
-k 在内置机器人、已加载的 PNG 和 OBJ 间切换；样例在 Models/TrailSurveyor/。
+k 在内置机器人、已加载的 PNG 和 OBJ 间切换；M 在拼装机器人与导入角色间直接切换；样例在 Models/TrailSurveyor/。
 
 运行环境：Windows 10/11 64 位，正常安装的显卡驱动。
 包内已带 freeglut 和微软可再分发的 VC++ 运行库。

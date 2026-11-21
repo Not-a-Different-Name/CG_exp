@@ -250,7 +250,7 @@ void drawHelpScreen()
             {"WASD / Q E", "Move / descend or climb"},
             {"Tab", "Select the next object"},
             {"t / r / y", "Move / rotate / scale with left drag"},
-            {"I / K", "Import PNG or OBJ / switch character"},
+            {"I / K / M", "Import / cycle / swap model"},
             {"Middle click", "Open the full action menu"},
         },
         {
@@ -341,7 +341,7 @@ void drawOverlay()
     else if (forest)
         actions = std::string("Shift+P  ") + (robotOnPath() ? "Pause" : "Patrol") +
                   (robotPathGuide() ? "   Shift+B  Hide route" : "   Shift+B  Show route") +
-                  "   Tab  Select   I  Import   K  Switch";
+                  "   Tab Select   I Import   K/M Switch";
 
     hudBegin(g_app.winW, g_app.winH);
     if (height >= 105.0f)

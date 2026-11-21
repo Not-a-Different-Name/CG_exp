@@ -465,6 +465,8 @@ bool robotImportCharacter(Scene& scene, const std::string& path, bool slim, std:
                 return false;
             }
         }
+        std::printf("[character] PNG: 64x64 %s skin, 6 parts, NEAREST filtering\n",
+                    slim ? "Slim (3px arms)" : "Classic (4px arms)");
     }
     else if (extension == ".obj")
     {
@@ -480,6 +482,12 @@ bool robotImportCharacter(Scene& scene, const std::string& path, bool slim, std:
         }
         model->preserveSmallTexturePixels();
         scene.objects[robot.importedObject].size = 2.35f / height;
+        // 实验规范 W3-3 要求记录加载信息：面数 / 法线 / 上轴。
+        std::printf("[character] OBJ: %d verts (%d unique), %d faces -> %d tris, "
+                    "normals=%s, uv=%s, up=Y, height %.2f -> scale %.3f\n",
+                    data.srcVertexCount, data.uniqueVertexCount, data.srcFaceCount,
+                    data.triangleCount, data.hasNormals ? "yes" : "generated",
+                    data.hasUVs ? "yes" : "no", height, 2.35f / height);
     }
     else { error = "Choose a 64 x 64 PNG skin or a Y-up OBJ."; return false; }
 
@@ -514,6 +522,36 @@ bool robotToggleCharacter(Scene& scene)
         robot.look = CharacterLook::BuiltIn;
     applyCharacter(scene);
     return true;
+}
+
+// W3-3 实验规范要求的 M 键：只在「拼装机器人 ↔ 外部导入模型」之间切换。
+// K 是三态循环（内置→PNG→OBJ），M 是二态替换，答辩演示时更不容易按错。
+bool robotToggleModel(Scene& scene)
+{
+    RobotCtl& robot = g_robot;
+    if (!robot.exists) return false;
+    if (!robotHasImportedCharacter()) return false;
+
+    if (robot.look == CharacterLook::Model)
+        robot.look = CharacterLook::BuiltIn;
+    else if (!robot.modelLabel.empty())
+        robot.look = CharacterLook::Model;
+    else if (robot.look == CharacterLook::Skin)
+        robot.look = CharacterLook::BuiltIn;      // 没有 OBJ：PNG ↔ 内置
+    else
+        robot.look = CharacterLook::Skin;
+
+    applyCharacter(scene);
+    std::printf("[character] look -> %s (%s)\n",
+                robot.look == CharacterLook::Model ? "OBJ model" :
+                robot.look == CharacterLook::Skin  ? "PNG skin" : "built-in robot",
+                robotCharacterSource().c_str());
+    return true;
+}
+
+bool robotHasImportedCharacter()
+{
+    return g_robot.exists && (!g_robot.skinLabel.empty() || !g_robot.modelLabel.empty());
 }
 
 const std::string& robotCharacterSource()
@@ -609,7 +647,8 @@ void robotUpdate(Scene& scene, float t)
         float offset[16], modelMatrix[16];
         mat4FromTranslation(offset, -data.center[0] * model.size,
                             -data.bboxMin[1] * model.size, -data.center[2] * model.size);
-        mat4Multiply(modelMatrix, A, offset);
+        // 用 Mbase 而不是 A：导入模型也跟随走路重心起伏，替换后不会像贴图一样僵在原地。
+        mat4Multiply(modelMatrix, Mbase, offset);
         writePart(model, modelMatrix);
     }
 

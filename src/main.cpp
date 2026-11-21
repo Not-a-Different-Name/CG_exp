@@ -288,6 +288,10 @@ int runSelfTest()
         Scene s;
         robotCreate(s);
 
+        // W3-3：还没导入角色时，M 键（拼装 ↔ 导入模型）必须是安全的空操作。
+        check(!robotHasImportedCharacter() && !robotToggleModel(s),
+              "character: M toggle is a no-op before any import");
+
         // T-pose：手臂水平伸直 -> 臂中心与肩同高（kShoulderY）
         robotSetPose(RobotPose::TPose, /*snap=*/true);
         robotSetTimeOverride(0.0f);
